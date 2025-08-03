@@ -1,10 +1,10 @@
 {
-  "name": "claude-autopilot",
-  "displayName": "Claude Autopilot",
+  "name": "autoclaude",
+  "displayName": "AutoClaude",
   "description": "Automated Claude Code assistant with smart task completion, queue management, and workflow automation for VS Code",
   "version": "3.8.0",
   "publisher": "R3ENetwork",
-  "icon": "img/claude-autopilot.png",
+  "icon": "img/autoclaude.png",
   "engines": {
     "vscode": "^1.74.0",
     "node": ">=18.0.0"

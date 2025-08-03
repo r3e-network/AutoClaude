@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { 
-    ClaudeAutopilotError, 
+    AutoClaudeError, 
     ErrorManager, 
     CommonErrors, 
     ErrorCategory, 
@@ -26,9 +26,9 @@ jest.mock('vscode', () => ({
     }
 }));
 
-describe('ClaudeAutopilotError', () => {
+describe('AutoClaudeError', () => {
     it('should create error with all details', () => {
-        const error = new ClaudeAutopilotError(
+        const error = new AutoClaudeError(
             'TEST_ERROR',
             'Test error message',
             ErrorCategory.CONFIGURATION,
@@ -39,7 +39,7 @@ describe('ClaudeAutopilotError', () => {
             ['Action 1', 'Action 2']
         );
 
-        expect(error.name).toBe('ClaudeAutopilotError');
+        expect(error.name).toBe('AutoClaudeError');
         expect(error.message).toBe('Test error message');
         expect(error.details.code).toBe('TEST_ERROR');
         expect(error.details.category).toBe(ErrorCategory.CONFIGURATION);
@@ -52,7 +52,7 @@ describe('ClaudeAutopilotError', () => {
     });
 
     it('should use defaults for optional parameters', () => {
-        const error = new ClaudeAutopilotError(
+        const error = new AutoClaudeError(
             'SIMPLE_ERROR',
             'Simple message',
             ErrorCategory.INTERNAL
@@ -76,7 +76,7 @@ describe('ErrorManager', () => {
     });
 
     describe('logError', () => {
-        it('should log ClaudeAutopilotError', () => {
+        it('should log AutoClaudeError', () => {
             const error = CommonErrors.CLAUDE_NOT_INSTALLED();
             ErrorManager.logError(error);
 
@@ -99,7 +99,7 @@ describe('ErrorManager', () => {
 
         it('should show appropriate notification based on severity', () => {
             // Critical error
-            const criticalError = new ClaudeAutopilotError(
+            const criticalError = new AutoClaudeError(
                 'CRITICAL',
                 'Critical issue',
                 ErrorCategory.INTERNAL,
@@ -112,7 +112,7 @@ describe('ErrorManager', () => {
             );
 
             // Warning
-            const warningError = new ClaudeAutopilotError(
+            const warningError = new AutoClaudeError(
                 'WARNING',
                 'Warning issue',
                 ErrorCategory.CONFIGURATION,
@@ -169,13 +169,13 @@ describe('ErrorManager', () => {
         });
 
         it('should filter errors by severity', () => {
-            const highError = new ClaudeAutopilotError(
+            const highError = new AutoClaudeError(
                 'HIGH',
                 'High severity',
                 ErrorCategory.INTERNAL,
                 ErrorSeverity.HIGH
             );
-            const lowError = new ClaudeAutopilotError(
+            const lowError = new AutoClaudeError(
                 'LOW',
                 'Low severity',
                 ErrorCategory.INTERNAL,
@@ -193,7 +193,7 @@ describe('ErrorManager', () => {
         });
 
         it('should filter recent errors', () => {
-            const oldError = new ClaudeAutopilotError(
+            const oldError = new AutoClaudeError(
                 'OLD',
                 'Old error',
                 ErrorCategory.INTERNAL

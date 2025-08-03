@@ -33,7 +33,7 @@ export interface ErrorDetails {
     suggestedActions?: string[];
 }
 
-export class ClaudeAutopilotError extends Error {
+export class AutoClaudeError extends Error {
     public readonly details: ErrorDetails;
 
     constructor(
@@ -47,7 +47,7 @@ export class ClaudeAutopilotError extends Error {
         suggestedActions?: string[]
     ) {
         super(message);
-        this.name = 'ClaudeAutopilotError';
+        this.name = 'AutoClaudeError';
 
         this.details = {
             code,
@@ -68,10 +68,10 @@ export class ErrorManager {
     private static errorHistory: ErrorDetails[] = [];
     private static readonly MAX_ERROR_HISTORY = 100;
 
-    static logError(error: ClaudeAutopilotError | Error, context?: Record<string, any>): void {
+    static logError(error: AutoClaudeError | Error, context?: Record<string, any>): void {
         let errorDetails: ErrorDetails;
 
-        if (error instanceof ClaudeAutopilotError) {
+        if (error instanceof AutoClaudeError) {
             errorDetails = error.details;
         } else {
             errorDetails = {
@@ -185,7 +185,7 @@ export class ErrorManager {
 
 // Pre-defined error types for common scenarios
 export const CommonErrors = {
-    CLAUDE_NOT_INSTALLED: (context?: any) => new ClaudeAutopilotError(
+    CLAUDE_NOT_INSTALLED: (context?: any) => new AutoClaudeError(
         'CLAUDE_NOT_INSTALLED',
         'Claude CLI is not installed or not found in PATH',
         ErrorCategory.DEPENDENCY,
@@ -200,7 +200,7 @@ export const CommonErrors = {
         ]
     ),
 
-    CLAUDE_SESSION_FAILED: (reason?: string, context?: any) => new ClaudeAutopilotError(
+    CLAUDE_SESSION_FAILED: (reason?: string, context?: any) => new AutoClaudeError(
         'CLAUDE_SESSION_FAILED',
         `Claude session failed to start: ${reason || 'Unknown reason'}`,
         ErrorCategory.CLAUDE_SESSION,
@@ -215,7 +215,7 @@ export const CommonErrors = {
         ]
     ),
 
-    QUEUE_SIZE_EXCEEDED: (currentSize: number, maxSize: number) => new ClaudeAutopilotError(
+    QUEUE_SIZE_EXCEEDED: (currentSize: number, maxSize: number) => new AutoClaudeError(
         'QUEUE_SIZE_EXCEEDED',
         `Queue size ${currentSize} exceeds maximum ${maxSize}`,
         ErrorCategory.QUEUE_MANAGEMENT,
@@ -230,7 +230,7 @@ export const CommonErrors = {
         ]
     ),
 
-    INVALID_CONFIGURATION: (setting: string, value: any, expected: string) => new ClaudeAutopilotError(
+    INVALID_CONFIGURATION: (setting: string, value: any, expected: string) => new AutoClaudeError(
         'INVALID_CONFIGURATION',
         `Invalid configuration for ${setting}: ${value} (expected: ${expected})`,
         ErrorCategory.CONFIGURATION,
@@ -245,7 +245,7 @@ export const CommonErrors = {
         ]
     ),
 
-    SCRIPT_EXECUTION_FAILED: (scriptName: string, exitCode: number, stderr?: string) => new ClaudeAutopilotError(
+    SCRIPT_EXECUTION_FAILED: (scriptName: string, exitCode: number, stderr?: string) => new AutoClaudeError(
         'SCRIPT_EXECUTION_FAILED',
         `Script ${scriptName} failed with exit code ${exitCode}`,
         ErrorCategory.SCRIPT_EXECUTION,
@@ -260,7 +260,7 @@ export const CommonErrors = {
         ]
     ),
 
-    FILE_ACCESS_DENIED: (filePath: string, operation: string) => new ClaudeAutopilotError(
+    FILE_ACCESS_DENIED: (filePath: string, operation: string) => new AutoClaudeError(
         'FILE_ACCESS_DENIED',
         `Access denied for ${operation} operation on ${filePath}`,
         ErrorCategory.FILE_SYSTEM,
