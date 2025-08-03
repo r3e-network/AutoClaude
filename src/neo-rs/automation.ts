@@ -410,8 +410,8 @@ export class NeoRsAutomationEngine {
         }
 
         // Generate traits from interfaces
-        for (const interface of relevantInterfaces) {
-            moduleContent.push(this.generateRustTrait(interface));
+        for (const iface of relevantInterfaces) {
+            moduleContent.push(this.generateRustTrait(iface));
             moduleContent.push('');
         }
 
@@ -431,9 +431,9 @@ pub enum ${enumDef.name} {
 }`;
     }
 
-    private generateRustTrait(interface: any): string {
-        const traitName = interface.name.startsWith('I') ? 
-            interface.name.substring(1) : interface.name;
+    private generateRustTrait(iface: any): string {
+        const traitName = iface.name.startsWith('I') ? 
+            iface.name.substring(1) : iface.name;
 
         return `pub trait ${traitName} {
     // TODO: Add trait methods based on C# interface
