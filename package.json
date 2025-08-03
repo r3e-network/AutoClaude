@@ -4,7 +4,7 @@
   "description": "Specialized AutoClaude plugin for Neo-rs development - Ensures 100% C# to Rust conversion accuracy",
   "version": "3.8.0-neo-rs",
   "publisher": "R3ENetwork",
-  "icon": "img/claude-autopilot.png",
+  "icon": "img/autoclaude.png",
   "engines": {
     "vscode": "^1.74.0",
     "node": ">=18.0.0"
