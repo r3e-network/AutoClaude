@@ -1,7 +1,7 @@
 {
-  "name": "claude-autopilot-neo-rs",
-  "displayName": "Claude Autopilot for Neo-rs",
-  "description": "Specialized Claude Code assistant for Neo-rs development - Ensures 100% C# to Rust conversion accuracy",
+  "name": "autoclaude-neo-rs",
+  "displayName": "AutoClaude for Neo-rs",
+  "description": "Specialized AutoClaude plugin for Neo-rs development - Ensures 100% C# to Rust conversion accuracy",
   "version": "3.8.0-neo-rs",
   "icon": "img/claude-autopilot.png",
   "engines": {

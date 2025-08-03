@@ -50,7 +50,7 @@
 - [x] Usage guide
 
 ## Release Artifacts
-- [x] VSIX package: `claude-autopilot-neo-rs-3.8.0-neo-rs.vsix`
+- [x] VSIX package: `autoclaude-neo-rs-3.8.0-neo-rs.vsix`
 - [x] GitHub workflow: `.github/workflows/release-neo-rs.yml`
 - [x] Build script: `scripts/build-neo-rs-release.sh`
 - [x] Package size: 392.4 KB

@@ -1,6 +1,6 @@
-# Claude Autopilot for Neo-rs
+# AutoClaude for Neo-rs
 
-This is a specialized version of Claude Autopilot specifically designed for the Neo-rs project - a complete Rust implementation of the Neo N3 blockchain platform, converted from the C# reference implementation.
+This is a specialized version of AutoClaude specifically designed for the Neo-rs project - a complete Rust implementation of the Neo N3 blockchain platform, converted from the C# reference implementation.
 
 ## 🎯 Mission
 
@@ -145,7 +145,7 @@ Track your progress with:
 ## 🤝 Integration
 
 Works seamlessly with:
-- Standard Claude Autopilot features
+- Standard AutoClaude features
 - Rust analyzer
 - Cargo commands
 - Git workflows
@@ -159,7 +159,7 @@ Works seamlessly with:
 
 ## 📝 License
 
-Same as Claude Autopilot - see main LICENSE file.
+Same as AutoClaude - see main LICENSE file.
 
 ---
 

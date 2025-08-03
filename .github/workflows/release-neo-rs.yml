@@ -45,11 +45,11 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
-        release_name: Claude Autopilot for Neo-rs ${{ github.ref }}
+        release_name: AutoClaude for Neo-rs ${{ github.ref }}
         body: |
-          # Claude Autopilot for Neo-rs
+          # AutoClaude for Neo-rs
           
-          This is a specialized release of Claude Autopilot designed specifically for Neo-rs development.
+          This is a specialized release of AutoClaude designed specifically for Neo-rs development.
           
           ## Features
           - Automated C# to Rust test conversion
@@ -78,8 +78,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./claude-autopilot-neo-rs-*.vsix
-        asset_name: claude-autopilot-neo-rs-${{ github.ref_name }}.vsix
+        asset_path: ./autoclaude-neo-rs-*.vsix
+        asset_name: autoclaude-neo-rs-${{ github.ref_name }}.vsix
         asset_content_type: application/octet-stream
         
     - name: Publish to VS Code Marketplace (Neo-rs)

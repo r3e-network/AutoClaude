@@ -1,8 +1,8 @@
-# Claude Autopilot for Neo-rs - Release v3.8.0-neo-rs
+# AutoClaude for Neo-rs - Release v3.8.0-neo-rs
 
 ## 🎯 Overview
 
-This is a specialized version of Claude Autopilot specifically engineered for the Neo-rs project. It provides automated tools to ensure Neo-rs achieves 100% functional compatibility with the C# Neo N3 blockchain implementation.
+This is a specialized version of AutoClaude specifically engineered for the Neo-rs project. It provides automated tools to ensure Neo-rs achieves 100% functional compatibility with the C# Neo N3 blockchain implementation.
 
 ## ✅ Completion Status
 
@@ -35,7 +35,7 @@ All planned features have been successfully implemented:
 - ✅ Release workflow - GitHub Actions automation
 
 ### Package Details
-- **File**: claude-autopilot-neo-rs-3.8.0-neo-rs.vsix
+- **File**: autoclaude-neo-rs-3.8.0-neo-rs.vsix
 - **Size**: 392.4 KB
 - **Files**: 34 files included
 - **Build**: Successfully compiled and packaged
@@ -78,7 +78,7 @@ All planned features have been successfully implemented:
 
 ```bash
 # Option 1: Command line
-code --install-extension claude-autopilot-neo-rs-3.8.0-neo-rs.vsix
+code --install-extension autoclaude-neo-rs-3.8.0-neo-rs.vsix
 
 # Option 2: VS Code UI
 # Extensions → ... → Install from VSIX → Select file

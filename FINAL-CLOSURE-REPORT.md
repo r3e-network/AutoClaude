@@ -54,7 +54,7 @@ All 13 planned tasks have been successfully completed:
 - `FINAL-CLOSURE-REPORT.md` - This closure document
 
 #### Release Artifacts
-- `claude-autopilot-neo-rs-3.8.0-neo-rs.vsix` (401,815 bytes)
+- `autoclaude-neo-rs-3.8.0-neo-rs.vsix` (401,815 bytes)
 - `.github/workflows/release-neo-rs.yml` - GitHub Actions workflow
 - `scripts/build-neo-rs-release.sh` - Build automation
 
@@ -103,7 +103,7 @@ The neo-rs specialized branch successfully delivers:
 ### Installation & Usage
 ```bash
 # Install the extension
-code --install-extension claude-autopilot-neo-rs-3.8.0-neo-rs.vsix
+code --install-extension autoclaude-neo-rs-3.8.0-neo-rs.vsix
 
 # Quick start
 1. Copy neo-rs-config.example.json to neo-rs-config.json

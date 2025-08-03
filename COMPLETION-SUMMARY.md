@@ -13,7 +13,7 @@ All work for the neo-rs specialized branch has been successfully completed.
 - **Latest**: "final: complete neo-rs implementation - all systems ready"
 
 #### Extension Package
-- **File**: claude-autopilot-neo-rs-3.8.0-neo-rs.vsix
+- **File**: autoclaude-neo-rs-3.8.0-neo-rs.vsix
 - **Size**: 392.4 KB
 - **Status**: Successfully built and ready for installation ✅
 
@@ -58,7 +58,7 @@ The neo-rs specialized branch is ready to help ensure Neo-rs achieves:
 
 ### Installation Ready
 ```bash
-code --install-extension claude-autopilot-neo-rs-3.8.0-neo-rs.vsix
+code --install-extension autoclaude-neo-rs-3.8.0-neo-rs.vsix
 ```
 
 ### Next Steps for Users
