@@ -3,6 +3,7 @@
   "displayName": "Claude Autopilot",
   "description": "Automated Claude Code assistant with smart task completion, queue management, and workflow automation for VS Code",
   "version": "3.8.0",
+  "publisher": "R3ENetwork",
   "icon": "img/claude-autopilot.png",
   "engines": {
     "vscode": "^1.74.0",
@@ -662,11 +663,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/claude-code/claude-autopilot"
+    "url": "https://github.com/r3e-network/AutoClaude"
   },
-  "homepage": "https://github.com/claude-code/claude-autopilot#readme",
+  "homepage": "https://github.com/r3e-network/AutoClaude#readme",
   "bugs": {
-    "url": "https://github.com/claude-code/claude-autopilot/issues"
+    "url": "https://github.com/r3e-network/AutoClaude/issues"
   },
   "galleryBanner": {
     "color": "#1e1e1e",
