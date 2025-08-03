@@ -1,4 +1,4 @@
-import { ClaudeAutopilotError, ErrorCategory, ErrorSeverity, CommonErrors } from '../errors';
+import { AutoClaudeError, ErrorCategory, ErrorSeverity, CommonErrors } from '../errors';
 
 export interface ValidationRule<T = any> {
     name: string;
