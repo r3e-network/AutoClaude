@@ -5,6 +5,40 @@ All notable changes to the Claude Autopilot extension will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.8.0] - 2025-08-03
+
+### ⚡ Performance Optimizations & Enhanced Security
+
+This release focuses on performance improvements and enhanced git sanitization for even better security.
+
+#### 🚀 Performance Enhancements
+- **Performance Optimizer Module** - New utilities for improving AutoClaude's efficiency
+  - Debounce and throttle functions for reducing excessive operations
+  - Batch processing for handling multiple operations efficiently
+  - Cached file reading with TTL for improved I/O performance
+  - Parallel task execution with concurrency control
+  - Memory-efficient string builder for large outputs
+  - Performance metrics collection and monitoring
+
+#### 🔒 Enhanced Git Sanitization
+- **Expanded Pattern Detection** - Additional AI attribution patterns
+  - Detects "developed with AI", "AI-enhanced", "machine learning generated"
+  - Catches "LLM generated" and "language model created" variations
+  - More comprehensive replacement patterns for cleaner output
+  - Improved edge case handling
+
+#### 🔧 Technical Improvements
+- **Lazy Evaluation** - Deferred computation for resource-intensive operations
+- **Smart Caching** - File content caching with automatic cleanup
+- **Batch Processing** - Efficient handling of multiple queue items
+- **Performance Monitoring** - Built-in metrics for operation timing
+
+#### 💡 Developer Experience
+- **Zero Configuration** - Performance optimizations work automatically
+- **Transparent Operation** - No changes to existing workflows
+- **Better Resource Usage** - Reduced memory and CPU consumption
+- **Faster Queue Processing** - Improved throughput for large task queues
+
 ## [3.7.0] - 2025-08-03
 
 ### 🔒 Git Operations Security & Privacy

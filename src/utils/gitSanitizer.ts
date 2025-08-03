@@ -47,6 +47,10 @@ const REPLACEMENT_PATTERNS = [
     { pattern: /\b(automatically\s+)?generated\s+code\b/gi, replacement: 'implemented' },
     { pattern: /\bai-powered\s+/gi, replacement: '' },
     { pattern: /\bsmart\s+ai\s+/gi, replacement: 'intelligent ' },
+    { pattern: /\b(developed|built|created)\s+with\s+ai\b/gi, replacement: '$1' },
+    { pattern: /\bai-enhanced\s+/gi, replacement: 'enhanced ' },
+    { pattern: /\bmachine learning\s+generated\b/gi, replacement: 'implemented' },
+    { pattern: /\b(llm|language model)\s+(generated|created)\b/gi, replacement: 'implemented' },
 ];
 
 /**
