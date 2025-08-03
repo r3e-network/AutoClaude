@@ -37,6 +37,9 @@ export class NeoRsAutomationEngine {
     }
 
     async activate() {
+        // Initialize context manager (now async)
+        await this.contextManager.initialize();
+        
         // Register commands
         this.context.subscriptions.push(
             vscode.commands.registerCommand('neo-rs.startAutomation', () => this.startAutomation()),
@@ -45,6 +48,14 @@ export class NeoRsAutomationEngine {
             vscode.commands.registerCommand('neo-rs.clearTaskQueue', () => this.clearTaskQueue()),
             vscode.commands.registerCommand('neo-rs.prioritizeTasks', () => this.prioritizeTasks())
         );
+
+        // Check environment before queuing tasks
+        const ctx = this.contextManager.getContext();
+        if (!ctx.environment.isValid) {
+            this.log('Environment setup incomplete. Cannot start automation.', 'error');
+            vscode.window.showErrorMessage('Neo-rs automation requires complete environment setup');
+            return;
+        }
 
         // Initial analysis
         await this.analyzeAndQueueTasks();

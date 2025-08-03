@@ -275,6 +275,12 @@
         "title": "📌 Prioritize Tasks",
         "category": "Neo-rs",
         "icon": "$(list-ordered)"
+      },
+      {
+        "command": "neo-rs.showEnvironment",
+        "title": "🔍 Show Environment Report",
+        "category": "Neo-rs",
+        "icon": "$(info)"
       }
     ],
     "menus": {

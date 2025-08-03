@@ -14,27 +14,33 @@ Ensure Neo-rs achieves:
 
 ### Neo-rs Specific Capabilities
 
-#### 1. **Automated C# to Rust Analysis**
+#### 1. **Automatic Environment Detection**
+- Auto-detects Rust toolchain (rustc, cargo, clippy, rustfmt)
+- Detects .NET SDK and runtime versions
+- Finds Neo C# source and neo-rs paths automatically
+- Validates development environment setup
+
+#### 2. **Automated C# to Rust Analysis**
 - Continuously analyzes both C# source and Rust implementation
 - Identifies missing features, unconverted tests, and behavioral discrepancies
 - Tracks progress across all Neo components
 
-#### 2. **Test Conversion Automation**
+#### 3. **Test Conversion Automation**
 - Automatically converts C# unit tests to idiomatic Rust tests
 - Maintains test semantics while adapting to Rust patterns
 - Ensures all edge cases are preserved
 
-#### 3. **Production Readiness Validation**
+#### 4. **Production Readiness Validation**
 - Scans for placeholders (TODO, FIXME, todo!, unimplemented!)
 - Validates complete implementation of all public APIs
 - Checks for proper error handling and thread safety
 
-#### 4. **Continuous Automation Engine**
+#### 5. **Continuous Automation Engine**
 - Works non-stop to achieve 100% completion
 - Prioritizes critical components (consensus, P2P, VM)
 - Automatically fixes issues and implements missing features
 
-#### 5. **Component-wise Tracking**
+#### 6. **Component-wise Tracking**
 - P2P Networking
 - Consensus (dBFT)
 - Blockchain & Storage
@@ -89,19 +95,25 @@ Create a `neo-rs-config.json` in your project root:
 
 ## 🎮 Quick Start
 
-1. **Initial Analysis**
+1. **Check Environment**
+   ```
+   Run: Neo-rs: Show Environment Report
+   ```
+   Verify your Rust and .NET development environment is properly configured.
+
+2. **Initial Analysis**
    ```
    Run: Neo-rs: Analyze Project
    ```
    This will scan your neo-rs project and identify all work needed.
 
-2. **Start Automation**
+3. **Start Automation**
    ```
    Run: Neo-rs: Start Automation
    ```
    The automation engine will begin working through all tasks.
 
-3. **Monitor Progress**
+4. **Monitor Progress**
    ```
    Run: Neo-rs: Show Validation Report
    ```

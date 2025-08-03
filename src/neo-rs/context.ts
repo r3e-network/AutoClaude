@@ -1,12 +1,14 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { NeoRsEnvironment, NeoRsEnvironmentDetector } from './environment';
 
 export interface NeoRsContext {
     csharpSourcePath: string;
     rustProjectPath: string;
     components: Map<string, ComponentInfo>;
     validationResults: ValidationResults;
+    environment: NeoRsEnvironment;
 }
 
 export interface ComponentInfo {
@@ -46,10 +48,16 @@ export interface Discrepancy {
 export class NeoRsContextManager {
     private context: NeoRsContext;
     private config: any;
+    private environmentDetector: NeoRsEnvironmentDetector;
 
     constructor(private workspaceRoot: string) {
+        this.environmentDetector = new NeoRsEnvironmentDetector(workspaceRoot);
         this.loadConfiguration();
-        this.initializeContext();
+        // Note: initializeContext is now async, so we need to handle it differently
+    }
+    
+    async initialize(): Promise<void> {
+        await this.initializeContext();
     }
 
     private loadConfiguration() {
@@ -61,10 +69,30 @@ export class NeoRsContextManager {
         }
     }
 
-    private initializeContext() {
+    private async initializeContext() {
+        // Detect environment first
+        const environment = await this.environmentDetector.detectEnvironment();
+        
+        // Use detected paths if config paths are relative or missing
+        let csharpPath = this.config.csharpSourcePath;
+        let rustPath = this.config.rustProjectPath;
+        
+        // Auto-configure paths from environment if not absolute
+        if (!path.isAbsolute(csharpPath) && environment.neoCsharpPath) {
+            csharpPath = environment.neoCsharpPath;
+        } else {
+            csharpPath = path.join(this.workspaceRoot, csharpPath);
+        }
+        
+        if (!path.isAbsolute(rustPath) && environment.neoRsPath) {
+            rustPath = environment.neoRsPath;
+        } else {
+            rustPath = path.join(this.workspaceRoot, rustPath);
+        }
+        
         this.context = {
-            csharpSourcePath: path.join(this.workspaceRoot, this.config.csharpSourcePath),
-            rustProjectPath: path.join(this.workspaceRoot, this.config.rustProjectPath),
+            csharpSourcePath: csharpPath,
+            rustProjectPath: rustPath,
             components: new Map(),
             validationResults: {
                 hasPlaceholders: false,
@@ -73,7 +101,8 @@ export class NeoRsContextManager {
                 missingTests: [],
                 functionalDiscrepancies: [],
                 isProductionReady: false
-            }
+            },
+            environment: environment
         };
 
         // Initialize components
@@ -92,6 +121,16 @@ export class NeoRsContextManager {
     }
 
     async analyzeProject(): Promise<void> {
+        // Ensure environment is valid before analysis
+        if (!this.context.environment.isValid) {
+            const issues = this.context.environment.issues
+                .filter(i => i.severity === 'error')
+                .map(i => i.message)
+                .join(', ');
+            vscode.window.showErrorMessage(`Cannot analyze: Environment issues - ${issues}`);
+            return;
+        }
+        
         vscode.window.showInformationMessage('Analyzing Neo-rs project structure...');
         
         // Analyze each component
@@ -255,8 +294,26 @@ export class NeoRsContextManager {
     }
 
     private async checkTestCoverage(): Promise<void> {
-        // This would integrate with cargo-tarpaulin or similar
-        // For now, we'll use a simplified approach
+        // Use tarpaulin if available
+        if (this.context.environment.hasTarpaulin) {
+            try {
+                const { execSync } = require('child_process');
+                const coverageOutput = execSync('cargo tarpaulin --print-summary', {
+                    cwd: this.context.rustProjectPath,
+                    encoding: 'utf8'
+                });
+                // Parse coverage from tarpaulin output
+                const coverageMatch = coverageOutput.match(/(\d+\.\d+)%/);
+                if (coverageMatch) {
+                    this.context.validationResults.testCoverage = parseFloat(coverageMatch[1]);
+                    return;
+                }
+            } catch (error) {
+                // Fall back to manual calculation
+            }
+        }
+        
+        // Manual calculation if tarpaulin not available
         let totalTests = 0;
         let implementedTests = 0;
         
@@ -320,6 +377,14 @@ export class NeoRsContextManager {
 
     getValidationReport(): string {
         const report: string[] = ['Neo-rs Validation Report', '=======================', ''];
+        
+        // Environment status
+        report.push('Environment Status:');
+        report.push(`  Rust: ${this.context.environment.rustVersion ? '✅' : '❌'} ${this.context.environment.rustVersion}`);
+        report.push(`  .NET: ${this.context.environment.dotnetVersion ? '✅' : '❌'} ${this.context.environment.dotnetVersion}`);
+        report.push(`  Neo C#: ${this.context.environment.neoCsharpPath ? '✅' : '❌'} ${this.context.environment.neoCsharpVersion}`);
+        report.push(`  Neo-rs: ${this.context.environment.neoRsPath ? '✅' : '❌'} ${this.context.environment.neoRsVersion}`);
+        report.push('');
         
         // Overall status
         report.push(`Production Ready: ${this.context.validationResults.isProductionReady ? '✅' : '❌'}`);

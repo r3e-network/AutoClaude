@@ -13,6 +13,9 @@ export class NeoRsAnalyzer {
     }
 
     async activate() {
+        // Initialize context manager (now async)
+        await this.contextManager.initialize();
+        
         // Register commands
         this.context.subscriptions.push(
             vscode.commands.registerCommand('neo-rs.analyze', () => this.analyzeProject()),
@@ -21,7 +24,8 @@ export class NeoRsAnalyzer {
             vscode.commands.registerCommand('neo-rs.generateMissing', () => this.generateMissingImplementation()),
             vscode.commands.registerCommand('neo-rs.fixPlaceholders', () => this.fixPlaceholders()),
             vscode.commands.registerCommand('neo-rs.compareWithCsharp', () => this.compareWithCsharp()),
-            vscode.commands.registerCommand('neo-rs.showReport', () => this.showValidationReport())
+            vscode.commands.registerCommand('neo-rs.showReport', () => this.showValidationReport()),
+            vscode.commands.registerCommand('neo-rs.showEnvironment', () => this.showEnvironmentReport())
         );
 
         // Register file watchers
@@ -30,17 +34,40 @@ export class NeoRsAnalyzer {
         rustWatcher.onDidCreate(() => this.onRustFileChanged());
         this.context.subscriptions.push(rustWatcher);
 
+        // Check environment first
+        const ctx = this.contextManager.getContext();
+        if (!ctx.environment.isValid) {
+            const action = await vscode.window.showWarningMessage(
+                'Neo-rs development environment has issues. View report?',
+                'View Environment Report',
+                'Continue Anyway'
+            );
+            
+            if (action === 'View Environment Report') {
+                await this.showEnvironmentReport();
+                return;
+            }
+        }
+
         // Run initial analysis
         await this.analyzeProject();
     }
 
     private async analyzeProject() {
-        vscode.window.withProgress({
+        await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: "Analyzing Neo-rs project",
             cancellable: false
         }, async (progress) => {
-            progress.report({ increment: 0, message: "Scanning project structure..." });
+            progress.report({ increment: 0, message: "Checking environment..." });
+            
+            const context = this.contextManager.getContext();
+            if (!context.environment.isValid) {
+                vscode.window.showErrorMessage('Cannot analyze: Environment setup incomplete');
+                return;
+            }
+            
+            progress.report({ increment: 20, message: "Scanning project structure..." });
             
             await this.contextManager.analyzeProject();
             
@@ -50,18 +77,20 @@ export class NeoRsAnalyzer {
             
             progress.report({ increment: 100, message: "Analysis complete" });
             
-            const context = this.contextManager.getContext();
             if (!context.validationResults.isProductionReady) {
                 const action = await vscode.window.showWarningMessage(
                     'Neo-rs is not production ready. View report?',
                     'View Report',
-                    'Fix Issues'
+                    'Fix Issues',
+                    'View Environment'
                 );
                 
                 if (action === 'View Report') {
                     await this.showValidationReport();
                 } else if (action === 'Fix Issues') {
                     await this.showQuickFixes();
+                } else if (action === 'View Environment') {
+                    await this.showEnvironmentReport();
                 }
             }
         });
@@ -1034,5 +1063,11 @@ This list will be populated after analyzing the C# source.
 
     dispose() {
         this.diagnosticCollection.dispose();
+    }
+    
+    private async showEnvironmentReport() {
+        const context = this.contextManager.getContext();
+        const detector = new (await import('./environment')).NeoRsEnvironmentDetector(this.workspaceRoot);
+        await detector.showEnvironmentDashboard();
     }
 }
