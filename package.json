@@ -3,6 +3,7 @@
   "displayName": "AutoClaude for Neo-rs",
   "description": "Specialized AutoClaude plugin for Neo-rs development - Ensures 100% C# to Rust conversion accuracy",
   "version": "3.8.0-neo-rs",
+  "publisher": "R3ENetwork",
   "icon": "img/claude-autopilot.png",
   "engines": {
     "vscode": "^1.74.0",
@@ -740,11 +741,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/claude-code/claude-autopilot"
+    "url": "https://github.com/r3e-network/AutoClaude"
   },
-  "homepage": "https://github.com/claude-code/claude-autopilot#readme",
+  "homepage": "https://github.com/r3e-network/AutoClaude#readme",
   "bugs": {
-    "url": "https://github.com/claude-code/claude-autopilot/issues"
+    "url": "https://github.com/r3e-network/AutoClaude/issues"
   },
   "galleryBanner": {
     "color": "#1e1e1e",
