@@ -5,6 +5,7 @@ import * as path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { debugLog } from '../utils/logging';
+import { sanitizeCommitMessage, sanitizePRDescription, validateCleanGitMessage } from '../utils/gitSanitizer';
 
 const execAsync = promisify(exec);
 
@@ -186,7 +187,18 @@ export class CommitCreatorAgent extends BaseProductionAgent {
             details.push(`- Changes: +${additions} -${deletions}`);
         }
 
-        return message + '\n\n' + details.join('\n');
+        const fullMessage = message + '\n\n' + details.join('\n');
+        
+        // Sanitize the message to remove any AI tool mentions
+        const sanitizedMessage = sanitizeCommitMessage(fullMessage);
+        
+        // Validate the message is clean
+        if (!validateCleanGitMessage(sanitizedMessage)) {
+            debugLog('Warning: Generated commit message may contain AI references, using fallback');
+            return `${type}: improve project implementation`;
+        }
+        
+        return sanitizedMessage;
     }
 
     private async createCommit(message: string): Promise<void> {
@@ -331,7 +343,12 @@ ${files.slice(0, 10).map(f => `- ${f}`).join('\n')}${files.length > 10 ? `\n- ..
 - [ ] No breaking changes introduced
 `);
 
-        return sections.join('\n');
+        const fullDescription = sections.join('\n');
+        
+        // Sanitize the PR description to remove any AI tool mentions
+        const sanitizedDescription = sanitizePRDescription(fullDescription);
+        
+        return sanitizedDescription;
     }
 
     private async createOrUpdatePR(branch: string, details: any): Promise<any> {
