@@ -3,7 +3,7 @@ import { debugLog } from '../../utils/logging';
 import { ErrorManager, CommonErrors } from '../errors';
 import { InputValidator, ValidationRules } from '../validation';
 
-export interface ClaudeAutopilotConfig {
+export interface AutoClaudeConfig {
     // Development settings
     developmentMode: boolean;
     
@@ -45,7 +45,7 @@ export interface ClaudeAutopilotConfig {
     };
 }
 
-export const DEFAULT_CONFIG: ClaudeAutopilotConfig = {
+export const DEFAULT_CONFIG: AutoClaudeConfig = {
     developmentMode: false,
     
     queue: {
@@ -88,7 +88,7 @@ export interface ConfigValidationError {
     message: string;
 }
 
-export function validateConfig(config: Partial<ClaudeAutopilotConfig>): ConfigValidationError[] {
+export function validateConfig(config: Partial<AutoClaudeConfig>): ConfigValidationError[] {
     const errors: ConfigValidationError[] = [];
     
     // Helper function to add validation errors
@@ -202,12 +202,12 @@ export function validateConfig(config: Partial<ClaudeAutopilotConfig>): ConfigVa
     return errors;
 }
 
-export function getValidatedConfig(): ClaudeAutopilotConfig {
+export function getValidatedConfig(): AutoClaudeConfig {
     try {
         const workspaceConfig = vscode.workspace.getConfiguration('autoclaude');
         
         // Get all configuration values with defaults
-        const config: ClaudeAutopilotConfig = {
+        const config: AutoClaudeConfig = {
         developmentMode: workspaceConfig.get('developmentMode', DEFAULT_CONFIG.developmentMode),
         
         queue: {
@@ -298,7 +298,7 @@ export function getValidatedConfig(): ClaudeAutopilotConfig {
     }
 }
 
-function getDefaultsForInvalidConfig(config: ClaudeAutopilotConfig, errors: ConfigValidationError[]): ClaudeAutopilotConfig {
+function getDefaultsForInvalidConfig(config: AutoClaudeConfig, errors: ConfigValidationError[]): AutoClaudeConfig {
     const fixedConfig = { ...config };
     
     // Reset invalid values to defaults
@@ -395,7 +395,7 @@ export function showConfigValidationDetails(errors: ConfigValidationError[]): vo
 }
 
 // Configuration change listener
-export function watchConfigChanges(callback: (config: ClaudeAutopilotConfig) => void): vscode.Disposable {
+export function watchConfigChanges(callback: (config: AutoClaudeConfig) => void): vscode.Disposable {
     return vscode.workspace.onDidChangeConfiguration(event => {
         if (event.affectsConfiguration('autoclaude')) {
             debugLog('🔧 Claude Autopilot configuration changed, revalidating...');

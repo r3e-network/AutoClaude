@@ -97,7 +97,7 @@ images/**/*.sketch
 
 # Scripts folder
 scripts/**
-.autopilot/**
+.autoclaude/**
 
 # Examples
 examples/**

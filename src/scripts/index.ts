@@ -65,7 +65,7 @@ export class ScriptRunner {
     }
 
     async initialize(): Promise<void> {
-        await this.ensureAutopilotFolder();
+        await this.ensureAutoclaudeFolder();
         await this.loadConfig();
         await this.copyPredefinedScripts();
         
@@ -74,12 +74,12 @@ export class ScriptRunner {
         }
     }
 
-    private async ensureAutopilotFolder(): Promise<void> {
-        const autopilotPath = path.join(this.workspacePath, AUTOCLAUDE_FOLDER);
-        const scriptsPath = path.join(autopilotPath, SCRIPTS_FOLDER);
+    private async ensureAutoclaudeFolder(): Promise<void> {
+        const autoclaludePath = path.join(this.workspacePath, AUTOCLAUDE_FOLDER);
+        const scriptsPath = path.join(autoclaludePath, SCRIPTS_FOLDER);
 
-        if (!fs.existsSync(autopilotPath)) {
-            fs.mkdirSync(autopilotPath, { recursive: true });
+        if (!fs.existsSync(autoclaludePath)) {
+            fs.mkdirSync(autoclaludePath, { recursive: true });
             debugLog(`Created ${AUTOCLAUDE_FOLDER} folder`);
         }
 
