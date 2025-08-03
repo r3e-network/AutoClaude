@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Build script for Claude Autopilot Neo-rs version
+# Build script for AutoClaude Neo-rs version
 
-echo "🚀 Building Claude Autopilot for Neo-rs..."
+echo "🚀 Building AutoClaude for Neo-rs..."
 
 # Ensure we're on the neo-rs branch
 CURRENT_BRANCH=$(git branch --show-current)
