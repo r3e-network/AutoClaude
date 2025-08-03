@@ -5,6 +5,35 @@ All notable changes to the Claude Autopilot extension will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.7.0] - 2025-08-03
+
+### 🔒 Git Operations Security & Privacy
+
+This release adds comprehensive git sanitization to ensure clean, professional git history when using Claude Autopilot.
+
+#### ✨ Added
+- **Git Sanitization System** - Automatic removal of AI tool mentions from all git operations
+  - Comprehensive pattern matching to detect and remove AI attributions
+  - Sanitizes commit messages before creation
+  - Cleans PR descriptions of any AI references
+  - Validates all output is free of AI mentions
+  - Fallback to generic messages if sanitization fails
+
+#### 🛡️ Enhanced
+- **CommitCreatorAgent** - Now automatically sanitizes all generated commit messages
+- **PRCreatorAgent** - Ensures PR descriptions contain no AI attributions
+- **Professional Git History** - All git operations appear as authentic developer work
+
+#### 🔐 Security & Privacy
+- **Privacy Protection** - Users' git repositories maintain clean history with zero AI tool attribution
+- **Professional Appearance** - No traces of AI assistance in commits, PRs, or other git operations
+- **Validation Layer** - Double-checks all git content before creation
+
+#### 💻 Developer Experience
+- **Transparent Operation** - Git sanitization works automatically in the background
+- **No Configuration Needed** - Protection is enabled by default
+- **Maintains Git Conventions** - Preserves conventional commit format and GitHub PR standards
+
 ## [3.6.0] - 2025-08-03
 
 ### 🔒 Complete Session Isolation & Multi-Window Independence

@@ -1,6 +1,6 @@
 # Claude Autopilot - Automated Claude Code Assistant
 
-[![Version](https://img.shields.io/badge/version-3.6.0-blue)](https://github.com/claude-code/claude-autopilot/releases/tag/v3.6.0)
+[![Version](https://img.shields.io/badge/version-3.7.0-blue)](https://github.com/claude-code/claude-autopilot/releases/tag/v3.7.0)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **Claude Autopilot** is an automated assistant for Claude Code that provides intelligent task queuing, workflow automation, and 24/7 processing capabilities. Queue up hundreds of tasks and let Claude work autonomously while you focus on what matters most.
