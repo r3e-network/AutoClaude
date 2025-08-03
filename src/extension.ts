@@ -29,6 +29,12 @@ import { AgentMonitor } from './monitoring/AgentMonitor';
 import { WorkDistributor } from './agents/WorkDistributor';
 import { CoordinationProtocol } from './coordination/CoordinationProtocol';
 
+// Neo-rs specific imports (only loaded on neo-rs branch)
+let NeoRsAnalyzer: any;
+let NeoRsAutomationEngine: any;
+const isNeoRsBranch = process.env.VSCODE_EXTENSION_MODE === 'neo-rs' || 
+                     vscode.workspace.getConfiguration('autoclaude').get<string>('branch') === 'neo-rs';
+
 // Development-only imports
 let simulateUsageLimit: (() => void) | undefined;
 let clearAllTimers: (() => void) | undefined;
@@ -78,6 +84,23 @@ export function activate(context: vscode.ExtensionContext) {
     let agentMonitor: AgentMonitor | null = null;
     let workDistributor: WorkDistributor | null = null;
     let coordinationProtocol: CoordinationProtocol | null = null;
+
+    // Initialize neo-rs specific features if on neo-rs branch
+    if (isNeoRsBranch) {
+        import('./neo-rs/analyzer').then(module => {
+            NeoRsAnalyzer = module.NeoRsAnalyzer;
+            infoLog('Neo-rs analyzer loaded');
+        }).catch(error => {
+            errorLog('Failed to load neo-rs analyzer', { error });
+        });
+        
+        import('./neo-rs/automation').then(module => {
+            NeoRsAutomationEngine = module.NeoRsAutomationEngine;
+            infoLog('Neo-rs automation engine loaded');
+        }).catch(error => {
+            errorLog('Failed to load neo-rs automation engine', { error });
+        });
+    }
 
     // Initialize automation if workspace is available
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -636,6 +659,59 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // Neo-rs specific commands (only registered on neo-rs branch)
+    let neoRsCommands: vscode.Disposable[] = [];
+    if (isNeoRsBranch && workspaceFolder) {
+        // Initialize Neo-rs analyzer and automation
+        let neoRsAnalyzer: any;
+        let neoRsAutomation: any;
+        
+        const initializeNeoRs = async () => {
+            if (NeoRsAnalyzer) {
+                neoRsAnalyzer = new NeoRsAnalyzer(context, workspaceFolder.uri.fsPath);
+                await neoRsAnalyzer.activate();
+            }
+            if (NeoRsAutomationEngine) {
+                neoRsAutomation = new NeoRsAutomationEngine(context, workspaceFolder.uri.fsPath);
+                await neoRsAutomation.activate();
+            }
+        };
+        
+        // Delay initialization to ensure modules are loaded
+        setTimeout(initializeNeoRs, 2000);
+        
+        neoRsCommands = [
+            vscode.commands.registerCommand('neo-rs.analyze', () => {
+                if (neoRsAnalyzer) {
+                    vscode.commands.executeCommand('neo-rs.analyze');
+                } else {
+                    vscode.window.showErrorMessage('Neo-rs analyzer not initialized');
+                }
+            }),
+            vscode.commands.registerCommand('neo-rs.startAutomation', () => {
+                if (neoRsAutomation) {
+                    vscode.commands.executeCommand('neo-rs.startAutomation');
+                } else {
+                    vscode.window.showErrorMessage('Neo-rs automation not initialized');
+                }
+            }),
+            vscode.commands.registerCommand('neo-rs.stopAutomation', () => {
+                if (neoRsAutomation) {
+                    vscode.commands.executeCommand('neo-rs.stopAutomation');
+                } else {
+                    vscode.window.showErrorMessage('Neo-rs automation not initialized');
+                }
+            }),
+            vscode.commands.registerCommand('neo-rs.showReport', () => {
+                if (neoRsAnalyzer) {
+                    vscode.commands.executeCommand('neo-rs.showReport');
+                } else {
+                    vscode.window.showErrorMessage('Neo-rs analyzer not initialized');
+                }
+            })
+        ];
+    }
+
     context.subscriptions.push(
         startCommand, stopCommand, addMessageCommand, runScriptChecksCommand, runScriptLoopCommand,
         quickStartCommand, runSubAgentsCommand, autoCompleteCommand, workflowWizardCommand,
@@ -646,7 +722,8 @@ export function activate(context: vscode.ExtensionContext) {
         useTemplateCommand, manageTemplatesCommand, showStatisticsCommand, checkRemoteStatusCommand,
         showErrorHistoryCommand, showServiceHealthCommand, exportLogsCommand,
         validateConfigurationCommand, resetToDefaultsCommand, showSessionInfoCommand,
-        configWatcher
+        configWatcher,
+        ...neoRsCommands
     );
     
     // Auto-start or schedule Claude session based on configuration

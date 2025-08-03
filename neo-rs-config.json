@@ -1,0 +1,97 @@
+{
+  "projectName": "neo-rs",
+  "projectDescription": "Neo N3 Rust full node implementation converted from C# version",
+  "projectGoals": [
+    "100% compatibility with Neo N3 C# implementation",
+    "Complete conversion of all C# unit tests to Rust",
+    "Full implementation of all Neo-CLI plugins",
+    "Production-ready codebase with no placeholders",
+    "Exact functional parity with C# version"
+  ],
+  "csharpSourcePath": "./neo_csharp",
+  "rustProjectPath": "./neo-rs",
+  "components": {
+    "p2p": {
+      "description": "Peer-to-peer networking layer",
+      "csharpPath": "neo_csharp/src/Neo/Network",
+      "rustPath": "neo-rs/crates/neo-p2p",
+      "critical": true
+    },
+    "consensus": {
+      "description": "dBFT consensus mechanism",
+      "csharpPath": "neo_csharp/src/Neo/Consensus",
+      "rustPath": "neo-rs/crates/neo-consensus",
+      "critical": true
+    },
+    "blockchain": {
+      "description": "Block synchronization and storage",
+      "csharpPath": "neo_csharp/src/Neo/Ledger",
+      "rustPath": "neo-rs/crates/neo-blockchain",
+      "critical": true
+    },
+    "vm": {
+      "description": "NeoVM execution engine",
+      "csharpPath": "neo_csharp/src/Neo.VM",
+      "rustPath": "neo-rs/crates/neo-vm",
+      "critical": true
+    },
+    "smartContracts": {
+      "description": "Native and deployed smart contracts",
+      "csharpPath": "neo_csharp/src/Neo/SmartContract",
+      "rustPath": "neo-rs/crates/neo-smart-contract",
+      "critical": true
+    },
+    "rpc": {
+      "description": "JSON-RPC server implementation",
+      "csharpPath": "neo_csharp/src/Neo/Plugins/RpcServer",
+      "rustPath": "neo-rs/crates/neo-rpc",
+      "critical": true
+    },
+    "storage": {
+      "description": "State and block persistence",
+      "csharpPath": "neo_csharp/src/Neo/Persistence",
+      "rustPath": "neo-rs/crates/neo-storage",
+      "critical": true
+    },
+    "cryptography": {
+      "description": "Cryptographic primitives and utilities",
+      "csharpPath": "neo_csharp/src/Neo/Cryptography",
+      "rustPath": "neo-rs/crates/neo-crypto",
+      "critical": true
+    }
+  },
+  "validationRules": {
+    "noPlaceholders": {
+      "patterns": ["TODO", "FIXME", "todo!", "unimplemented!", "unreachable!", "panic!"],
+      "severity": "error",
+      "message": "Production code must not contain placeholders or incomplete implementations"
+    },
+    "testCoverage": {
+      "minimum": 95,
+      "requireAllCsharpTestsConverted": true,
+      "severity": "error"
+    },
+    "functionalParity": {
+      "requireExactBehavior": true,
+      "allowOptimizations": false,
+      "severity": "error"
+    }
+  },
+  "automationTasks": {
+    "continuousValidation": {
+      "enabled": true,
+      "interval": "onSave",
+      "checks": [
+        "compareWithCsharp",
+        "validateTestCoverage",
+        "checkPlaceholders",
+        "verifyProductionReadiness"
+      ]
+    },
+    "codeGeneration": {
+      "convertCsharpTests": true,
+      "generateMissingImplementations": true,
+      "maintainExactCompatibility": true
+    }
+  }
+}

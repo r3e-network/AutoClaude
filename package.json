@@ -1,8 +1,8 @@
 {
-  "name": "claude-autopilot",
-  "displayName": "Claude Autopilot",
-  "description": "Automated Claude Code assistant with smart task completion, queue management, and workflow automation for VS Code",
-  "version": "3.8.0",
+  "name": "claude-autopilot-neo-rs",
+  "displayName": "Claude Autopilot for Neo-rs",
+  "description": "Specialized Claude Code assistant for Neo-rs development - Ensures 100% C# to Rust conversion accuracy",
+  "version": "3.8.0-neo-rs",
   "icon": "img/claude-autopilot.png",
   "engines": {
     "vscode": "^1.74.0",
@@ -203,6 +203,78 @@
         "title": "🔄 Reset to Default Settings",
         "category": "Claude",
         "icon": "$(discard)"
+      },
+      {
+        "command": "neo-rs.analyze",
+        "title": "🔍 Analyze Neo-rs Project",
+        "category": "Neo-rs",
+        "icon": "$(search)"
+      },
+      {
+        "command": "neo-rs.convertTest",
+        "title": "🔄 Convert C# Test to Rust",
+        "category": "Neo-rs",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "neo-rs.validateComponent",
+        "title": "✅ Validate Component",
+        "category": "Neo-rs",
+        "icon": "$(check)"
+      },
+      {
+        "command": "neo-rs.generateMissing",
+        "title": "🏗️ Generate Missing Implementation",
+        "category": "Neo-rs",
+        "icon": "$(add)"
+      },
+      {
+        "command": "neo-rs.fixPlaceholders",
+        "title": "🔧 Fix Placeholders",
+        "category": "Neo-rs",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "neo-rs.compareWithCsharp",
+        "title": "⚖️ Compare with C# Implementation",
+        "category": "Neo-rs",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "neo-rs.showReport",
+        "title": "📊 Show Validation Report",
+        "category": "Neo-rs",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "neo-rs.startAutomation",
+        "title": "🚀 Start Neo-rs Automation",
+        "category": "Neo-rs",
+        "icon": "$(play)"
+      },
+      {
+        "command": "neo-rs.stopAutomation",
+        "title": "⏹️ Stop Neo-rs Automation",
+        "category": "Neo-rs",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "neo-rs.showAutomationStatus",
+        "title": "📈 Show Automation Status",
+        "category": "Neo-rs",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "neo-rs.clearTaskQueue",
+        "title": "🗑️ Clear Task Queue",
+        "category": "Neo-rs",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "neo-rs.prioritizeTasks",
+        "title": "📌 Prioritize Tasks",
+        "category": "Neo-rs",
+        "icon": "$(list-ordered)"
       }
     ],
     "menus": {
