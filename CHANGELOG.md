@@ -5,6 +5,27 @@ All notable changes to the Claude Autopilot extension will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.9.0] - 2025-08-05
+
+### 🔧 Stability & Reliability Improvements
+
+This release focuses on improving stability and addressing compatibility issues for a better user experience.
+
+#### 🛠️ Bug Fixes & Improvements
+- **Enhanced Node.js Compatibility** - Resolved GitHub Actions failures by updating Node.js compatibility
+- **Dependency Updates** - Updated and resolved dependency compatibility issues
+- **Build System Improvements** - Enhanced build process reliability and error handling
+- **Test Infrastructure** - Improved test stability and error handling
+
+#### 🔧 Technical Improvements
+- **Better Error Handling** - More robust error handling throughout the application
+- **Improved Compilation** - Enhanced TypeScript compilation and build processes
+- **Dependency Management** - Better handling of missing dependencies and installation
+
+#### 📦 Package Updates
+- **Version Synchronization** - Both VS Code extension and terminal versions aligned at 3.9.0
+- **Dependencies** - Updated core dependencies for better stability
+
 ## [3.8.0] - 2025-08-03
 
 ### ⚡ Performance Optimizations & Enhanced Security
