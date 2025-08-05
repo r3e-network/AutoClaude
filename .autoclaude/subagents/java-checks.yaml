@@ -1,0 +1,490 @@
+id: java-checks
+name: Java Programming Quality Checks  
+description: Enforces Java code quality standards using Maven/Gradle build tools, checkstyle, SpotBugs, and tests
+version: 1.0.0
+author: AutoClaude Development Team
+capabilities:
+  - Java code formatting with google-java-format
+  - Static analysis with SpotBugs and PMD
+  - Style checking with Checkstyle
+  - Build validation with Maven/Gradle
+  - Test execution with JUnit/TestNG
+  - Code coverage with JaCoCo
+  - Dependency vulnerability scanning
+projectDetection:
+  - pattern: "**/pom.xml"
+  - pattern: "**/build.gradle"
+  - pattern: "**/build.gradle.kts"
+  - pattern: "**/gradlew"
+  - pattern: "**/*.java"
+  - files: ["settings.gradle", "settings.gradle.kts", "gradle.properties"]
+  - keywords: ["java", "maven", "gradle", "spring", "junit"]
+priority: critical
+enabled: true
+supportsTriggers: true
+supportsAnalysis: true
+supportsFix: true
+smartMode: true
+options:
+  enforceFormatting: true
+  runCheckstyle: true
+  runSpotBugs: true
+  runTests: true
+  checkCoverage: true
+  minCoveragePercent: 80
+  failOnWarnings: false
+
+check:
+  script: |
+    #!/bin/bash
+    echo "☕ Java Programming Quality Checks - Ensuring production-ready code"
+    
+    ERRORS=()
+    WARNINGS=()
+    CHECK_FAILED=false
+    BUILD_TOOL=""
+    
+    # Detect build tool
+    if [ -f "pom.xml" ]; then
+      BUILD_TOOL="maven"
+      echo "✅ Maven project detected"
+    elif [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
+      BUILD_TOOL="gradle"
+      echo "✅ Gradle project detected"
+    else
+      # Look in subdirectories
+      if find . -name "pom.xml" -type f 2>/dev/null | head -1 | grep -q .; then
+        BUILD_TOOL="maven"
+        echo "✅ Maven project detected"
+      elif find . -name "build.gradle" -o -name "build.gradle.kts" -type f 2>/dev/null | head -1 | grep -q .; then
+        BUILD_TOOL="gradle"
+        echo "✅ Gradle project detected"
+      fi
+    fi
+    
+    if [ -z "$BUILD_TOOL" ]; then
+      echo "❌ No Java build configuration found (pom.xml or build.gradle)"
+      exit 1
+    fi
+    
+    # Check Java version
+    if ! command -v java &> /dev/null; then
+      echo "❌ Java is not installed"
+      exit 1
+    fi
+    
+    JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}' | head -1)
+    echo "Using Java $JAVA_VERSION"
+    
+    # Maven-specific checks
+    if [ "$BUILD_TOOL" = "maven" ]; then
+      if ! command -v mvn &> /dev/null; then
+        echo "❌ Maven is not installed"
+        exit 1
+      fi
+      
+      # Step 1: Clean and compile
+      echo -e "\n🔨 Building with Maven..."
+      
+      if ! mvn clean compile 2>&1 > /dev/null; then
+        ERRORS+=("Maven build failed")
+        CHECK_FAILED=true
+        echo "❌ Build failed"
+      else
+        echo "✅ Build succeeded"
+      fi
+      
+      # Step 2: Run Checkstyle
+      echo -e "\n📏 Running Checkstyle..."
+      
+      if mvn checkstyle:check 2>&1 | grep -q "BUILD SUCCESS"; then
+        echo "✅ Checkstyle passed"
+      else
+        # Check if plugin exists
+        if mvn checkstyle:check 2>&1 | grep -q "Could not find goal"; then
+          WARNINGS+=("Checkstyle plugin not configured")
+          echo "⚠️ Checkstyle not configured"
+        else
+          ERRORS+=("Checkstyle violations found")
+          CHECK_FAILED=true
+          echo "❌ Checkstyle failed"
+        fi
+      fi
+      
+      # Step 3: Run SpotBugs
+      echo -e "\n🐛 Running SpotBugs..."
+      
+      if mvn spotbugs:check 2>&1 | grep -q "BUILD SUCCESS"; then
+        echo "✅ SpotBugs passed"
+      else
+        if mvn spotbugs:check 2>&1 | grep -q "Could not find goal"; then
+          WARNINGS+=("SpotBugs plugin not configured")
+          echo "⚠️ SpotBugs not configured"
+        else
+          ERRORS+=("SpotBugs found issues")
+          CHECK_FAILED=true
+          echo "❌ SpotBugs failed"
+        fi
+      fi
+      
+      # Step 4: Run tests
+      echo -e "\n🧪 Running tests..."
+      
+      output=$(mvn test 2>&1)
+      
+      if echo "$output" | grep -q "BUILD SUCCESS"; then
+        # Extract test results
+        tests_run=$(echo "$output" | grep -oP 'Tests run: \K\d+' | tail -1)
+        failures=$(echo "$output" | grep -oP 'Failures: \K\d+' | tail -1)
+        errors=$(echo "$output" | grep -oP 'Errors: \K\d+' | tail -1)
+        skipped=$(echo "$output" | grep -oP 'Skipped: \K\d+' | tail -1)
+        
+        if [ "${failures:-0}" -eq 0 ] && [ "${errors:-0}" -eq 0 ]; then
+          echo "✅ All tests passed (${tests_run:-0} tests, ${skipped:-0} skipped)"
+        else
+          ERRORS+=("Test failures: ${failures:-0} failures, ${errors:-0} errors")
+          CHECK_FAILED=true
+          echo "❌ Tests failed"
+        fi
+      else
+        ERRORS+=("Test execution failed")
+        CHECK_FAILED=true
+        echo "❌ Test execution failed"
+      fi
+      
+      # Step 5: Check coverage
+      echo -e "\n📊 Checking code coverage..."
+      
+      if mvn jacoco:report 2>&1 > /dev/null; then
+        echo "✅ Coverage report generated"
+      else
+        echo "⚠️ JaCoCo not configured"
+      fi
+      
+    # Gradle-specific checks
+    elif [ "$BUILD_TOOL" = "gradle" ]; then
+      # Use gradlew if available
+      if [ -x "./gradlew" ]; then
+        GRADLE_CMD="./gradlew"
+      elif command -v gradle &> /dev/null; then
+        GRADLE_CMD="gradle"
+      else
+        echo "❌ Gradle is not installed and gradlew not found"
+        exit 1
+      fi
+      
+      # Step 1: Clean and build
+      echo -e "\n🔨 Building with Gradle..."
+      
+      if ! $GRADLE_CMD clean build -x test 2>&1 > /dev/null; then
+        ERRORS+=("Gradle build failed")
+        CHECK_FAILED=true
+        echo "❌ Build failed"
+      else
+        echo "✅ Build succeeded"
+      fi
+      
+      # Step 2: Run Checkstyle
+      echo -e "\n📏 Running Checkstyle..."
+      
+      if $GRADLE_CMD checkstyleMain 2>&1 | grep -q "BUILD SUCCESSFUL"; then
+        echo "✅ Checkstyle passed"
+      else
+        if $GRADLE_CMD tasks 2>&1 | grep -q "checkstyle"; then
+          ERRORS+=("Checkstyle violations found")
+          CHECK_FAILED=true
+          echo "❌ Checkstyle failed"
+        else
+          WARNINGS+=("Checkstyle not configured")
+          echo "⚠️ Checkstyle not configured"
+        fi
+      fi
+      
+      # Step 3: Run SpotBugs
+      echo -e "\n🐛 Running SpotBugs..."
+      
+      if $GRADLE_CMD spotbugsMain 2>&1 | grep -q "BUILD SUCCESSFUL"; then
+        echo "✅ SpotBugs passed"
+      else
+        if $GRADLE_CMD tasks 2>&1 | grep -q "spotbugs"; then
+          ERRORS+=("SpotBugs found issues")
+          CHECK_FAILED=true
+          echo "❌ SpotBugs failed"
+        else
+          WARNINGS+=("SpotBugs not configured")
+          echo "⚠️ SpotBugs not configured"
+        fi
+      fi
+      
+      # Step 4: Run tests
+      echo -e "\n🧪 Running tests..."
+      
+      output=$($GRADLE_CMD test 2>&1)
+      
+      if echo "$output" | grep -q "BUILD SUCCESSFUL"; then
+        echo "✅ All tests passed"
+      else
+        ERRORS+=("Test failures detected")
+        CHECK_FAILED=true
+        echo "❌ Tests failed"
+        
+        # Try to extract failure details
+        echo "$output" | grep -E "FAILED|Test failed" | head -5
+      fi
+      
+      # Step 5: Check coverage
+      echo -e "\n📊 Checking code coverage..."
+      
+      if $GRADLE_CMD jacocoTestReport 2>&1 | grep -q "BUILD SUCCESSFUL"; then
+        echo "✅ Coverage report generated"
+      else
+        echo "⚠️ JaCoCo not configured"
+      fi
+    fi
+    
+    # Step 6: Check for dependency vulnerabilities
+    echo -e "\n🔒 Checking for dependency vulnerabilities..."
+    
+    if [ "$BUILD_TOOL" = "maven" ]; then
+      if mvn dependency-check:check 2>&1 | grep -q "BUILD SUCCESS"; then
+        echo "✅ No known vulnerabilities"
+      else
+        if mvn dependency-check:check 2>&1 | grep -q "Could not find goal"; then
+          echo "ℹ️ OWASP dependency check not configured"
+        else
+          WARNINGS+=("Dependency vulnerabilities found")
+          echo "⚠️ Vulnerabilities detected"
+        fi
+      fi
+    elif [ "$BUILD_TOOL" = "gradle" ]; then
+      if $GRADLE_CMD dependencyCheckAnalyze 2>&1 | grep -q "BUILD SUCCESSFUL"; then
+        echo "✅ No known vulnerabilities"
+      else
+        echo "ℹ️ Dependency check not configured"
+      fi
+    fi
+    
+    # Step 7: Check code formatting
+    echo -e "\n🎨 Checking code formatting..."
+    
+    # Check if google-java-format is available
+    if command -v google-java-format &> /dev/null; then
+      unformatted=$(find . -name "*.java" -type f | xargs google-java-format --dry-run 2>&1 | grep -c "^---" || true)
+      if [ "$unformatted" -gt 0 ]; then
+        ERRORS+=("$unformatted files need formatting")
+        CHECK_FAILED=true
+        echo "❌ Format check failed"
+      else
+        echo "✅ Format check passed"
+      fi
+    else
+      echo "ℹ️ google-java-format not installed"
+    fi
+    
+    # Output results
+    echo -e "\n📊 Java Quality Check Summary:"
+    echo "=============================="
+    
+    if [ $CHECK_FAILED = true ]; then
+      echo "❌ Quality checks FAILED"
+      
+      if [ ${#ERRORS[@]} -gt 0 ]; then
+        echo -e "\n🚫 Errors (must fix):"
+        printf '%s\n' "${ERRORS[@]}"
+      fi
+    else
+      echo "✅ All quality checks PASSED"
+    fi
+    
+    if [ ${#WARNINGS[@]} -gt 0 ]; then
+      echo -e "\n⚠️ Warnings (should fix):"
+      printf '%s\n' "${WARNINGS[@]}"
+    fi
+    
+    if [ $CHECK_FAILED = true ]; then
+      exit 1
+    else
+      exit 0
+    fi
+
+analysis:
+  script: |
+    #!/bin/bash
+    echo "🔍 Analyzing Java project quality issues..."
+    
+    echo -e "\n📋 Recommended Actions:"
+    echo "======================="
+    
+    # Build tool setup
+    echo -e "\n🔨 Build Configuration:"
+    echo "  Maven:"
+    echo "    - Update: mvn versions:use-latest-versions"
+    echo "    - Wrapper: mvn -N io.takari:maven:wrapper"
+    echo "  Gradle:"
+    echo "    - Update: gradle wrapper --gradle-version=latest"
+    echo "    - Dependencies: gradle dependencies"
+    
+    # Code quality tools
+    echo -e "\n📏 Code Quality Tools:"
+    echo "  Checkstyle:"
+    echo "    - Maven: Add maven-checkstyle-plugin to pom.xml"
+    echo "    - Gradle: apply plugin: 'checkstyle'"
+    echo "    - Config: Use Google or Sun checks"
+    echo "  SpotBugs:"
+    echo "    - Maven: Add spotbugs-maven-plugin"
+    echo "    - Gradle: apply plugin: 'com.github.spotbugs'"
+    echo "  PMD:"
+    echo "    - Maven: Add maven-pmd-plugin"
+    echo "    - Gradle: apply plugin: 'pmd'"
+    
+    # Testing
+    echo -e "\n🧪 Testing:"
+    echo "  - JUnit 5: testImplementation 'org.junit.jupiter:junit-jupiter'"
+    echo "  - Mockito: testImplementation 'org.mockito:mockito-core'"
+    echo "  - Coverage: JaCoCo plugin with 80% threshold"
+    echo "  - Integration: maven-failsafe-plugin or integrationTest task"
+    
+    # Performance
+    echo -e "\n⚡ Performance:"
+    echo "  - JMH benchmarks: org.openjdk.jmh"
+    echo "  - Profiling: async-profiler, JProfiler"
+    echo "  - GC tuning: -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+    echo "  - Native compilation: GraalVM native-image"
+    
+    # Security
+    echo -e "\n🔒 Security:"
+    echo "  - OWASP check: dependency-check-maven/gradle"
+    echo "  - Sonar: sonar-maven-plugin or sonarqube gradle plugin"
+    echo "  - SAST: Fortify, Checkmarx, or Veracode"
+    
+    # Modern Java
+    echo -e "\n☕ Modern Java:"
+    echo "  - Records: Use for immutable data (Java 14+)"
+    echo "  - Text blocks: Multi-line strings (Java 15+)"
+    echo "  - Pattern matching: instanceof checks (Java 16+)"
+    echo "  - Virtual threads: Project Loom (Java 21+)"
+
+fix:
+  script: |
+    #!/bin/bash
+    echo "🔧 Fixing Java code quality issues..."
+    
+    BUILD_TOOL=""
+    if [ -f "pom.xml" ]; then
+      BUILD_TOOL="maven"
+    elif [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
+      BUILD_TOOL="gradle"
+    fi
+    
+    # Format code
+    echo -e "\n🎨 Formatting Java code..."
+    
+    # Download google-java-format if not available
+    if ! command -v google-java-format &> /dev/null; then
+      echo "Downloading google-java-format..."
+      GJF_VERSION="1.17.0"
+      curl -sL "https://github.com/google/google-java-format/releases/download/v${GJF_VERSION}/google-java-format-${GJF_VERSION}-all-deps.jar" \
+        -o /tmp/google-java-format.jar 2>/dev/null || echo "Failed to download formatter"
+      
+      if [ -f "/tmp/google-java-format.jar" ]; then
+        find . -name "*.java" -type f | xargs java -jar /tmp/google-java-format.jar --replace
+        echo "✅ Code formatting applied"
+      fi
+    else
+      find . -name "*.java" -type f | xargs google-java-format --replace
+      echo "✅ Code formatting applied"
+    fi
+    
+    # Maven fixes
+    if [ "$BUILD_TOOL" = "maven" ]; then
+      echo -e "\n📦 Updating Maven dependencies..."
+      mvn versions:use-latest-versions -DallowSnapshots=false 2>/dev/null || echo "⚠️ Some updates require manual review"
+      mvn dependency:analyze 2>/dev/null || true
+      
+      # Add plugins if missing
+      if ! grep -q "maven-checkstyle-plugin" pom.xml; then
+        echo "ℹ️ Consider adding maven-checkstyle-plugin to pom.xml"
+      fi
+      
+      if ! grep -q "spotbugs-maven-plugin" pom.xml; then
+        echo "ℹ️ Consider adding spotbugs-maven-plugin to pom.xml"
+      fi
+      
+      if ! grep -q "jacoco-maven-plugin" pom.xml; then
+        echo "ℹ️ Consider adding jacoco-maven-plugin to pom.xml"
+      fi
+      
+    # Gradle fixes
+    elif [ "$BUILD_TOOL" = "gradle" ]; then
+      GRADLE_CMD="gradle"
+      if [ -x "./gradlew" ]; then
+        GRADLE_CMD="./gradlew"
+      fi
+      
+      echo -e "\n📦 Updating Gradle dependencies..."
+      $GRADLE_CMD dependencyUpdates 2>/dev/null || echo "ℹ️ Add com.github.ben-manes.versions plugin for updates"
+      
+      # Create basic quality config if missing
+      if [ ! -f "config/checkstyle/checkstyle.xml" ] && ! grep -q "checkstyle" build.gradle*; then
+        mkdir -p config/checkstyle
+        curl -sL "https://raw.githubusercontent.com/checkstyle/checkstyle/master/src/main/resources/google_checks.xml" \
+          -o config/checkstyle/checkstyle.xml 2>/dev/null || echo "Failed to download checkstyle config"
+        echo "✅ Created checkstyle configuration"
+      fi
+    fi
+    
+    # Create .editorconfig if missing
+    if [ ! -f ".editorconfig" ]; then
+      cat > .editorconfig << 'EOF'
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.java]
+indent_style = space
+indent_size = 4
+continuation_indent_size = 8
+
+[*.{xml,yaml,yml}]
+indent_style = space
+indent_size = 2
+EOF
+      echo "✅ Created .editorconfig"
+    fi
+    
+    # Run build to verify fixes
+    echo -e "\n🔨 Verifying build..."
+    if [ "$BUILD_TOOL" = "maven" ]; then
+      mvn clean compile
+    elif [ "$BUILD_TOOL" = "gradle" ]; then
+      $GRADLE_CMD clean build -x test
+    fi
+    
+    echo -e "\n✅ Java quality fixes applied!"
+    echo "Next steps:"
+    echo "1. Review dependency updates"
+    echo "2. Add missing quality plugins to build configuration"
+    echo "3. Run full test suite"
+    echo "4. Configure IDE with code style settings"
+
+config:
+  requiredFiles:
+    - pattern: "**/*.java"
+      description: "Java source files"
+  forbiddenPatterns:
+    - pattern: "target/|build/|out/|bin/"
+      description: "Build output directories"
+  hooks:
+    preCommit: |
+      # Format check
+      find . -name "*.java" | xargs google-java-format --dry-run --set-exit-if-changed
+      # Build and test
+      if [ -f "pom.xml" ]; then
+        mvn clean test
+      elif [ -f "build.gradle" ]; then
+        ./gradlew clean test
+      fi

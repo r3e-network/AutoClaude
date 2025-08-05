@@ -1,0 +1,599 @@
+id: python-checks
+name: Python Programming Quality Checks
+description: Enforces Python code quality standards using black, flake8, mypy, pytest, and security scanning
+version: 1.0.0
+author: AutoClaude Development Team
+capabilities:
+  - Python code formatting with black and isort
+  - Linting with flake8 and pylint
+  - Type checking with mypy
+  - Test execution with pytest
+  - Security scanning with bandit
+  - Dependency management with pip-audit
+  - Code coverage with coverage.py
+  - Documentation checking with pydocstyle
+projectDetection:
+  - pattern: "**/setup.py"
+  - pattern: "**/pyproject.toml"
+  - pattern: "**/requirements.txt"
+  - pattern: "**/Pipfile"
+  - pattern: "**/poetry.lock"
+  - pattern: "**/*.py"
+  - files: ["tox.ini", ".flake8", ".pylintrc", "pytest.ini"]
+  - keywords: ["python", "django", "flask", "pytest", "poetry"]
+priority: critical
+enabled: true
+supportsTriggers: true
+supportsAnalysis: true
+supportsFix: true
+smartMode: true
+options:
+  enforceFormatting: true
+  runFlake8: true
+  runMypy: true
+  runTests: true
+  runSecurity: true
+  checkCoverage: true
+  minCoveragePercent: 80
+  maxLineLength: 88
+
+check:
+  script: |
+    #!/bin/bash
+    echo "🐍 Python Programming Quality Checks - Ensuring production-ready code"
+    
+    ERRORS=()
+    WARNINGS=()
+    CHECK_FAILED=false
+    
+    # Find Python files
+    PYTHON_FILES=$(find . -name "*.py" -type f 2>/dev/null | grep -v "__pycache__" | grep -v ".venv" | grep -v "venv/" | head -50)
+    
+    if [ -z "$PYTHON_FILES" ]; then
+      echo "❌ No Python files found"
+      exit 1
+    fi
+    
+    echo "✅ Python project detected"
+    
+    # Check if python is installed
+    if ! command -v python3 &> /dev/null && ! command -v python &> /dev/null; then
+      echo "❌ Python is not installed"
+      exit 1
+    fi
+    
+    # Use python3 if available, otherwise python
+    PYTHON_CMD="python3"
+    if ! command -v python3 &> /dev/null; then
+      PYTHON_CMD="python"
+    fi
+    
+    PYTHON_VERSION=$($PYTHON_CMD --version 2>&1)
+    echo "Using $PYTHON_VERSION"
+    
+    # Detect package manager
+    PACKAGE_MANAGER=""
+    if [ -f "poetry.lock" ] || [ -f "pyproject.toml" ]; then
+      PACKAGE_MANAGER="poetry"
+      echo "Using Poetry for dependency management"
+    elif [ -f "Pipfile" ]; then
+      PACKAGE_MANAGER="pipenv"
+      echo "Using Pipenv for dependency management"
+    elif [ -f "requirements.txt" ]; then
+      PACKAGE_MANAGER="pip"
+      echo "Using pip with requirements.txt"
+    fi
+    
+    # Step 1: Check code formatting with black
+    echo -e "\n🎨 Checking code formatting with black..."
+    
+    if ! $PYTHON_CMD -m black --version &> /dev/null; then
+      echo "Installing black..."
+      $PYTHON_CMD -m pip install black 2>/dev/null || {
+        WARNINGS+=("black not available. Install with: pip install black")
+        echo "⚠️ Skipping black formatting check"
+      }
+    fi
+    
+    if $PYTHON_CMD -m black --version &> /dev/null; then
+      output=$($PYTHON_CMD -m black --check --diff . 2>&1)
+      exit_code=$?
+      
+      if [ $exit_code -ne 0 ]; then
+        files_need_format=$(echo "$output" | grep -c "would reformat")
+        if [ "$files_need_format" -gt 0 ]; then
+          ERRORS+=("$files_need_format files need formatting. Run 'black .' to fix.")
+          CHECK_FAILED=true
+          echo "❌ Format check failed ($files_need_format files)"
+        fi
+      else
+        echo "✅ Format check passed"
+      fi
+    fi
+    
+    # Step 2: Check import sorting with isort
+    echo -e "\n📦 Checking import sorting with isort..."
+    
+    if ! $PYTHON_CMD -m isort --version &> /dev/null; then
+      echo "Installing isort..."
+      $PYTHON_CMD -m pip install isort 2>/dev/null || {
+        WARNINGS+=("isort not available. Install with: pip install isort")
+        echo "⚠️ Skipping import sort check"
+      }
+    fi
+    
+    if $PYTHON_CMD -m isort --version &> /dev/null; then
+      if ! $PYTHON_CMD -m isort --check-only --diff . 2>&1 > /dev/null; then
+        ERRORS+=("Import statements need sorting. Run 'isort .' to fix.")
+        CHECK_FAILED=true
+        echo "❌ Import sort check failed"
+      else
+        echo "✅ Import sort check passed"
+      fi
+    fi
+    
+    # Step 3: Run flake8 linting
+    echo -e "\n🔍 Running flake8 linter..."
+    
+    if ! $PYTHON_CMD -m flake8 --version &> /dev/null; then
+      echo "Installing flake8..."
+      $PYTHON_CMD -m pip install flake8 2>/dev/null || {
+        WARNINGS+=("flake8 not available. Install with: pip install flake8")
+        echo "⚠️ Skipping flake8 check"
+      }
+    fi
+    
+    if $PYTHON_CMD -m flake8 --version &> /dev/null; then
+      output=$($PYTHON_CMD -m flake8 . --count --statistics 2>&1)
+      exit_code=$?
+      
+      if [ $exit_code -ne 0 ]; then
+        error_count=$(echo "$output" | tail -1 | grep -oE '^[0-9]+' || echo "0")
+        if [ "$error_count" -gt 0 ]; then
+          ERRORS+=("flake8 found $error_count issues")
+          CHECK_FAILED=true
+          echo "❌ Linting failed ($error_count issues)"
+          echo "$output" | head -10
+        fi
+      else
+        echo "✅ Linting passed"
+      fi
+    fi
+    
+    # Step 4: Type checking with mypy
+    echo -e "\n📝 Running mypy type checker..."
+    
+    if ! $PYTHON_CMD -m mypy --version &> /dev/null; then
+      echo "Installing mypy..."
+      $PYTHON_CMD -m pip install mypy 2>/dev/null || {
+        WARNINGS+=("mypy not available. Install with: pip install mypy")
+        echo "⚠️ Skipping type check"
+      }
+    fi
+    
+    if $PYTHON_CMD -m mypy --version &> /dev/null; then
+      # Check if there's a mypy config
+      MYPY_ARGS=""
+      if [ -f "mypy.ini" ] || [ -f "setup.cfg" ] || [ -f "pyproject.toml" ]; then
+        MYPY_ARGS="."
+      else
+        # Run on Python files only if no config
+        MYPY_ARGS="--ignore-missing-imports ."
+      fi
+      
+      output=$($PYTHON_CMD -m mypy $MYPY_ARGS 2>&1)
+      
+      if echo "$output" | grep -q "error:"; then
+        error_count=$(echo "$output" | grep -c "error:")
+        WARNINGS+=("mypy found $error_count type errors")
+        echo "⚠️ Type checking found issues"
+      else
+        echo "✅ Type checking passed"
+      fi
+    fi
+    
+    # Step 5: Run tests with pytest
+    echo -e "\n🧪 Running tests with pytest..."
+    
+    if ! $PYTHON_CMD -m pytest --version &> /dev/null; then
+      echo "Installing pytest..."
+      $PYTHON_CMD -m pip install pytest pytest-cov 2>/dev/null || {
+        WARNINGS+=("pytest not available. Install with: pip install pytest")
+        echo "⚠️ Skipping test execution"
+      }
+    fi
+    
+    if $PYTHON_CMD -m pytest --version &> /dev/null; then
+      # Find test files
+      TEST_FILES=$(find . -name "test_*.py" -o -name "*_test.py" | grep -v __pycache__ | head -20)
+      
+      if [ -z "$TEST_FILES" ]; then
+        WARNINGS+=("No test files found (test_*.py or *_test.py)")
+        echo "⚠️ No tests found"
+      else
+        output=$($PYTHON_CMD -m pytest -v --tb=short --cov=. --cov-report=term-missing 2>&1)
+        exit_code=$?
+        
+        if [ $exit_code -ne 0 ]; then
+          ERRORS+=("Tests failed")
+          CHECK_FAILED=true
+          echo "❌ Tests failed"
+          echo "$output" | grep -E "FAILED|ERROR" | head -10
+        else
+          # Extract test summary
+          passed=$(echo "$output" | grep -oP '\d+(?= passed)')
+          failed=$(echo "$output" | grep -oP '\d+(?= failed)' || echo "0")
+          
+          echo "✅ Tests passed ($passed tests)"
+          
+          # Check coverage
+          coverage=$(echo "$output" | grep -oP 'TOTAL.*\s+\K\d+(?=%)')
+          if [ -n "$coverage" ]; then
+            if [ "$coverage" -lt 80 ]; then
+              WARNINGS+=("Test coverage is ${coverage}% (recommended: >80%)")
+              echo "⚠️ Low test coverage: ${coverage}%"
+            else
+              echo "✅ Good test coverage: ${coverage}%"
+            fi
+          fi
+        fi
+      fi
+    fi
+    
+    # Step 6: Security scan with bandit
+    echo -e "\n🔒 Running security scan with bandit..."
+    
+    if ! $PYTHON_CMD -m bandit --version &> /dev/null; then
+      echo "Installing bandit..."
+      $PYTHON_CMD -m pip install bandit 2>/dev/null || {
+        WARNINGS+=("bandit not available. Install with: pip install bandit")
+        echo "⚠️ Skipping security scan"
+      }
+    fi
+    
+    if $PYTHON_CMD -m bandit --version &> /dev/null; then
+      output=$($PYTHON_CMD -m bandit -r . -f json 2>&1)
+      
+      if echo "$output" | grep -q '"issue_severity"'; then
+        high_issues=$(echo "$output" | grep -o '"issue_severity": "HIGH"' | wc -l)
+        medium_issues=$(echo "$output" | grep -o '"issue_severity": "MEDIUM"' | wc -l)
+        
+        if [ "$high_issues" -gt 0 ]; then
+          ERRORS+=("bandit found $high_issues high severity security issues")
+          CHECK_FAILED=true
+          echo "❌ Security scan found high severity issues"
+        elif [ "$medium_issues" -gt 0 ]; then
+          WARNINGS+=("bandit found $medium_issues medium severity security issues")
+          echo "⚠️ Security scan found medium severity issues"
+        else
+          echo "✅ Security scan passed"
+        fi
+      else
+        echo "✅ Security scan passed"
+      fi
+    fi
+    
+    # Step 7: Check dependencies
+    echo -e "\n📚 Checking dependencies..."
+    
+    if [ "$PACKAGE_MANAGER" = "pip" ] && [ -f "requirements.txt" ]; then
+      # Check for outdated packages
+      outdated=$($PYTHON_CMD -m pip list --outdated 2>/dev/null | grep -c "^[a-zA-Z]" || echo "0")
+      if [ "$outdated" -gt 0 ]; then
+        WARNINGS+=("$outdated packages are outdated")
+        echo "⚠️ $outdated outdated packages"
+      else
+        echo "✅ All packages up to date"
+      fi
+      
+      # Check for security vulnerabilities
+      if $PYTHON_CMD -m pip_audit --version &> /dev/null 2>&1; then
+        if ! $PYTHON_CMD -m pip_audit 2>&1 > /dev/null; then
+          WARNINGS+=("pip-audit found vulnerabilities")
+          echo "⚠️ Dependency vulnerabilities found"
+        fi
+      fi
+    fi
+    
+    # Step 8: Check documentation
+    echo -e "\n📖 Checking documentation..."
+    
+    # Count functions/classes without docstrings
+    no_docstring=$(grep -E "^(def |class )" $PYTHON_FILES | grep -v '"""' | wc -l || echo "0")
+    if [ "$no_docstring" -gt 10 ]; then
+      WARNINGS+=("$no_docstring functions/classes lack docstrings")
+      echo "⚠️ Missing docstrings: $no_docstring"
+    else
+      echo "✅ Documentation check passed"
+    fi
+    
+    # Output results
+    echo -e "\n📊 Python Quality Check Summary:"
+    echo "=============================="
+    
+    if [ $CHECK_FAILED = true ]; then
+      echo "❌ Quality checks FAILED"
+      
+      if [ ${#ERRORS[@]} -gt 0 ]; then
+        echo -e "\n🚫 Errors (must fix):"
+        printf '%s\n' "${ERRORS[@]}"
+      fi
+    else
+      echo "✅ All quality checks PASSED"
+    fi
+    
+    if [ ${#WARNINGS[@]} -gt 0 ]; then
+      echo -e "\n⚠️ Warnings (should fix):"
+      printf '%s\n' "${WARNINGS[@]}"
+    fi
+    
+    if [ $CHECK_FAILED = true ]; then
+      exit 1
+    else
+      exit 0
+    fi
+
+analysis:
+  script: |
+    #!/bin/bash
+    echo "🔍 Analyzing Python project quality issues..."
+    
+    echo -e "\n📋 Recommended Actions:"
+    echo "======================="
+    
+    # Formatting
+    echo -e "\n🎨 Code Formatting:"
+    echo "  - Format: black ."
+    echo "  - Sort imports: isort ."
+    echo "  - Both: black . && isort ."
+    echo "  - Config: pyproject.toml or setup.cfg"
+    
+    # Linting
+    echo -e "\n🔍 Linting:"
+    echo "  - flake8: flake8 . --max-line-length=88"
+    echo "  - pylint: pylint **/*.py"
+    echo "  - Combined: pre-commit install"
+    echo "  - Config: .flake8, .pylintrc, or setup.cfg"
+    
+    # Type checking
+    echo -e "\n📝 Type Checking:"
+    echo "  - Basic: mypy ."
+    echo "  - Strict: mypy --strict ."
+    echo "  - Gradual: mypy --follow-imports=skip"
+    echo "  - Config: mypy.ini or pyproject.toml"
+    
+    # Testing
+    echo -e "\n🧪 Testing:"
+    echo "  - Run: pytest -v"
+    echo "  - Coverage: pytest --cov=. --cov-report=html"
+    echo "  - Watch: pytest-watch"
+    echo "  - Parallel: pytest -n auto"
+    echo "  - Config: pytest.ini or pyproject.toml"
+    
+    # Security
+    echo -e "\n🔒 Security:"
+    echo "  - Scan: bandit -r ."
+    echo "  - Dependencies: pip-audit"
+    echo "  - SAST: semgrep --config=auto"
+    echo "  - Secrets: detect-secrets scan"
+    
+    # Performance
+    echo -e "\n⚡ Performance:"
+    echo "  - Profile: python -m cProfile script.py"
+    echo "  - Line profiler: kernprof -l -v script.py"
+    echo "  - Memory: memory_profiler"
+    echo "  - Async: aiohttp-devtools"
+    
+    # Documentation
+    echo -e "\n📚 Documentation:"
+    echo "  - Docstrings: pydocstyle ."
+    echo "  - API docs: sphinx-quickstart"
+    echo "  - Type stubs: stubgen -p package"
+    echo "  - Examples: doctest"
+    
+    # Modern Python
+    echo -e "\n🐍 Modern Python:"
+    echo "  - Type hints: Use typing module"
+    echo "  - f-strings: Replace % and .format()"
+    echo "  - Pathlib: Replace os.path"
+    echo "  - Dataclasses: For data structures"
+    echo "  - Async/await: For I/O operations"
+
+fix:
+  script: |
+    #!/bin/bash
+    echo "🔧 Fixing Python code quality issues..."
+    
+    # Detect Python command
+    PYTHON_CMD="python3"
+    if ! command -v python3 &> /dev/null; then
+      PYTHON_CMD="python"
+    fi
+    
+    # Install essential tools
+    echo -e "\n📦 Installing essential tools..."
+    $PYTHON_CMD -m pip install --upgrade pip 2>/dev/null
+    $PYTHON_CMD -m pip install black isort flake8 mypy pytest pytest-cov bandit 2>/dev/null
+    
+    # Fix formatting
+    echo -e "\n🎨 Fixing code formatting..."
+    $PYTHON_CMD -m black . 2>/dev/null || echo "⚠️ Black formatting failed"
+    $PYTHON_CMD -m isort . 2>/dev/null || echo "⚠️ Import sorting failed"
+    echo "✅ Code formatting applied"
+    
+    # Create pyproject.toml if missing
+    if [ ! -f "pyproject.toml" ] && [ ! -f "setup.cfg" ]; then
+      cat > pyproject.toml << 'EOF'
+[tool.black]
+line-length = 88
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --tb=short --cov --cov-report=term-missing"
+
+[tool.coverage.run]
+omit = ["*/tests/*", "*/test_*", "*/__pycache__/*", "*/venv/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+EOF
+      echo "✅ Created pyproject.toml"
+    fi
+    
+    # Create .flake8 if missing
+    if [ ! -f ".flake8" ]; then
+      cat > .flake8 << 'EOF'
+[flake8]
+max-line-length = 88
+extend-ignore = E203, E266, E501, W503
+max-complexity = 10
+exclude = .git,__pycache__,venv,.venv,build,dist
+EOF
+      echo "✅ Created .flake8 configuration"
+    fi
+    
+    # Create .gitignore if missing Python entries
+    if [ ! -f ".gitignore" ] || ! grep -q "__pycache__" .gitignore; then
+      cat >> .gitignore << 'EOF'
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+.env
+*.egg-info/
+dist/
+build/
+.coverage
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+EOF
+      echo "✅ Updated .gitignore"
+    fi
+    
+    # Create basic test structure if missing
+    if [ ! -d "tests" ] && [ -d "src" -o -f "*.py" ]; then
+      mkdir -p tests
+      cat > tests/__init__.py << 'EOF'
+"""Test package for the project."""
+EOF
+      
+      cat > tests/test_example.py << 'EOF'
+"""Example test file."""
+import pytest
+
+
+def test_example():
+    """Example test case."""
+    assert True
+
+
+@pytest.mark.parametrize("input,expected", [
+    (1, 1),
+    (2, 2),
+    (3, 3),
+])
+def test_parametrized(input, expected):
+    """Example parametrized test."""
+    assert input == expected
+EOF
+      echo "✅ Created test structure"
+    fi
+    
+    # Create pre-commit config
+    if [ ! -f ".pre-commit-config.yaml" ]; then
+      cat > .pre-commit-config.yaml << 'EOF'
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+EOF
+      echo "✅ Created pre-commit configuration"
+      echo "Run 'pre-commit install' to enable git hooks"
+    fi
+    
+    # Update dependencies
+    echo -e "\n📚 Checking dependencies..."
+    if [ -f "requirements.txt" ]; then
+      # Create requirements-dev.txt if missing
+      if [ ! -f "requirements-dev.txt" ]; then
+        cat > requirements-dev.txt << 'EOF'
+# Development dependencies
+black
+isort
+flake8
+mypy
+pytest
+pytest-cov
+bandit
+pre-commit
+EOF
+        echo "✅ Created requirements-dev.txt"
+      fi
+    fi
+    
+    echo -e "\n✅ Python quality fixes applied!"
+    echo "Next steps:"
+    echo "1. Review formatting changes"
+    echo "2. Run tests: pytest"
+    echo "3. Fix any remaining linting issues: flake8 ."
+    echo "4. Set up pre-commit: pre-commit install"
+
+config:
+  requiredFiles:
+    - pattern: "**/*.py"
+      description: "Python source files"
+  forbiddenPatterns:
+    - pattern: "__pycache__|.pytest_cache|.mypy_cache"
+      description: "Cache directories"
+  hooks:
+    preCommit: |
+      # Format and lint
+      black --check .
+      isort --check-only .
+      flake8 .
+      # Run tests
+      pytest

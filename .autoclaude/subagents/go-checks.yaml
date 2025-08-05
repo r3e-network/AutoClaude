@@ -1,0 +1,499 @@
+id: go-checks
+name: Go Programming Quality Checks
+description: Enforces Go code quality standards by running format, vet, lint, build, and test checks before task completion
+version: 1.0.0
+author: AutoClaude Development Team
+capabilities:
+  - Go code formatting with go fmt
+  - Static analysis with go vet
+  - Linting with golangci-lint
+  - Build validation
+  - Test execution with coverage
+  - Module dependency management
+  - Race condition detection
+  - Security scanning with gosec
+projectDetection:
+  - pattern: "**/go.mod"
+  - pattern: "**/go.sum"
+  - pattern: "**/*.go"
+  - files: ["Makefile", "magefile.go"]
+  - keywords: ["golang", "go", "gin", "echo", "fiber"]
+priority: critical
+enabled: true
+supportsTriggers: true
+supportsAnalysis: true
+supportsFix: true
+smartMode: true
+options:
+  enforceFormatting: true
+  runVet: true
+  runLint: true
+  runTests: true
+  checkRaceConditions: true
+  runSecurityScan: true
+  checkCoverage: true
+  minCoveragePercent: 80
+
+check:
+  script: |
+    #!/bin/bash
+    echo "🐹 Go Programming Quality Checks - Ensuring production-ready code"
+    
+    ERRORS=()
+    WARNINGS=()
+    CHECK_FAILED=false
+    
+    # Find go.mod files
+    GO_MOD_FILES=$(find . -name "go.mod" -type f 2>/dev/null | grep -v "/vendor/" | head -10)
+    
+    if [ -z "$GO_MOD_FILES" ]; then
+      echo "❌ No Go module files found"
+      exit 1
+    fi
+    
+    echo "✅ Go project detected"
+    
+    # Check if go is installed
+    if ! command -v go &> /dev/null; then
+      echo "❌ Go is not installed. Please install Go toolchain."
+      exit 1
+    fi
+    
+    GO_VERSION=$(go version | awk '{print $3}')
+    echo "Using $GO_VERSION"
+    
+    # Function to run go command and capture result
+    run_go_command() {
+      local cmd="$1"
+      local description="$2"
+      local extra_args="$3"
+      
+      echo "🔄 Running: go $cmd $extra_args"
+      
+      output=$(go $cmd $extra_args 2>&1)
+      exit_code=$?
+      
+      if [ $exit_code -ne 0 ]; then
+        ERRORS+=("$description failed: go $cmd")
+        CHECK_FAILED=true
+        echo "❌ $description failed"
+        echo "$output" | tail -20
+        return 1
+      else
+        echo "✅ $description passed"
+        return 0
+      fi
+    }
+    
+    # Navigate to module root
+    MODULE_ROOT=$(dirname "$(find . -name "go.mod" | head -1)")
+    cd "$MODULE_ROOT" || exit 1
+    
+    # Step 1: Check formatting
+    echo -e "\n🎨 Checking code formatting..."
+    
+    unformatted=$(gofmt -l . 2>&1 | grep -v "/vendor/")
+    
+    if [ -n "$unformatted" ]; then
+      file_count=$(echo "$unformatted" | wc -l)
+      ERRORS+=("$file_count files need formatting. Run 'go fmt ./...' to fix.")
+      CHECK_FAILED=true
+      echo "❌ Format check failed ($file_count files)"
+      echo "Files needing formatting:"
+      echo "$unformatted" | head -10
+    else
+      echo "✅ Format check passed"
+    fi
+    
+    # Step 2: Run go vet
+    echo -e "\n🔍 Running go vet..."
+    
+    if ! go vet ./... 2>&1 | grep -v "/vendor/"; then
+      ERRORS+=("go vet found issues")
+      CHECK_FAILED=true
+      echo "❌ go vet failed"
+    else
+      echo "✅ go vet passed"
+    fi
+    
+    # Step 3: Run golangci-lint (if available)
+    echo -e "\n📎 Running linter..."
+    
+    if ! command -v golangci-lint &> /dev/null; then
+      echo "Installing golangci-lint..."
+      go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest 2>/dev/null || {
+        WARNINGS+=("golangci-lint not available. Install for comprehensive linting.")
+        echo "⚠️ Skipping golangci-lint"
+      }
+    fi
+    
+    if command -v golangci-lint &> /dev/null; then
+      output=$(golangci-lint run ./... 2>&1)
+      exit_code=$?
+      
+      if [ $exit_code -ne 0 ]; then
+        issue_count=$(echo "$output" | grep -E "^[^:]+:[0-9]+:" | wc -l)
+        if [ "$issue_count" -gt 0 ]; then
+          ERRORS+=("golangci-lint found $issue_count issues")
+          CHECK_FAILED=true
+          echo "❌ Linter found $issue_count issues"
+          echo "$output" | grep -E "^[^:]+:[0-9]+:" | head -10
+        fi
+      else
+        echo "✅ Linter check passed"
+      fi
+    fi
+    
+    # Step 4: Check module dependencies
+    echo -e "\n📦 Checking module dependencies..."
+    
+    # Download dependencies
+    if ! go mod download 2>&1 > /dev/null; then
+      ERRORS+=("Failed to download module dependencies")
+      CHECK_FAILED=true
+      echo "❌ Module download failed"
+    else
+      echo "✅ Module dependencies OK"
+    fi
+    
+    # Verify dependencies
+    if ! go mod verify 2>&1 > /dev/null; then
+      ERRORS+=("Module verification failed")
+      CHECK_FAILED=true
+      echo "❌ Module verification failed"
+    else
+      echo "✅ Module verification passed"
+    fi
+    
+    # Check for outdated dependencies
+    if command -v go-mod-outdated &> /dev/null; then
+      outdated=$(go list -u -m -json all | go-mod-outdated -direct 2>&1 | grep -c "Update available")
+      if [ "$outdated" -gt 0 ]; then
+        WARNINGS+=("$outdated direct dependencies have updates available")
+        echo "⚠️ $outdated dependencies outdated"
+      fi
+    fi
+    
+    # Step 5: Build project
+    echo -e "\n🔨 Building project..."
+    
+    if ! go build -v ./... 2>&1 > /dev/null; then
+      ERRORS+=("Build failed")
+      CHECK_FAILED=true
+      echo "❌ Build failed"
+    else
+      echo "✅ Build succeeded"
+    fi
+    
+    # Step 6: Run tests
+    echo -e "\n🧪 Running tests..."
+    
+    # Run tests with coverage
+    output=$(go test -v -cover -race ./... 2>&1)
+    exit_code=$?
+    
+    if [ $exit_code -ne 0 ]; then
+      ERRORS+=("Tests failed")
+      CHECK_FAILED=true
+      echo "❌ Tests failed"
+      
+      # Extract test failures
+      failures=$(echo "$output" | grep -E "FAIL:|--- FAIL:" | head -10)
+      if [ -n "$failures" ]; then
+        echo "Failed tests:"
+        echo "$failures"
+      fi
+    else
+      # Extract test summary
+      test_count=$(echo "$output" | grep -c "^=== RUN")
+      pass_count=$(echo "$output" | grep -c "^--- PASS:")
+      
+      if [ "$test_count" -eq 0 ]; then
+        WARNINGS+=("No tests found")
+        echo "⚠️ No tests found"
+      else
+        echo "✅ All tests passed ($pass_count tests)"
+        
+        # Check coverage
+        coverage=$(echo "$output" | grep -oP 'coverage: \K[0-9.]+' | tail -1)
+        if [ -n "$coverage" ]; then
+          if (( $(echo "$coverage < 80" | bc -l) )); then
+            WARNINGS+=("Test coverage is ${coverage}% (recommended: >80%)")
+            echo "⚠️ Low test coverage: ${coverage}%"
+          else
+            echo "✅ Good test coverage: ${coverage}%"
+          fi
+        fi
+      fi
+    fi
+    
+    # Step 7: Race condition check
+    echo -e "\n🏃 Checking for race conditions..."
+    
+    if go test -race ./... 2>&1 > /dev/null; then
+      echo "✅ No race conditions detected"
+    else
+      ERRORS+=("Race conditions detected")
+      CHECK_FAILED=true
+      echo "❌ Race conditions found"
+    fi
+    
+    # Step 8: Security scan with gosec
+    echo -e "\n🔒 Running security scan..."
+    
+    if ! command -v gosec &> /dev/null; then
+      echo "Installing gosec..."
+      go install github.com/securego/gosec/v2/cmd/gosec@latest 2>/dev/null || {
+        WARNINGS+=("gosec not available. Install for security scanning.")
+        echo "⚠️ Skipping security scan"
+      }
+    fi
+    
+    if command -v gosec &> /dev/null; then
+      output=$(gosec -fmt text ./... 2>&1)
+      
+      if echo "$output" | grep -q "Issues found:"; then
+        issue_count=$(echo "$output" | grep -oP 'Issues found: \K[0-9]+' | head -1)
+        if [ "$issue_count" -gt 0 ]; then
+          ERRORS+=("gosec found $issue_count security issues")
+          CHECK_FAILED=true
+          echo "❌ Security issues found: $issue_count"
+        fi
+      else
+        echo "✅ Security scan passed"
+      fi
+    fi
+    
+    # Step 9: Check for common issues
+    echo -e "\n⚠️ Checking for common issues..."
+    
+    # Check for missing error handling
+    unhandled_errors=$(grep -r "err :=" . --include="*.go" | grep -v "if err" | grep -v "/vendor/" | wc -l)
+    if [ "$unhandled_errors" -gt 0 ]; then
+      WARNINGS+=("Found $unhandled_errors potential unhandled errors")
+      echo "⚠️ Potential unhandled errors: $unhandled_errors"
+    fi
+    
+    # Check for TODO/FIXME comments
+    todos=$(grep -r "TODO\|FIXME" . --include="*.go" | grep -v "/vendor/" | wc -l)
+    if [ "$todos" -gt 0 ]; then
+      WARNINGS+=("Found $todos TODO/FIXME comments")
+      echo "⚠️ TODO/FIXME comments: $todos"
+    fi
+    
+    # Output results
+    echo -e "\n📊 Go Quality Check Summary:"
+    echo "=============================="
+    
+    if [ $CHECK_FAILED = true ]; then
+      echo "❌ Quality checks FAILED"
+      
+      if [ ${#ERRORS[@]} -gt 0 ]; then
+        echo -e "\n🚫 Errors (must fix):"
+        printf '%s\n' "${ERRORS[@]}"
+      fi
+    else
+      echo "✅ All quality checks PASSED"
+    fi
+    
+    if [ ${#WARNINGS[@]} -gt 0 ]; then
+      echo -e "\n⚠️ Warnings (should fix):"
+      printf '%s\n' "${WARNINGS[@]}"
+    fi
+    
+    if [ $CHECK_FAILED = true ]; then
+      exit 1
+    else
+      exit 0
+    fi
+
+analysis:
+  script: |
+    #!/bin/bash
+    echo "🔍 Analyzing Go project quality issues..."
+    
+    echo -e "\n📋 Recommended Actions:"
+    echo "======================="
+    
+    # Format recommendations
+    echo -e "\n🎨 Code Formatting:"
+    echo "  - Format all: go fmt ./..."
+    echo "  - Import sort: goimports -w ."
+    echo "  - Format check: gofmt -d ."
+    
+    # Linting recommendations
+    echo -e "\n📎 Linting:"
+    echo "  - Install: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
+    echo "  - Run: golangci-lint run ./..."
+    echo "  - Fix: golangci-lint run --fix"
+    echo "  - Config: create .golangci.yml"
+    
+    # Testing recommendations
+    echo -e "\n🧪 Testing:"
+    echo "  - Run all: go test ./..."
+    echo "  - Coverage: go test -cover ./..."
+    echo "  - Race detection: go test -race ./..."
+    echo "  - Benchmark: go test -bench=."
+    echo "  - Coverage report: go test -coverprofile=coverage.out && go tool cover -html=coverage.out"
+    
+    # Build optimization
+    echo -e "\n🔨 Build Optimization:"
+    echo "  - Smaller binary: go build -ldflags='-s -w'"
+    echo "  - Static build: CGO_ENABLED=0 go build"
+    echo "  - Cross-compile: GOOS=linux GOARCH=amd64 go build"
+    echo "  - Build tags: go build -tags production"
+    
+    # Security recommendations
+    echo -e "\n🔒 Security:"
+    echo "  - Scan: go install github.com/securego/gosec/v2/cmd/gosec@latest && gosec ./..."
+    echo "  - Vulnerabilities: go install golang.org/x/vuln/cmd/govulncheck@latest && govulncheck ./..."
+    echo "  - Dependencies: go mod audit"
+    echo "  - Update deps: go get -u ./..."
+    
+    # Performance recommendations
+    echo -e "\n⚡ Performance:"
+    echo "  - Profile: go test -cpuprofile=cpu.prof"
+    echo "  - Memory: go test -memprofile=mem.prof"
+    echo "  - Trace: go test -trace=trace.out"
+    echo "  - pprof: go tool pprof cpu.prof"
+    
+    # Code quality
+    echo -e "\n📊 Code Quality:"
+    echo "  - Cyclomatic complexity: gocyclo ."
+    echo "  - Code review: go install github.com/mgechev/revive@latest && revive ./..."
+    echo "  - Inefficient code: go install github.com/gordonklaus/ineffassign@latest && ineffassign ."
+    echo "  - Unused code: go install honnef.co/go/tools/cmd/staticcheck@latest && staticcheck ./..."
+
+fix:
+  script: |
+    #!/bin/bash
+    echo "🔧 Fixing Go code quality issues..."
+    
+    # Fix formatting
+    echo -e "\n🎨 Fixing code formatting..."
+    go fmt ./...
+    echo "✅ Code formatting fixed"
+    
+    # Fix imports
+    if command -v goimports &> /dev/null; then
+      goimports -w .
+      echo "✅ Import statements organized"
+    else
+      go install golang.org/x/tools/cmd/goimports@latest
+      goimports -w .
+      echo "✅ Import statements organized"
+    fi
+    
+    # Fix linting issues
+    echo -e "\n📎 Fixing linting issues..."
+    if command -v golangci-lint &> /dev/null; then
+      golangci-lint run --fix ./... 2>/dev/null || echo "⚠️ Some issues require manual fixes"
+      echo "✅ Applied automatic lint fixes"
+    fi
+    
+    # Update dependencies
+    echo -e "\n📦 Updating dependencies..."
+    go mod tidy
+    go mod download
+    echo "✅ Dependencies cleaned and downloaded"
+    
+    # Update outdated dependencies
+    echo "Checking for outdated dependencies..."
+    go list -u -m all 2>/dev/null | grep '\[' | head -10
+    
+    # Generate default config files if missing
+    echo -e "\n📄 Generating config files..."
+    
+    # Create .golangci.yml if missing
+    if [ ! -f ".golangci.yml" ]; then
+      cat > .golangci.yml << 'EOF'
+linters:
+  enable:
+    - gofmt
+    - golint
+    - govet
+    - gosec
+    - ineffassign
+    - misspell
+    - unconvert
+    - goconst
+    - gocyclo
+    - goimports
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+EOF
+      echo "✅ Created .golangci.yml"
+    fi
+    
+    # Create basic Makefile if missing
+    if [ ! -f "Makefile" ]; then
+      cat > Makefile << 'EOF'
+.PHONY: all build test clean fmt lint
+
+all: fmt lint test build
+
+build:
+	go build -v ./...
+
+test:
+	go test -v -race -cover ./...
+
+clean:
+	go clean
+	rm -f coverage.out
+
+fmt:
+	go fmt ./...
+	goimports -w .
+
+lint:
+	golangci-lint run ./...
+
+coverage:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out
+EOF
+      echo "✅ Created Makefile"
+    fi
+    
+    # Fix security issues
+    echo -e "\n🔒 Checking security issues..."
+    if command -v gosec &> /dev/null; then
+      gosec -fmt json ./... > gosec-report.json 2>/dev/null || true
+      echo "✅ Security report generated: gosec-report.json"
+    fi
+    
+    echo -e "\n✅ Go quality fixes applied!"
+    echo "Next steps:"
+    echo "1. Review and fix remaining linting issues"
+    echo "2. Run 'go test -race ./...' to verify"
+    echo "3. Check coverage: go test -cover ./..."
+    echo "4. Update dependencies if needed: go get -u ./..."
+
+config:
+  requiredFiles:
+    - pattern: "**/go.mod"
+      description: "Go module file"
+  forbiddenPatterns:
+    - pattern: "vendor/"
+      description: "Vendored dependencies"
+  hooks:
+    preCommit: |
+      # Format check
+      test -z "$(gofmt -l .)"
+      # Vet check
+      go vet ./...
+      # Test check
+      go test -race ./...
+      # Build check
+      go build -v ./...

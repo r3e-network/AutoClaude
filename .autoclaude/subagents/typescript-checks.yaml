@@ -1,0 +1,605 @@
+id: typescript-checks
+name: TypeScript/JavaScript Programming Quality Checks
+description: Enforces TypeScript/JavaScript code quality using ESLint, Prettier, tsc, and Jest
+version: 1.0.0
+author: AutoClaude Development Team
+capabilities:
+  - Code formatting with Prettier
+  - Linting with ESLint
+  - Type checking with TypeScript compiler
+  - Test execution with Jest
+  - Bundle size analysis
+  - Security scanning
+  - Module dependency checking
+  - Code complexity analysis
+projectDetection:
+  - pattern: "**/package.json"
+  - pattern: "**/tsconfig.json"
+  - pattern: "**/jsconfig.json"
+  - pattern: "**/*.ts"
+  - pattern: "**/*.tsx"
+  - pattern: "**/*.js"
+  - pattern: "**/*.jsx"
+  - files: [".eslintrc", ".eslintrc.js", ".eslintrc.json", ".prettierrc"]
+  - keywords: ["typescript", "javascript", "react", "vue", "angular", "node"]
+priority: critical
+enabled: true
+supportsTriggers: true
+supportsAnalysis: true
+supportsFix: true
+smartMode: true
+options:
+  enforceFormatting: true
+  runESLint: true
+  runTypeCheck: true
+  runTests: true
+  checkBundleSize: true
+  runSecurityAudit: true
+  strictTypeChecking: true
+  checkCoverage: true
+  minCoveragePercent: 80
+
+check:
+  script: |
+    #!/bin/bash
+    echo "📦 TypeScript/JavaScript Quality Checks - Ensuring production-ready code"
+    
+    ERRORS=()
+    WARNINGS=()
+    CHECK_FAILED=false
+    IS_TYPESCRIPT=false
+    
+    # Check for package.json
+    if [ ! -f "package.json" ]; then
+      echo "❌ No package.json found"
+      exit 1
+    fi
+    
+    echo "✅ Node.js project detected"
+    
+    # Check if TypeScript project
+    if [ -f "tsconfig.json" ] || grep -q "typescript" package.json; then
+      IS_TYPESCRIPT=true
+      echo "✅ TypeScript project detected"
+    else
+      echo "✅ JavaScript project detected"
+    fi
+    
+    # Check Node.js version
+    if ! command -v node &> /dev/null; then
+      echo "❌ Node.js is not installed"
+      exit 1
+    fi
+    
+    NODE_VERSION=$(node --version)
+    echo "Using Node.js $NODE_VERSION"
+    
+    # Check package manager
+    PACKAGE_MANAGER="npm"
+    LOCKFILE=""
+    
+    if [ -f "yarn.lock" ]; then
+      PACKAGE_MANAGER="yarn"
+      LOCKFILE="yarn.lock"
+    elif [ -f "pnpm-lock.yaml" ]; then
+      PACKAGE_MANAGER="pnpm"
+      LOCKFILE="pnpm-lock.yaml"
+    elif [ -f "package-lock.json" ]; then
+      LOCKFILE="package-lock.json"
+    fi
+    
+    echo "Using $PACKAGE_MANAGER"
+    
+    # Install dependencies if needed
+    if [ -n "$LOCKFILE" ] && [ ! -d "node_modules" ]; then
+      echo "Installing dependencies..."
+      $PACKAGE_MANAGER install 2>&1 > /dev/null || {
+        ERRORS+=("Failed to install dependencies")
+        CHECK_FAILED=true
+        echo "❌ Dependency installation failed"
+      }
+    fi
+    
+    # Step 1: Check formatting with Prettier
+    echo -e "\n🎨 Checking code formatting with Prettier..."
+    
+    if ! npx prettier --version &> /dev/null; then
+      WARNINGS+=("Prettier not installed. Add to devDependencies.")
+      echo "⚠️ Skipping Prettier check"
+    else
+      # Find files to check
+      FILES_TO_CHECK=$(find . -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" -o -name "*.json" | \
+        grep -v node_modules | grep -v dist | grep -v build | grep -v coverage)
+      
+      if [ -n "$FILES_TO_CHECK" ]; then
+        unformatted=$(echo "$FILES_TO_CHECK" | xargs npx prettier --check 2>&1 | grep -c "Code style issues" || true)
+        
+        if [ "$unformatted" -gt 0 ]; then
+          ERRORS+=("$unformatted files need formatting. Run 'npm run prettier:fix' or 'npx prettier --write .'")
+          CHECK_FAILED=true
+          echo "❌ Format check failed"
+        else
+          echo "✅ Format check passed"
+        fi
+      fi
+    fi
+    
+    # Step 2: Run ESLint
+    echo -e "\n🔍 Running ESLint..."
+    
+    if ! npx eslint --version &> /dev/null; then
+      WARNINGS+=("ESLint not installed. Add to devDependencies.")
+      echo "⚠️ Skipping ESLint"
+    else
+      # Check for ESLint config
+      if ls .eslintrc* 1> /dev/null 2>&1 || [ -f "package.json" ]; then
+        output=$(npx eslint . --ext .js,.jsx,.ts,.tsx --format compact 2>&1 || true)
+        
+        error_count=$(echo "$output" | grep -E "error" | wc -l || echo "0")
+        warning_count=$(echo "$output" | grep -E "warning" | wc -l || echo "0")
+        
+        if [ "$error_count" -gt 0 ]; then
+          ERRORS+=("ESLint found $error_count errors")
+          CHECK_FAILED=true
+          echo "❌ ESLint found $error_count errors"
+          echo "$output" | grep -E "error" | head -10
+        elif [ "$warning_count" -gt 0 ]; then
+          WARNINGS+=("ESLint found $warning_count warnings")
+          echo "⚠️ ESLint found $warning_count warnings"
+        else
+          echo "✅ ESLint passed"
+        fi
+      else
+        WARNINGS+=("No ESLint configuration found")
+        echo "⚠️ No ESLint configuration"
+      fi
+    fi
+    
+    # Step 3: TypeScript type checking
+    if [ "$IS_TYPESCRIPT" = true ]; then
+      echo -e "\n📝 Running TypeScript type check..."
+      
+      if ! npx tsc --version &> /dev/null; then
+        ERRORS+=("TypeScript not installed but tsconfig.json exists")
+        CHECK_FAILED=true
+        echo "❌ TypeScript not installed"
+      else
+        output=$(npx tsc --noEmit 2>&1)
+        exit_code=$?
+        
+        if [ $exit_code -ne 0 ]; then
+          error_count=$(echo "$output" | grep -c "error TS" || echo "0")
+          ERRORS+=("TypeScript found $error_count type errors")
+          CHECK_FAILED=true
+          echo "❌ Type check failed ($error_count errors)"
+          echo "$output" | grep "error TS" | head -10
+        else
+          echo "✅ Type check passed"
+        fi
+      fi
+    fi
+    
+    # Step 4: Run tests
+    echo -e "\n🧪 Running tests..."
+    
+    # Check test script in package.json
+    if grep -q '"test"' package.json && ! grep -q '"test".*"echo' package.json; then
+      output=$($PACKAGE_MANAGER test 2>&1)
+      exit_code=$?
+      
+      if [ $exit_code -ne 0 ]; then
+        ERRORS+=("Tests failed")
+        CHECK_FAILED=true
+        echo "❌ Tests failed"
+        echo "$output" | grep -E "FAIL|Error:|failed" | head -10
+      else
+        echo "✅ Tests passed"
+        
+        # Check coverage if available
+        if echo "$output" | grep -q "Coverage"; then
+          coverage=$(echo "$output" | grep -oP '\d+(?=%)' | tail -1)
+          if [ -n "$coverage" ] && [ "$coverage" -lt 80 ]; then
+            WARNINGS+=("Test coverage is ${coverage}% (recommended: >80%)")
+            echo "⚠️ Low test coverage: ${coverage}%"
+          elif [ -n "$coverage" ]; then
+            echo "✅ Good test coverage: ${coverage}%"
+          fi
+        fi
+      fi
+    else
+      WARNINGS+=("No test script configured or using placeholder")
+      echo "⚠️ No tests configured"
+    fi
+    
+    # Step 5: Check for security vulnerabilities
+    echo -e "\n🔒 Checking for security vulnerabilities..."
+    
+    # npm/yarn/pnpm audit
+    audit_output=$($PACKAGE_MANAGER audit 2>&1 || true)
+    
+    if echo "$audit_output" | grep -q "high"; then
+      high_vulns=$(echo "$audit_output" | grep -oP '\d+(?= high)' | head -1)
+      ERRORS+=("$high_vulns high severity vulnerabilities found")
+      CHECK_FAILED=true
+      echo "❌ High severity vulnerabilities found"
+    elif echo "$audit_output" | grep -q "moderate"; then
+      moderate_vulns=$(echo "$audit_output" | grep -oP '\d+(?= moderate)' | head -1)
+      WARNINGS+=("$moderate_vulns moderate severity vulnerabilities found")
+      echo "⚠️ Moderate vulnerabilities found"
+    else
+      echo "✅ No security vulnerabilities"
+    fi
+    
+    # Step 6: Check bundle size (for frontend projects)
+    echo -e "\n📊 Checking build configuration..."
+    
+    if grep -q '"build"' package.json; then
+      # Check if build script exists and works
+      if $PACKAGE_MANAGER run build 2>&1 > /dev/null; then
+        echo "✅ Build script works"
+        
+        # Check build output size
+        if [ -d "dist" ] || [ -d "build" ]; then
+          BUILD_DIR=$([ -d "dist" ] && echo "dist" || echo "build")
+          total_size=$(find $BUILD_DIR -name "*.js" -o -name "*.css" | xargs du -ch | grep total | awk '{print $1}')
+          echo "ℹ️ Build size: $total_size"
+        fi
+      else
+        WARNINGS+=("Build script failed")
+        echo "⚠️ Build script failed"
+      fi
+    fi
+    
+    # Step 7: Check for common issues
+    echo -e "\n⚠️ Checking for common issues..."
+    
+    # Check for console.log in source files
+    console_logs=$(find . -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" | \
+      grep -v node_modules | xargs grep -l "console\.log" | wc -l || echo "0")
+    
+    if [ "$console_logs" -gt 0 ]; then
+      WARNINGS+=("Found console.log in $console_logs files")
+      echo "⚠️ console.log statements: $console_logs files"
+    fi
+    
+    # Check for any types in TypeScript
+    if [ "$IS_TYPESCRIPT" = true ]; then
+      any_types=$(find . -name "*.ts" -o -name "*.tsx" | grep -v node_modules | \
+        xargs grep -h ": any" | wc -l || echo "0")
+      
+      if [ "$any_types" -gt 5 ]; then
+        WARNINGS+=("Found $any_types uses of 'any' type")
+        echo "⚠️ TypeScript 'any' usage: $any_types"
+      fi
+    fi
+    
+    # Output results
+    echo -e "\n📊 TypeScript/JavaScript Quality Check Summary:"
+    echo "=============================================="
+    
+    if [ $CHECK_FAILED = true ]; then
+      echo "❌ Quality checks FAILED"
+      
+      if [ ${#ERRORS[@]} -gt 0 ]; then
+        echo -e "\n🚫 Errors (must fix):"
+        printf '%s\n' "${ERRORS[@]}"
+      fi
+    else
+      echo "✅ All quality checks PASSED"
+    fi
+    
+    if [ ${#WARNINGS[@]} -gt 0 ]; then
+      echo -e "\n⚠️ Warnings (should fix):"
+      printf '%s\n' "${WARNINGS[@]}"
+    fi
+    
+    if [ $CHECK_FAILED = true ]; then
+      exit 1
+    else
+      exit 0
+    fi
+
+analysis:
+  script: |
+    #!/bin/bash
+    echo "🔍 Analyzing TypeScript/JavaScript project quality..."
+    
+    echo -e "\n📋 Recommended Actions:"
+    echo "======================="
+    
+    # Formatting
+    echo -e "\n🎨 Code Formatting:"
+    echo "  - Setup: npm install --save-dev prettier"
+    echo "  - Format: npx prettier --write ."
+    echo "  - Config: Create .prettierrc"
+    echo "  - Ignore: Create .prettierignore"
+    
+    # Linting
+    echo -e "\n🔍 Linting:"
+    echo "  - Setup: npm install --save-dev eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin"
+    echo "  - Init: npx eslint --init"
+    echo "  - Run: npx eslint . --fix"
+    echo "  - Strict: Use eslint-config-airbnb or eslint-config-standard"
+    
+    # TypeScript
+    echo -e "\n📝 TypeScript:"
+    echo "  - Strict mode: \"strict\": true in tsconfig.json"
+    echo "  - No implicit any: \"noImplicitAny\": true"
+    echo "  - Check: npx tsc --noEmit"
+    echo "  - Watch: npx tsc --watch --noEmit"
+    
+    # Testing
+    echo -e "\n🧪 Testing:"
+    echo "  - Jest: npm install --save-dev jest @types/jest ts-jest"
+    echo "  - Coverage: jest --coverage"
+    echo "  - Watch: jest --watch"
+    echo "  - E2E: Cypress or Playwright"
+    
+    # Build optimization
+    echo -e "\n📦 Build Optimization:"
+    echo "  - Bundle analysis: webpack-bundle-analyzer"
+    echo "  - Tree shaking: Ensure ES modules"
+    echo "  - Code splitting: Dynamic imports"
+    echo "  - Minification: Terser or ESBuild"
+    
+    # Security
+    echo -e "\n🔒 Security:"
+    echo "  - Audit: npm audit fix"
+    echo "  - Snyk: npx snyk test"
+    echo "  - Lock files: Commit package-lock.json"
+    echo "  - Updates: npm-check-updates"
+    
+    # Performance
+    echo -e "\n⚡ Performance:"
+    echo "  - Lighthouse: For web apps"
+    echo "  - Bundle size: bundlephobia.com"
+    echo "  - Lazy loading: React.lazy(), dynamic imports"
+    echo "  - Web Vitals: web-vitals library"
+    
+    # Modern JavaScript
+    echo -e "\n🚀 Modern Patterns:"
+    echo "  - ES modules over CommonJS"
+    echo "  - Async/await over callbacks"
+    echo "  - Optional chaining: ?."
+    echo "  - Nullish coalescing: ??"
+    echo "  - Template literals over string concat"
+
+fix:
+  script: |
+    #!/bin/bash
+    echo "🔧 Fixing TypeScript/JavaScript quality issues..."
+    
+    PACKAGE_MANAGER="npm"
+    if [ -f "yarn.lock" ]; then
+      PACKAGE_MANAGER="yarn"
+    elif [ -f "pnpm-lock.yaml" ]; then
+      PACKAGE_MANAGER="pnpm"
+    fi
+    
+    # Install essential dev tools
+    echo -e "\n📦 Installing essential tools..."
+    
+    DEV_DEPS="prettier eslint"
+    
+    # Add TypeScript deps if needed
+    if [ -f "tsconfig.json" ] || grep -q "typescript" package.json; then
+      DEV_DEPS="$DEV_DEPS typescript @types/node @typescript-eslint/parser @typescript-eslint/eslint-plugin"
+    fi
+    
+    # Add Jest if no test framework
+    if ! grep -q "jest\|mocha\|vitest" package.json; then
+      DEV_DEPS="$DEV_DEPS jest"
+      if [ -f "tsconfig.json" ]; then
+        DEV_DEPS="$DEV_DEPS @types/jest ts-jest"
+      fi
+    fi
+    
+    echo "Installing: $DEV_DEPS"
+    
+    if [ "$PACKAGE_MANAGER" = "yarn" ]; then
+      yarn add -D $DEV_DEPS 2>/dev/null || echo "⚠️ Some packages failed to install"
+    elif [ "$PACKAGE_MANAGER" = "pnpm" ]; then
+      pnpm add -D $DEV_DEPS 2>/dev/null || echo "⚠️ Some packages failed to install"
+    else
+      npm install --save-dev $DEV_DEPS 2>/dev/null || echo "⚠️ Some packages failed to install"
+    fi
+    
+    # Create Prettier config if missing
+    if [ ! -f ".prettierrc" ] && [ ! -f ".prettierrc.js" ] && [ ! -f ".prettierrc.json" ]; then
+      cat > .prettierrc.json << 'EOF'
+{
+  "semi": true,
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "printWidth": 80,
+  "tabWidth": 2,
+  "useTabs": false,
+  "arrowParens": "avoid",
+  "endOfLine": "lf"
+}
+EOF
+      echo "✅ Created .prettierrc.json"
+    fi
+    
+    # Create .prettierignore
+    if [ ! -f ".prettierignore" ]; then
+      cat > .prettierignore << 'EOF'
+node_modules
+dist
+build
+coverage
+.next
+.nuxt
+*.min.js
+*.min.css
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+EOF
+      echo "✅ Created .prettierignore"
+    fi
+    
+    # Run Prettier
+    echo -e "\n🎨 Formatting code..."
+    npx prettier --write . 2>/dev/null || echo "⚠️ Some files could not be formatted"
+    
+    # Create ESLint config if missing
+    if ! ls .eslintrc* 1> /dev/null 2>&1; then
+      if [ -f "tsconfig.json" ]; then
+        cat > .eslintrc.json << 'EOF'
+{
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true
+  },
+  "rules": {
+    "no-console": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/explicit-function-return-type": "off"
+  }
+}
+EOF
+      else
+        cat > .eslintrc.json << 'EOF'
+{
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true
+  },
+  "rules": {
+    "no-console": "warn",
+    "no-unused-vars": "warn"
+  }
+}
+EOF
+      fi
+      echo "✅ Created .eslintrc.json"
+    fi
+    
+    # Create .eslintignore
+    if [ ! -f ".eslintignore" ]; then
+      cp .prettierignore .eslintignore 2>/dev/null || cat > .eslintignore << 'EOF'
+node_modules
+dist
+build
+coverage
+EOF
+      echo "✅ Created .eslintignore"
+    fi
+    
+    # Update package.json scripts
+    echo -e "\n📝 Updating package.json scripts..."
+    
+    # Add scripts using Node.js
+    node -e "
+    const fs = require('fs');
+    const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+    
+    pkg.scripts = pkg.scripts || {};
+    
+    // Add formatting scripts
+    if (!pkg.scripts.format) pkg.scripts.format = 'prettier --write .';
+    if (!pkg.scripts['format:check']) pkg.scripts['format:check'] = 'prettier --check .';
+    
+    // Add linting scripts
+    if (!pkg.scripts.lint) pkg.scripts.lint = 'eslint . --ext .js,.jsx,.ts,.tsx';
+    if (!pkg.scripts['lint:fix']) pkg.scripts['lint:fix'] = 'eslint . --ext .js,.jsx,.ts,.tsx --fix';
+    
+    // Add TypeScript check if applicable
+    if (fs.existsSync('tsconfig.json') && !pkg.scripts.typecheck) {
+      pkg.scripts.typecheck = 'tsc --noEmit';
+    }
+    
+    // Add test script if missing
+    if (!pkg.scripts.test || pkg.scripts.test.includes('echo')) {
+      pkg.scripts.test = 'jest';
+    }
+    
+    // Add quality check script
+    pkg.scripts['check:all'] = 'npm run format:check && npm run lint' + 
+      (pkg.scripts.typecheck ? ' && npm run typecheck' : '') + 
+      ' && npm test';
+    
+    fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+    " || echo "⚠️ Failed to update package.json"
+    
+    echo "✅ Updated package.json scripts"
+    
+    # Fix security vulnerabilities
+    echo -e "\n🔒 Fixing security vulnerabilities..."
+    $PACKAGE_MANAGER audit fix 2>/dev/null || echo "⚠️ Some vulnerabilities require manual review"
+    
+    # Create basic test setup if missing
+    if [ ! -d "tests" ] && [ ! -d "__tests__" ] && [ ! -d "src/__tests__" ]; then
+      mkdir -p tests
+      
+      if [ -f "tsconfig.json" ]; then
+        cat > jest.config.js << 'EOF'
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/src', '<rootDir>/tests'],
+  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.d.ts',
+    '!src/**/index.ts'
+  ]
+};
+EOF
+      else
+        cat > jest.config.js << 'EOF'
+module.exports = {
+  testEnvironment: 'node',
+  roots: ['<rootDir>/src', '<rootDir>/tests'],
+  testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
+  collectCoverageFrom: [
+    'src/**/*.js',
+    '!src/**/index.js'
+  ]
+};
+EOF
+      fi
+      echo "✅ Created Jest configuration"
+    fi
+    
+    echo -e "\n✅ TypeScript/JavaScript quality fixes applied!"
+    echo "Next steps:"
+    echo "1. Run 'npm run lint:fix' to auto-fix remaining issues"
+    echo "2. Run 'npm run check:all' to verify everything works"
+    echo "3. Fix any remaining type errors or test failures"
+    echo "4. Consider adding pre-commit hooks with husky"
+
+config:
+  requiredFiles:
+    - pattern: "**/package.json"
+      description: "Node.js project manifest"
+  forbiddenPatterns:
+    - pattern: "node_modules/"
+      description: "Dependencies directory"
+  hooks:
+    preCommit: |
+      # Check formatting
+      npm run format:check
+      # Run linter
+      npm run lint
+      # Type check if TypeScript
+      [ -f "tsconfig.json" ] && npm run typecheck
+      # Run tests
+      npm test

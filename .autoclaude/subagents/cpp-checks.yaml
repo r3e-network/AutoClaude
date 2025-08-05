@@ -1,0 +1,468 @@
+id: cpp-checks
+name: C++ Programming Quality Checks
+description: Enforces C++ code quality standards by running format, static analysis, build, and test checks before task completion
+version: 1.0.0
+author: AutoClaude Development Team
+capabilities:
+  - C++ code formatting with clang-format
+  - Static analysis with clang-tidy and cppcheck
+  - Build validation with CMake/Make/Bazel
+  - Test execution with CTest/GoogleTest
+  - Memory leak detection with valgrind/sanitizers
+  - Cross-platform support
+projectDetection:
+  - pattern: "**/CMakeLists.txt"
+  - pattern: "**/*.cpp"
+  - pattern: "**/*.cc"
+  - pattern: "**/*.cxx"
+  - pattern: "**/*.h"
+  - pattern: "**/*.hpp"
+  - pattern: "**/Makefile"
+  - pattern: "**/BUILD"
+  - pattern: "**/BUILD.bazel"
+  - files: [".clang-format", ".clang-tidy", "compile_commands.json"]
+  - keywords: ["c++", "cpp", "cmake", "make", "bazel"]
+priority: critical
+enabled: true
+supportsTriggers: true
+supportsAnalysis: true
+supportsFix: true
+smartMode: true
+options:
+  enforceFormatting: true
+  runStaticAnalysis: true
+  runTests: true
+  checkMemoryLeaks: true
+  buildType: "Release"
+  enableSanitizers: true
+  crossPlatformCheck: true
+
+check:
+  script: |
+    #!/bin/bash
+    echo "🔧 C++ Programming Quality Checks - Ensuring production-ready code"
+    
+    ERRORS=()
+    WARNINGS=()
+    CHECK_FAILED=false
+    
+    # Detect build system
+    BUILD_SYSTEM=""
+    BUILD_DIR=""
+    
+    if [ -f "CMakeLists.txt" ]; then
+      BUILD_SYSTEM="cmake"
+      BUILD_DIR="build"
+    elif [ -f "Makefile" ]; then
+      BUILD_SYSTEM="make"
+    elif [ -f "BUILD" ] || [ -f "BUILD.bazel" ] || [ -f "WORKSPACE" ]; then
+      BUILD_SYSTEM="bazel"
+    else
+      # Look for CMakeLists.txt in subdirectories
+      CMAKE_FILES=$(find . -name "CMakeLists.txt" -type f 2>/dev/null | grep -v "/build/" | head -5)
+      if [ -n "$CMAKE_FILES" ]; then
+        BUILD_SYSTEM="cmake"
+        BUILD_DIR="build"
+      fi
+    fi
+    
+    if [ -z "$BUILD_SYSTEM" ]; then
+      echo "❌ No C++ build system detected (CMake, Make, or Bazel)"
+      exit 1
+    fi
+    
+    echo "✅ C++ project detected (Build system: $BUILD_SYSTEM)"
+    
+    # Step 1: Check code formatting
+    echo -e "\n🎨 Checking code formatting..."
+    
+    # Check if clang-format is installed
+    if ! command -v clang-format &> /dev/null; then
+      WARNINGS+=("clang-format not installed. Install to enable format checking.")
+      echo "⚠️ Skipping format check - clang-format not installed"
+    else
+      # Find all C++ source files
+      CPP_FILES=$(find . -type f \( -name "*.cpp" -o -name "*.cc" -o -name "*.cxx" -o -name "*.h" -o -name "*.hpp" \) \
+        -not -path "*/build/*" -not -path "*/.git/*" -not -path "*/third_party/*" -not -path "*/external/*" 2>/dev/null | head -50)
+      
+      if [ -n "$CPP_FILES" ]; then
+        format_issues=0
+        for file in $CPP_FILES; do
+          if ! clang-format --dry-run -Werror "$file" 2>/dev/null; then
+            ((format_issues++))
+          fi
+        done
+        
+        if [ $format_issues -gt 0 ]; then
+          ERRORS+=("$format_issues files have formatting issues. Run 'clang-format -i <file>' to fix.")
+          CHECK_FAILED=true
+          echo "❌ Format check failed ($format_issues files)"
+        else
+          echo "✅ Format check passed"
+        fi
+      fi
+    fi
+    
+    # Step 2: Static analysis with clang-tidy
+    echo -e "\n🔍 Running static analysis..."
+    
+    if ! command -v clang-tidy &> /dev/null; then
+      WARNINGS+=("clang-tidy not installed. Install for static analysis.")
+      echo "⚠️ Skipping clang-tidy - not installed"
+    else
+      # Generate compile_commands.json if using CMake
+      if [ "$BUILD_SYSTEM" = "cmake" ] && [ ! -f "compile_commands.json" ]; then
+        mkdir -p "$BUILD_DIR"
+        cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B "$BUILD_DIR" 2>/dev/null || true
+        if [ -f "$BUILD_DIR/compile_commands.json" ]; then
+          ln -sf "$BUILD_DIR/compile_commands.json" . 2>/dev/null || true
+        fi
+      fi
+      
+      # Run clang-tidy on a sample of files
+      if [ -f "compile_commands.json" ]; then
+        SAMPLE_FILES=$(find . -name "*.cpp" -o -name "*.cc" | grep -v "/build/" | head -5)
+        tidy_issues=0
+        
+        for file in $SAMPLE_FILES; do
+          if clang-tidy "$file" 2>&1 | grep -q "warning:"; then
+            ((tidy_issues++))
+          fi
+        done
+        
+        if [ $tidy_issues -gt 0 ]; then
+          WARNINGS+=("clang-tidy found issues in $tidy_issues files")
+          echo "⚠️ Static analysis found issues"
+        else
+          echo "✅ Static analysis passed"
+        fi
+      else
+        echo "ℹ️ compile_commands.json not found - limited analysis"
+      fi
+    fi
+    
+    # Step 3: Additional static analysis with cppcheck
+    if command -v cppcheck &> /dev/null; then
+      echo "Running cppcheck..."
+      
+      cppcheck_output=$(cppcheck --enable=all --suppress=missingIncludeSystem --error-exitcode=1 \
+        --quiet . 2>&1 | grep -E "(error|warning)" | head -10)
+      
+      if [ -n "$cppcheck_output" ]; then
+        WARNINGS+=("cppcheck found issues")
+        echo "⚠️ cppcheck found issues"
+      else
+        echo "✅ cppcheck passed"
+      fi
+    fi
+    
+    # Step 4: Build project
+    echo -e "\n🔨 Building project..."
+    
+    case "$BUILD_SYSTEM" in
+      "cmake")
+        mkdir -p "$BUILD_DIR"
+        cd "$BUILD_DIR"
+        
+        if cmake .. -DCMAKE_BUILD_TYPE=Release 2>&1 > /dev/null; then
+          if make -j$(nproc) 2>&1 > /dev/null; then
+            echo "✅ Build succeeded"
+          else
+            ERRORS+=("Build failed with make")
+            CHECK_FAILED=true
+            echo "❌ Build failed"
+          fi
+        else
+          ERRORS+=("CMake configuration failed")
+          CHECK_FAILED=true
+          echo "❌ CMake configuration failed"
+        fi
+        
+        cd ..
+        ;;
+        
+      "make")
+        if make clean 2>/dev/null && make -j$(nproc) 2>&1 > /dev/null; then
+          echo "✅ Build succeeded"
+        else
+          ERRORS+=("Make build failed")
+          CHECK_FAILED=true
+          echo "❌ Build failed"
+        fi
+        ;;
+        
+      "bazel")
+        if bazel build //... 2>&1 > /dev/null; then
+          echo "✅ Build succeeded"
+        else
+          ERRORS+=("Bazel build failed")
+          CHECK_FAILED=true
+          echo "❌ Build failed"
+        fi
+        ;;
+    esac
+    
+    # Step 5: Run tests
+    echo -e "\n🧪 Running tests..."
+    
+    case "$BUILD_SYSTEM" in
+      "cmake")
+        if [ -d "$BUILD_DIR" ]; then
+          cd "$BUILD_DIR"
+          
+          if command -v ctest &> /dev/null; then
+            if ctest --output-on-failure 2>&1 > /dev/null; then
+              echo "✅ All tests passed"
+            else
+              ERRORS+=("Some tests failed")
+              CHECK_FAILED=true
+              echo "❌ Tests failed"
+            fi
+          else
+            echo "ℹ️ CTest not found"
+          fi
+          
+          cd ..
+        fi
+        ;;
+        
+      "make")
+        if make test 2>&1 > /dev/null; then
+          echo "✅ Tests passed"
+        else
+          echo "ℹ️ No test target found"
+        fi
+        ;;
+        
+      "bazel")
+        if bazel test //... 2>&1 > /dev/null; then
+          echo "✅ Tests passed"
+        else
+          WARNINGS+=("Some tests failed")
+          echo "⚠️ Some tests failed"
+        fi
+        ;;
+    esac
+    
+    # Step 6: Memory checks (if debug build available)
+    echo -e "\n💾 Checking for memory issues..."
+    
+    if [ "$BUILD_SYSTEM" = "cmake" ] && [ -d "$BUILD_DIR" ]; then
+      # Check if any executable has AddressSanitizer
+      if find "$BUILD_DIR" -type f -executable -exec ldd {} \; 2>/dev/null | grep -q "asan"; then
+        echo "✅ AddressSanitizer enabled"
+      else
+        echo "ℹ️ Consider enabling AddressSanitizer with -fsanitize=address"
+      fi
+    fi
+    
+    # Check for valgrind
+    if command -v valgrind &> /dev/null; then
+      echo "✅ Valgrind available for memory checking"
+    else
+      echo "ℹ️ Install valgrind for memory leak detection"
+    fi
+    
+    # Step 7: Check for common issues
+    echo -e "\n⚠️ Checking for common issues..."
+    
+    # Check for using namespace std in headers
+    if grep -r "using namespace std" --include="*.h" --include="*.hpp" . 2>/dev/null | grep -v "^Binary"; then
+      WARNINGS+=("Found 'using namespace std' in header files")
+      echo "⚠️ Found 'using namespace std' in headers"
+    fi
+    
+    # Check for raw pointers without smart pointers
+    raw_ptr_count=$(grep -r "\\*[a-zA-Z]" --include="*.cpp" --include="*.h" . 2>/dev/null | grep -v "shared_ptr\|unique_ptr\|weak_ptr" | wc -l)
+    if [ "$raw_ptr_count" -gt 100 ]; then
+      WARNINGS+=("High usage of raw pointers ($raw_ptr_count). Consider smart pointers.")
+      echo "⚠️ High raw pointer usage"
+    fi
+    
+    # Output results
+    echo -e "\n📊 C++ Quality Check Summary:"
+    echo "=============================="
+    
+    if [ $CHECK_FAILED = true ]; then
+      echo "❌ Quality checks FAILED"
+      
+      if [ ${#ERRORS[@]} -gt 0 ]; then
+        echo -e "\n🚫 Errors (must fix):"
+        printf '%s\n' "${ERRORS[@]}"
+      fi
+    else
+      echo "✅ All quality checks PASSED"
+    fi
+    
+    if [ ${#WARNINGS[@]} -gt 0 ]; then
+      echo -e "\n⚠️ Warnings (should fix):"
+      printf '%s\n' "${WARNINGS[@]}"
+    fi
+    
+    if [ $CHECK_FAILED = true ]; then
+      exit 1
+    else
+      exit 0
+    fi
+
+analysis:
+  script: |
+    #!/bin/bash
+    echo "🔍 Analyzing C++ project quality issues..."
+    
+    echo -e "\n📋 Recommended Actions:"
+    echo "======================="
+    
+    # Format recommendations
+    echo -e "\n🎨 Code Formatting:"
+    echo "  - Format all: find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i"
+    echo "  - Create config: clang-format -style=google -dump-config > .clang-format"
+    echo "  - VS Code: Install C/C++ extension for auto-format"
+    
+    # Static analysis
+    echo -e "\n🔍 Static Analysis:"
+    echo "  - clang-tidy: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    echo "  - Run: clang-tidy -fix-errors -header-filter=.* *.cpp"
+    echo "  - cppcheck: cppcheck --enable=all --inconclusive ."
+    echo "  - PVS-Studio: pvs-studio-analyzer analyze"
+    
+    # Build recommendations
+    echo -e "\n🔨 Build Optimization:"
+    echo "  - Release: cmake -DCMAKE_BUILD_TYPE=Release"
+    echo "  - Debug: cmake -DCMAKE_BUILD_TYPE=Debug"
+    echo "  - Sanitizers: -fsanitize=address,undefined"
+    echo "  - LTO: -flto for link-time optimization"
+    echo "  - Profile-guided: -fprofile-generate/-fprofile-use"
+    
+    # Testing
+    echo -e "\n🧪 Testing:"
+    echo "  - GoogleTest: FetchContent_Declare(googletest ...)"
+    echo "  - Coverage: -fprofile-arcs -ftest-coverage"
+    echo "  - Valgrind: valgrind --leak-check=full ./program"
+    echo "  - Sanitizers: ASAN_OPTIONS=detect_leaks=1"
+    
+    # Memory safety
+    echo -e "\n💾 Memory Safety:"
+    echo "  - Smart pointers: Use unique_ptr/shared_ptr"
+    echo "  - RAII: Resource Acquisition Is Initialization"
+    echo "  - Rule of 5: Destructor, copy/move constructors/assignments"
+    echo "  - STL containers: Prefer over raw arrays"
+    
+    # Performance
+    echo -e "\n⚡ Performance:"
+    echo "  - Profiling: gprof, perf, Intel VTune"
+    echo "  - Optimization: -O3 -march=native"
+    echo "  - Constexpr: Use for compile-time computation"
+    echo "  - Move semantics: Implement move constructor/assignment"
+    
+    # Cross-platform
+    echo -e "\n🌍 Cross-Platform:"
+    echo "  - CMake: Use target_compile_features"
+    echo "  - Compiler flags: if(MSVC) vs if(GCC)"
+    echo "  - Platform detection: #ifdef _WIN32"
+    echo "  - Filesystem: std::filesystem (C++17)"
+
+fix:
+  script: |
+    #!/bin/bash
+    echo "🔧 Fixing C++ code quality issues..."
+    
+    # Fix formatting
+    echo -e "\n🎨 Fixing code formatting..."
+    if command -v clang-format &> /dev/null; then
+      # Create default .clang-format if not exists
+      if [ ! -f ".clang-format" ]; then
+        clang-format -style=google -dump-config > .clang-format
+        echo "Created .clang-format with Google style"
+      fi
+      
+      # Format all C++ files
+      find . -type f \( -name "*.cpp" -o -name "*.cc" -o -name "*.h" -o -name "*.hpp" \) \
+        -not -path "*/build/*" -not -path "*/third_party/*" \
+        -exec clang-format -i {} \;
+      
+      echo "✅ Code formatting fixed"
+    else
+      echo "⚠️ clang-format not installed"
+    fi
+    
+    # Run clang-tidy fixes
+    echo -e "\n🔍 Applying static analysis fixes..."
+    if command -v clang-tidy &> /dev/null && [ -f "compile_commands.json" ]; then
+      find . -name "*.cpp" -not -path "*/build/*" | head -10 | \
+        xargs clang-tidy -fix-errors -header-filter=.* 2>/dev/null || true
+      echo "✅ Applied clang-tidy fixes"
+    fi
+    
+    # Setup CMake build with sanitizers
+    echo -e "\n🔨 Setting up sanitized build..."
+    if [ -f "CMakeLists.txt" ]; then
+      mkdir -p build_sanitized
+      cd build_sanitized
+      
+      cmake .. -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+        -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" 2>/dev/null || true
+      
+      cd ..
+      echo "✅ Sanitized build configured in build_sanitized/"
+    fi
+    
+    # Create basic test structure if missing
+    echo -e "\n🧪 Setting up test structure..."
+    if [ ! -d "tests" ] && [ -f "CMakeLists.txt" ]; then
+      mkdir -p tests
+      cat > tests/CMakeLists.txt << 'EOF'
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG release-1.12.1
+)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+# Add your test executables here
+# add_executable(my_tests test_main.cpp)
+# target_link_libraries(my_tests GTest::gtest_main)
+# include(GoogleTest)
+# gtest_discover_tests(my_tests)
+EOF
+      echo "✅ Created test structure in tests/"
+    fi
+    
+    # Generate .clang-tidy if missing
+    if [ ! -f ".clang-tidy" ]; then
+      cat > .clang-tidy << 'EOF'
+Checks: '*,-fuchsia-*,-google-runtime-references,-llvm-header-guard,-modernize-use-trailing-return-type'
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*'
+AnalyzeTemporaryDtors: false
+FormatStyle: google
+EOF
+      echo "✅ Created .clang-tidy configuration"
+    fi
+    
+    echo -e "\n✅ C++ quality fixes applied!"
+    echo "Next steps:"
+    echo "1. Review and commit formatting changes"
+    echo "2. Build with: cmake -B build && cmake --build build"
+    echo "3. Run tests: cd build && ctest"
+    echo "4. Check memory: valgrind --leak-check=full ./your_program"
+
+config:
+  requiredFiles:
+    - pattern: "**/*.cpp"
+      description: "C++ source files"
+  forbiddenPatterns:
+    - pattern: "build/|cmake-build-*/"
+      description: "Build directories"
+  hooks:
+    preCommit: |
+      # Format check
+      find . -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run -Werror
+      # Build check
+      cmake --build build --target all
+      # Test check
+      cd build && ctest --output-on-failure

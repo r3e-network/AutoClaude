@@ -1,0 +1,345 @@
+id: dotnet-checks
+name: .NET Programming Quality Checks
+description: Enforces .NET code quality standards by running format, build, and test checks before task completion
+version: 1.0.0
+author: AutoClaude Development Team
+capabilities:
+  - .NET code formatting with dotnet format
+  - Build validation with dotnet build
+  - Test execution with dotnet test
+  - NuGet package restoration
+  - Code analysis with analyzers
+  - Cross-platform .NET support
+projectDetection:
+  - pattern: "**/*.csproj"
+  - pattern: "**/*.fsproj"
+  - pattern: "**/*.vbproj"
+  - pattern: "**/global.json"
+  - pattern: "**/*.sln"
+  - files: ["Directory.Build.props", "Directory.Build.targets"]
+  - keywords: ["dotnet", ".NET", "C#", "F#", "VB.NET"]
+priority: critical
+enabled: true
+supportsTriggers: true
+supportsAnalysis: true
+supportsFix: true
+smartMode: true
+options:
+  enforceFormatting: true
+  runTests: true
+  failOnWarnings: false
+  treatWarningsAsErrors: false
+  runCodeAnalysis: true
+  checkNuGetVulnerabilities: true
+
+check:
+  script: |
+    #!/bin/bash
+    echo "🎯 .NET Programming Quality Checks - Ensuring production-ready code"
+    
+    ERRORS=()
+    WARNINGS=()
+    CHECK_FAILED=false
+    
+    # Find all solution and project files
+    SOLUTION_FILES=$(find . -name "*.sln" -type f 2>/dev/null | grep -v "/obj/" | grep -v "/bin/" | head -5)
+    PROJECT_FILES=$(find . -name "*.csproj" -o -name "*.fsproj" -o -name "*.vbproj" 2>/dev/null | grep -v "/obj/" | grep -v "/bin/" | head -20)
+    
+    if [ -z "$SOLUTION_FILES" ] && [ -z "$PROJECT_FILES" ]; then
+      echo "❌ No .NET solution or project files found"
+      exit 1
+    fi
+    
+    echo "✅ .NET project detected"
+    
+    # Function to run command and capture result
+    run_dotnet_command() {
+      local cmd="$1"
+      local description="$2"
+      local project="$3"
+      
+      echo "🔄 Running: $cmd $project"
+      
+      if [ -n "$project" ]; then
+        output=$($cmd "$project" 2>&1)
+      else
+        output=$($cmd 2>&1)
+      fi
+      
+      exit_code=$?
+      
+      if [ $exit_code -ne 0 ]; then
+        ERRORS+=("$description failed: $cmd")
+        CHECK_FAILED=true
+        echo "❌ $description failed"
+        echo "$output" | tail -20
+        return 1
+      else
+        echo "✅ $description passed"
+        return 0
+      fi
+    }
+    
+    # Step 1: Restore NuGet packages
+    echo -e "\n📦 Restoring NuGet packages..."
+    if [ -n "$SOLUTION_FILES" ]; then
+      for sln in $SOLUTION_FILES; do
+        run_dotnet_command "dotnet restore" "Package restore" "$sln"
+      done
+    else
+      run_dotnet_command "dotnet restore" "Package restore" ""
+    fi
+    
+    # Step 2: Check code formatting
+    echo -e "\n🎨 Checking code formatting..."
+    
+    # Check if dotnet-format is available
+    if ! command -v dotnet-format &> /dev/null; then
+      # Try using dotnet format command (newer versions)
+      if dotnet format --version &> /dev/null; then
+        FORMAT_CMD="dotnet format"
+      else
+        WARNINGS+=("dotnet-format tool not installed. Install with: dotnet tool install -g dotnet-format")
+        echo "⚠️ Skipping format check - tool not installed"
+        FORMAT_CMD=""
+      fi
+    else
+      FORMAT_CMD="dotnet-format"
+    fi
+    
+    if [ -n "$FORMAT_CMD" ]; then
+      # Run format check without fixing
+      if [ -n "$SOLUTION_FILES" ]; then
+        for sln in $SOLUTION_FILES; do
+          echo "Checking format for: $sln"
+          output=$($FORMAT_CMD "$sln" --verify-no-changes 2>&1)
+          exit_code=$?
+          
+          if [ $exit_code -ne 0 ]; then
+            ERRORS+=("Code formatting issues found in $sln. Run 'dotnet format' to fix.")
+            CHECK_FAILED=true
+            echo "❌ Format check failed for $sln"
+          else
+            echo "✅ Format check passed for $sln"
+          fi
+        done
+      else
+        output=$($FORMAT_CMD --verify-no-changes 2>&1)
+        exit_code=$?
+        
+        if [ $exit_code -ne 0 ]; then
+          ERRORS+=("Code formatting issues found. Run 'dotnet format' to fix.")
+          CHECK_FAILED=true
+          echo "❌ Format check failed"
+        else
+          echo "✅ Format check passed"
+        fi
+      fi
+    fi
+    
+    # Step 3: Build projects
+    echo -e "\n🔨 Building projects..."
+    
+    BUILD_CONFIG="Release"
+    if [ -n "$SOLUTION_FILES" ]; then
+      for sln in $SOLUTION_FILES; do
+        run_dotnet_command "dotnet build" "Build" "$sln --configuration $BUILD_CONFIG --no-restore"
+      done
+    else
+      for proj in $PROJECT_FILES; do
+        run_dotnet_command "dotnet build" "Build" "$proj --configuration $BUILD_CONFIG --no-restore"
+      done
+    fi
+    
+    # Step 4: Run tests
+    echo -e "\n🧪 Running tests..."
+    
+    TEST_PROJECTS=$(find . -name "*.csproj" -o -name "*.fsproj" | xargs grep -l "Microsoft.NET.Test.Sdk" 2>/dev/null | grep -v "/obj/" | grep -v "/bin/")
+    
+    if [ -z "$TEST_PROJECTS" ]; then
+      echo "ℹ️ No test projects found (looking for Microsoft.NET.Test.Sdk reference)"
+    else
+      for test_proj in $TEST_PROJECTS; do
+        echo "Running tests in: $test_proj"
+        
+        output=$(dotnet test "$test_proj" --configuration $BUILD_CONFIG --no-build --no-restore --logger "console;verbosity=minimal" 2>&1)
+        exit_code=$?
+        
+        if [ $exit_code -ne 0 ]; then
+          ERRORS+=("Tests failed in $test_proj")
+          CHECK_FAILED=true
+          echo "❌ Tests failed in $test_proj"
+          echo "$output" | grep -E "(Failed|Error)" | head -10
+        else
+          # Extract test summary
+          passed=$(echo "$output" | grep -oP 'Passed.*?(\d+)' | grep -oP '\d+' | tail -1)
+          failed=$(echo "$output" | grep -oP 'Failed.*?(\d+)' | grep -oP '\d+' | tail -1)
+          skipped=$(echo "$output" | grep -oP 'Skipped.*?(\d+)' | grep -oP '\d+' | tail -1)
+          
+          if [ -n "$failed" ] && [ "$failed" != "0" ]; then
+            ERRORS+=("$failed tests failed in $test_proj")
+            CHECK_FAILED=true
+            echo "❌ $failed tests failed in $test_proj"
+          else
+            echo "✅ All tests passed in $test_proj (${passed:-0} passed, ${skipped:-0} skipped)"
+          fi
+        fi
+      done
+    fi
+    
+    # Step 5: Check for security vulnerabilities (if enabled)
+    echo -e "\n🔒 Checking for NuGet vulnerabilities..."
+    
+    if dotnet list package --vulnerable 2>&1 | grep -q "no vulnerabilities"; then
+      echo "✅ No known vulnerabilities found"
+    else
+      vulnerabilities=$(dotnet list package --vulnerable 2>&1 | grep -E "(High|Critical|Moderate)" | head -5)
+      if [ -n "$vulnerabilities" ]; then
+        WARNINGS+=("NuGet packages with known vulnerabilities detected")
+        echo "⚠️ Vulnerable packages found:"
+        echo "$vulnerabilities"
+      fi
+    fi
+    
+    # Step 6: Run code analyzers (if configured)
+    echo -e "\n🔍 Running code analysis..."
+    
+    # Check if any analyzers are installed
+    ANALYZER_PACKAGES=$(find . -name "*.csproj" -exec grep -l "Microsoft.CodeAnalysis" {} \; 2>/dev/null | head -5)
+    
+    if [ -n "$ANALYZER_PACKAGES" ]; then
+      echo "✅ Code analyzers detected and will run during build"
+    else
+      echo "ℹ️ No code analyzers configured"
+    fi
+    
+    # Output results
+    echo -e "\n📊 .NET Quality Check Summary:"
+    echo "=============================="
+    
+    if [ $CHECK_FAILED = true ]; then
+      echo "❌ Quality checks FAILED"
+      
+      if [ ${#ERRORS[@]} -gt 0 ]; then
+        echo -e "\n🚫 Errors (must fix):"
+        printf '%s\n' "${ERRORS[@]}"
+      fi
+    else
+      echo "✅ All quality checks PASSED"
+    fi
+    
+    if [ ${#WARNINGS[@]} -gt 0 ]; then
+      echo -e "\n⚠️ Warnings (should fix):"
+      printf '%s\n' "${WARNINGS[@]}"
+    fi
+    
+    if [ $CHECK_FAILED = true ]; then
+      exit 1
+    else
+      exit 0
+    fi
+
+analysis:
+  script: |
+    #!/bin/bash
+    echo "🔍 Analyzing .NET project quality issues..."
+    
+    echo -e "\n📋 Recommended Actions:"
+    echo "======================="
+    
+    # Format recommendations
+    echo -e "\n🎨 Code Formatting:"
+    echo "  - Run: dotnet format"
+    echo "  - Or: dotnet format --severity info"
+    echo "  - For specific project: dotnet format <project.csproj>"
+    
+    # Build recommendations
+    echo -e "\n🔨 Build Issues:"
+    echo "  - Check compiler warnings: dotnet build -warnaserror"
+    echo "  - Clean and rebuild: dotnet clean && dotnet build"
+    echo "  - Restore packages: dotnet restore"
+    
+    # Test recommendations
+    echo -e "\n🧪 Testing:"
+    echo "  - Run all tests: dotnet test"
+    echo "  - With coverage: dotnet test --collect:\"XPlat Code Coverage\""
+    echo "  - Specific test: dotnet test --filter \"FullyQualifiedName~TestName\""
+    
+    # Performance recommendations
+    echo -e "\n⚡ Performance:"
+    echo "  - Enable ReadyToRun: <PublishReadyToRun>true</PublishReadyToRun>"
+    echo "  - Use Release mode: dotnet build -c Release"
+    echo "  - Enable tiered compilation: <TieredCompilation>true</TieredCompilation>"
+    
+    # Security recommendations
+    echo -e "\n🔒 Security:"
+    echo "  - Check vulnerabilities: dotnet list package --vulnerable"
+    echo "  - Update packages: dotnet add package <package> --version <version>"
+    echo "  - Audit packages: dotnet list package --outdated"
+    
+    # Code quality
+    echo -e "\n📊 Code Quality Tools:"
+    echo "  - Install analyzers: dotnet add package Microsoft.CodeAnalysis.NetAnalyzers"
+    echo "  - StyleCop: dotnet add package StyleCop.Analyzers"
+    echo "  - FxCop: dotnet add package Microsoft.CodeAnalysis.FxCopAnalyzers"
+    echo "  - SonarAnalyzer: dotnet add package SonarAnalyzer.CSharp"
+
+fix:
+  script: |
+    #!/bin/bash
+    echo "🔧 Fixing .NET code quality issues..."
+    
+    # Fix formatting
+    echo -e "\n🎨 Fixing code formatting..."
+    if command -v dotnet-format &> /dev/null || dotnet format --version &> /dev/null; then
+      if [ -n "$(find . -name "*.sln" -type f 2>/dev/null | head -1)" ]; then
+        find . -name "*.sln" -type f -exec dotnet format {} \; 2>/dev/null
+      else
+        dotnet format 2>/dev/null || echo "Format fixing requires a solution or project file"
+      fi
+      echo "✅ Code formatting fixed"
+    else
+      echo "⚠️ dotnet-format not available. Install with: dotnet tool install -g dotnet-format"
+    fi
+    
+    # Restore packages
+    echo -e "\n📦 Restoring NuGet packages..."
+    dotnet restore
+    echo "✅ Packages restored"
+    
+    # Clean and rebuild
+    echo -e "\n🔨 Cleaning and rebuilding..."
+    dotnet clean
+    dotnet build
+    echo "✅ Project rebuilt"
+    
+    # Update vulnerable packages
+    echo -e "\n🔒 Checking for vulnerable packages..."
+    vulnerable=$(dotnet list package --vulnerable 2>&1 | grep -E "(High|Critical)" | awk '{print $2}' | sort -u)
+    
+    if [ -n "$vulnerable" ]; then
+      echo "Found vulnerable packages. Attempting to update..."
+      for package in $vulnerable; do
+        echo "Updating $package..."
+        find . -name "*.csproj" -exec dotnet add {} package "$package" \; 2>/dev/null
+      done
+    fi
+    
+    echo -e "\n✅ .NET quality fixes applied!"
+    echo "Please run 'dotnet test' to ensure all tests still pass."
+
+config:
+  requiredFiles:
+    - pattern: "**/*.csproj"
+      description: "C# project files"
+    - pattern: "**/*.sln"
+      description: ".NET solution files"
+  forbiddenPatterns:
+    - pattern: "bin/|obj/"
+      description: "Build output directories"
+  hooks:
+    preCommit: |
+      # Run quality checks before commit
+      dotnet format --verify-no-changes
+      dotnet build --no-restore
+      dotnet test --no-build --no-restore

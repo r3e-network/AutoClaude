@@ -184,7 +184,19 @@ export class ProductionReadinessValidator {
                 log.error('DDD violations detected - blocking task completion');
             }
             
-            // Step 5: Check code formatting
+            // Step 5: Language-specific quality checks
+            const detectedLanguages = await this.detectProjectLanguages();
+            if (detectedLanguages.length > 0) {
+                log.info('Detected project languages', { languages: detectedLanguages });
+                const languageResult = await this.runLanguageSpecificChecks(detectedLanguages);
+                if (!languageResult.passed) {
+                    result.isProductionReady = false;
+                    result.criticalIssues.push(...languageResult.errors);
+                    log.error('Language-specific quality checks failed');
+                }
+            }
+            
+            // Step 6: Check code formatting
             const formatResult = await this.runFormatCheck();
             if (!formatResult.passed) {
                 result.warnings.push(...formatResult.errors);
@@ -633,6 +645,101 @@ export class ProductionReadinessValidator {
         }
         
         return lines.join('\n');
+    }
+    
+    /**
+     * Detect programming languages in the project
+     */
+    private async detectProjectLanguages(): Promise<string[]> {
+        const languages: Set<string> = new Set();
+        
+        try {
+            // Check for language-specific files
+            const files = await this.getAllSourceFiles();
+            
+            for (const file of files) {
+                // .NET detection
+                if (file.endsWith('.csproj') || file.endsWith('.sln') || file.endsWith('.cs')) {
+                    languages.add('dotnet');
+                }
+                // Rust detection
+                if (file.includes('Cargo.toml') || file.endsWith('.rs')) {
+                    languages.add('rust');
+                }
+                // C++ detection
+                if (file.includes('CMakeLists.txt') || file.endsWith('.cpp') || file.endsWith('.cc') || file.endsWith('.hpp')) {
+                    languages.add('cpp');
+                }
+                // Go detection
+                if (file.includes('go.mod') || file.endsWith('.go')) {
+                    languages.add('go');
+                }
+                // Java detection
+                if (file.includes('pom.xml') || file.includes('build.gradle') || file.endsWith('.java')) {
+                    languages.add('java');
+                }
+                // Python detection
+                if (file.includes('requirements.txt') || file.includes('setup.py') || file.includes('pyproject.toml') || file.endsWith('.py')) {
+                    languages.add('python');
+                }
+                // TypeScript/JavaScript detection
+                if (file.includes('package.json') || file.includes('tsconfig.json') || file.endsWith('.ts') || file.endsWith('.js')) {
+                    languages.add('typescript');
+                }
+            }
+            
+        } catch (error) {
+            log.error('Language detection failed', error as Error);
+        }
+        
+        return Array.from(languages);
+    }
+    
+    /**
+     * Run language-specific quality checks
+     */
+    private async runLanguageSpecificChecks(languages: string[]): Promise<CheckResult> {
+        const combinedResult: CheckResult = {
+            passed: true,
+            errors: []
+        };
+        
+        const languageToAgent: Record<string, string> = {
+            'dotnet': 'dotnet-checks',
+            'rust': 'rust-checks',
+            'cpp': 'cpp-checks',
+            'go': 'go-checks',
+            'java': 'java-checks',
+            'python': 'python-checks',
+            'typescript': 'typescript-checks'
+        };
+        
+        for (const language of languages) {
+            const agentId = languageToAgent[language];
+            if (agentId) {
+                log.info(`Running ${language} specific quality checks`, { agentId });
+                
+                try {
+                    const result = await this.subAgentRunner.runSingleAgent(agentId);
+                    
+                    if (!result?.passed) {
+                        combinedResult.passed = false;
+                        combinedResult.errors.push(...(result?.errors?.map(e => ({
+                            file: agentId,
+                            line: 0,
+                            message: `${language.toUpperCase()} Check: ${e}`,
+                            severity: 'error' as const
+                        })) || []));
+                    }
+                } catch (error) {
+                    log.warn(`${language} quality check not available or failed`, error as Error);
+                    // Don't fail if language-specific check is not available
+                    // Just log a warning
+                }
+            }
+        }
+        
+        return combinedResult;
     }
 }
 
