@@ -5,6 +5,10 @@ import { HiveMindAgent, AgentRole, TaskPriority, HiveMindTask, HiveMindResult } 
 import ArchitectAgent from './ArchitectAgent';
 import CoderAgent from './CoderAgent';
 import TesterAgent from './TesterAgent';
+import ResearcherAgent from './ResearcherAgent';
+import SecurityAgent from './SecurityAgent';
+import DocumentationAgent from './DocumentationAgent';
+import OptimizationAgent from './OptimizationAgent';
 
 /**
  * Queen Agent - Master coordinator for the Hive-Mind system
@@ -69,7 +73,11 @@ export class QueenAgent implements HiveMindAgent {
         const agents: HiveMindAgent[] = [
             new ArchitectAgent(this.workspaceRoot),
             new CoderAgent(this.workspaceRoot),
-            new TesterAgent(this.workspaceRoot)
+            new TesterAgent(this.workspaceRoot),
+            new ResearcherAgent(this.workspaceRoot),
+            new SecurityAgent(this.workspaceRoot),
+            new DocumentationAgent(this.workspaceRoot),
+            new OptimizationAgent(this.workspaceRoot)
         ];
         
         // Initialize statically imported agents
@@ -83,25 +91,10 @@ export class QueenAgent implements HiveMindAgent {
             }
         }
         
-        // Initialize additional agents dynamically
-        const dynamicAgentTypes = [
-            'ResearcherAgent',
-            'SecurityAgent',
-            'DocumentationAgent',
-            'OptimizationAgent'
-        ];
-        
-        for (const agentType of dynamicAgentTypes) {
-            try {
-                const AgentClass = await import(`./${agentType}`);
-                const agent = new AgentClass.default(this.workspaceRoot);
-                await agent.initialize();
-                this.activeAgents.set(agent.id, agent);
-                log.info(`Initialized ${agentType}`, { agentId: agent.id });
-            } catch (error) {
-                log.warn(`Failed to initialize ${agentType}`, { error });
-            }
-        }
+        log.info('All specialized agents initialized', { 
+            agentCount: this.activeAgents.size,
+            agents: Array.from(this.activeAgents.keys())
+        });
     }
     
     private async loadMemorySystem(): Promise<void> {
