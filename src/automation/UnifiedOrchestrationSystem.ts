@@ -12,6 +12,7 @@ import { ContextManager } from './contextManager';
 import { TaskCompletionEngine } from './taskCompletion';
 import { ErrorRecoverySystem } from './errorRecovery';
 import { HiveMindTask, TaskPriority, TaskStatus } from '../agents/hivemind/types';
+import { ProductionReadinessValidator } from '../validation/ProductionReadinessValidator';
 
 /**
  * Unified Orchestration System - Integrates all AutoClaude features
@@ -37,10 +38,12 @@ export class UnifiedOrchestrationSystem {
     private hookManager: any;
     private agentCoordinator: any;
     private systemMonitor: any;
+    private productionValidator: ProductionReadinessValidator;
     
     private isRunning = false;
     private activeWorkflows = new Map<string, any>();
     private taskQueue: HiveMindTask[] = [];
+    private changedFiles = new Set<string>();
     
     constructor(private workspaceRoot: string) {
         this.workflowSystem = AutomaticWorkflowSystem.getInstance(workspaceRoot);
@@ -48,6 +51,7 @@ export class UnifiedOrchestrationSystem {
         this.contextManager = new ContextManager(workspaceRoot);
         this.taskEngine = new TaskCompletionEngine(workspaceRoot);
         this.errorRecovery = new ErrorRecoverySystem(this.contextManager, workspaceRoot);
+        this.productionValidator = ProductionReadinessValidator.getInstance(workspaceRoot);
         
         // Get singleton instances
         this.memoryManager = getMemoryManager(workspaceRoot);
@@ -175,13 +179,57 @@ export class UnifiedOrchestrationSystem {
                     await this.workflowSystem.processTask(task);
             }
             
-            // Update task completion
+            // CRITICAL: Validate production readiness before marking as complete
+            const validationResult = await this.validateProductionReadiness();
+            
+            if (!validationResult.isProductionReady) {
+                log.error('Task cannot be completed - code is not production ready', {
+                    taskId: task.id,
+                    errors: validationResult.errors.length,
+                    criticalIssues: validationResult.criticalIssues.length
+                });
+                
+                // Show validation report to user
+                const report = this.productionValidator.formatValidationResult(validationResult);
+                vscode.window.showErrorMessage(
+                    'Task cannot be completed - code is not production ready. Check output for details.',
+                    'Show Report'
+                ).then(action => {
+                    if (action === 'Show Report') {
+                        const outputChannel = vscode.window.createOutputChannel('Production Readiness');
+                        outputChannel.appendLine(report);
+                        outputChannel.show();
+                    }
+                });
+                
+                // Attempt to fix issues automatically
+                await this.attemptAutomaticFixes(validationResult);
+                
+                // Re-validate after fixes
+                const revalidationResult = await this.validateProductionReadiness();
+                
+                if (!revalidationResult.isProductionReady) {
+                    // Still not ready - mark task as failed
+                    task.status = TaskStatus.FAILED;
+                    task.result = {
+                        success: false,
+                        error: 'Code is not production ready',
+                        validationResult: revalidationResult
+                    };
+                    throw new Error('Production readiness validation failed after automatic fixes');
+                }
+            }
+            
+            // Update task completion only if validation passes
             task.status = TaskStatus.COMPLETED;
             task.completedAt = Date.now();
             task.duration = task.completedAt - task.startedAt;
             
             // Record metrics
             await this.recordTaskMetrics(task);
+            
+            // Clear changed files tracking
+            this.changedFiles.clear();
             
         } catch (error) {
             log.error('Task execution failed', error as Error, { taskId: task.id });
@@ -286,6 +334,15 @@ export class UnifiedOrchestrationSystem {
         vscode.workspace.onDidSaveTextDocument(async (document) => {
             if (this.isRunning) {
                 await this.contextManager.updateContext(document.uri.fsPath);
+                // Track changed files for validation
+                this.changedFiles.add(document.uri.fsPath);
+            }
+        });
+        
+        // Track all file changes
+        vscode.workspace.onDidChangeTextDocument((event) => {
+            if (this.isRunning && !event.document.isUntitled) {
+                this.changedFiles.add(event.document.uri.fsPath);
             }
         });
     }
@@ -898,5 +955,120 @@ export class UnifiedOrchestrationSystem {
         // Try to extract file path from error message
         const fileMatch = error.match(/(?:in|at)\s+(.+?\.[a-zA-Z]+)(?::(\d+))?/);
         return fileMatch ? fileMatch[1] : undefined;
+    }
+    
+    /**
+     * Validate production readiness of current code
+     */
+    private async validateProductionReadiness(): Promise<any> {
+        log.info('Validating production readiness', { 
+            changedFiles: this.changedFiles.size 
+        });
+        
+        // Get list of changed files or validate all if too many changes
+        const changedFilesArray = this.changedFiles.size > 0 && this.changedFiles.size < 100
+            ? Array.from(this.changedFiles)
+            : undefined;
+        
+        const result = await this.productionValidator.validateProductionReadiness(changedFilesArray);
+        
+        // Log detailed results
+        if (!result.isProductionReady) {
+            log.warn('Production readiness validation failed', {
+                errors: result.errors.length,
+                warnings: result.warnings.length,
+                criticalIssues: result.criticalIssues.length,
+                totalIssues: result.totalIssues
+            });
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Attempt to automatically fix production readiness issues
+     */
+    private async attemptAutomaticFixes(validationResult: any): Promise<void> {
+        log.info('Attempting automatic fixes for production readiness issues');
+        
+        const fixTasks: HiveMindTask[] = [];
+        
+        // Create fix tasks for different issue types
+        if (validationResult.errors.some((e: any) => e.message.includes('TODO'))) {
+            fixTasks.push(this.createTask(
+                'fix-todos',
+                'Remove all TODO comments and implement missing functionality',
+                TaskPriority.CRITICAL
+            ));
+        }
+        
+        if (validationResult.errors.some((e: any) => e.message.includes('console'))) {
+            fixTasks.push(this.createTask(
+                'remove-console',
+                'Replace all console.log statements with proper logging',
+                TaskPriority.HIGH
+            ));
+        }
+        
+        if (validationResult.errors.some((e: any) => e.message.includes('any type'))) {
+            fixTasks.push(this.createTask(
+                'fix-types',
+                'Replace all TypeScript any types with proper types',
+                TaskPriority.HIGH
+            ));
+        }
+        
+        if (validationResult.criticalIssues.length > 0) {
+            fixTasks.push(this.createTask(
+                'fix-security',
+                'Fix all security issues including hardcoded secrets',
+                TaskPriority.CRITICAL
+            ));
+        }
+        
+        if (validationResult.errors.some((e: any) => e.message.includes('placeholder') || e.message.includes('mock'))) {
+            fixTasks.push(this.createTask(
+                'implement-placeholders',
+                'Implement all placeholder and mock code with production implementations',
+                TaskPriority.CRITICAL
+            ));
+        }
+        
+        if (validationResult.errors.some((e: any) => e.message.includes('error handling'))) {
+            fixTasks.push(this.createTask(
+                'fix-error-handling',
+                'Implement proper error handling for all empty catch blocks',
+                TaskPriority.HIGH
+            ));
+        }
+        
+        // Execute all fix tasks
+        for (const fixTask of fixTasks) {
+            try {
+                log.info('Executing automatic fix task', { 
+                    type: fixTask.type,
+                    description: fixTask.description 
+                });
+                
+                // Use SubAgent for specific fixes
+                if (fixTask.type === 'fix-todos' || fixTask.type === 'implement-placeholders') {
+                    await this.executeWithSubAgent(fixTask);
+                } else {
+                    await this.executeDirectTask(fixTask);
+                }
+                
+            } catch (error) {
+                log.error('Automatic fix failed', error as Error, { 
+                    taskType: fixTask.type 
+                });
+            }
+        }
+        
+        // Run format fix
+        try {
+            await vscode.commands.executeCommand('editor.action.formatDocument');
+        } catch (error) {
+            log.warn('Format command failed', error as Error);
+        }
     }
 }

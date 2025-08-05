@@ -659,6 +659,25 @@
           "default": true,
           "description": "Automatically start the unified orchestration system when workspace opens"
         },
+        "autoclaude.workflow.enforceProductionReadiness": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enforce production readiness checks before completing any task. Ensures no placeholders, TODOs, or incomplete code."
+        },
+        "autoclaude.workflow.productionStandards": {
+          "type": "object",
+          "default": {
+            "blockTodos": true,
+            "blockPlaceholders": true,
+            "blockConsoleLog": true,
+            "blockAnyTypes": true,
+            "blockEmptyCatch": true,
+            "blockHardcodedSecrets": true,
+            "requireTests": true,
+            "requireErrorHandling": true
+          },
+          "description": "Configure which production standards to enforce"
+        },
         "autoclaude.hooks.preOperation": {
           "type": "array",
           "default": [

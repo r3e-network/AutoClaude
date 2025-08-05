@@ -5,6 +5,7 @@ import { QueenAgent } from '../agents/hivemind/QueenAgent';
 import { AdvancedHookSystem } from '../hooks/AdvancedHookSystem';
 import { SQLiteMemorySystem } from '../memory/SQLiteMemorySystem';
 import { HiveMindTask, TaskPriority, TaskStatus, SwarmConfiguration } from '../agents/hivemind/types';
+import { ProductionReadinessValidator } from '../validation/ProductionReadinessValidator';
 
 /**
  * Automatic Workflow System - Orchestrates all AutoClaude components
@@ -31,6 +32,7 @@ export class AutomaticWorkflowSystem {
         this.queenAgent = new QueenAgent(workspaceRoot);
         this.hookSystem = AdvancedHookSystem.getInstance(workspaceRoot);
         this.memorySystem = new SQLiteMemorySystem(workspaceRoot);
+        this.productionValidator = ProductionReadinessValidator.getInstance(workspaceRoot);
     }
     
     static getInstance(workspaceRoot: string): AutomaticWorkflowSystem {
@@ -222,10 +224,18 @@ export class AutomaticWorkflowSystem {
         const cachedResult = await this.memorySystem.searchCache(task.type, task.context);
         if (cachedResult && this.config.mode === 'swarm') {
             log.info('Using cached result for task', { taskId: task.id });
-            task.result = cachedResult;
-            task.status = TaskStatus.COMPLETED;
-            task.completedAt = Date.now();
-            return;
+            
+            // Still need to validate production readiness even for cached results
+            const validationResult = await this.productionValidator.validateProductionReadiness();
+            if (!validationResult.isProductionReady) {
+                log.warn('Cached result cannot be used - code is not production ready');
+                // Continue with normal processing instead of using cache
+            } else {
+                task.result = cachedResult;
+                task.status = TaskStatus.COMPLETED;
+                task.completedAt = Date.now();
+                return;
+            }
         }
         
         // Record task
@@ -255,6 +265,37 @@ export class AutomaticWorkflowSystem {
                 
                 // Execute task through Queen Agent
                 const result = await this.queenAgent.execute(task);
+                
+                // Validate production readiness before marking as complete
+                if (result.success) {
+                    const validationResult = await this.productionValidator.validateProductionReadiness();
+                    
+                    if (!validationResult.isProductionReady) {
+                        log.error('Task cannot be completed - code is not production ready', {
+                            taskId: task.id,
+                            errors: validationResult.errors.length,
+                            criticalIssues: validationResult.criticalIssues.length
+                        });
+                        
+                        // Override success if not production ready
+                        result.success = false;
+                        result.error = 'Production readiness validation failed';
+                        result.validationResult = validationResult;
+                        
+                        // Show validation report
+                        const report = this.productionValidator.formatValidationResult(validationResult);
+                        vscode.window.showErrorMessage(
+                            'Task failed: Code is not production ready',
+                            'Show Report'
+                        ).then(action => {
+                            if (action === 'Show Report') {
+                                const outputChannel = vscode.window.createOutputChannel('Production Validation');
+                                outputChannel.appendLine(report);
+                                outputChannel.show();
+                            }
+                        });
+                    }
+                }
                 
                 // Update task with result
                 task.result = result;
