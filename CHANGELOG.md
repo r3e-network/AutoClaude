@@ -1,9 +1,90 @@
 # Changelog
 
-All notable changes to the Claude Autopilot extension will be documented in this file.
+All notable changes to the AutoClaude extension will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [3.10.0] - 2025-08-05
+
+### 🧠 Major Feature Release - Hive-Mind Architecture
+
+This release introduces advanced AI coordination capabilities inspired by Claude Flow, transforming AutoClaude into a powerful multi-agent orchestration system.
+
+#### 🎯 Added
+- **Hive-Mind AI Coordination System**
+  - Queen Agent for master orchestration of complex tasks
+  - Specialized agents: Architect, Coder, and Tester
+  - Swarm intelligence for distributed task processing
+  - Automatic task decomposition and parallel execution
+  
+- **Natural Language Command Processing**
+  - Execute commands in plain English: "Make project production ready"
+  - Intelligent command parsing and task generation
+  - Context-aware task prioritization
+  
+- **SQLite-based Persistent Memory System**
+  - Pattern recognition and learning across sessions
+  - Performance metrics tracking and optimization
+  - Intelligent caching with configurable TTL
+  - Task history and session management
+  
+- **Advanced Hooks System**
+  - Pre/post operation hooks for automation
+  - Session lifecycle management
+  - Automatic code formatting and optimization
+  - Pattern learning from user operations
+  
+- **Automatic Workflow Orchestration**
+  - Intelligent task prioritization (High/Medium/Low)
+  - Auto-scaling based on workload
+  - Fault tolerance with automatic recovery
+  - Load balancing across specialized agents
+  
+- **New Commands**
+  - `🧠 Start Hive-Mind Mode` - Complex project orchestration
+  - `🐝 Start Swarm Mode` - Quick task processing
+  - `💬 Execute Natural Language Command` - AI-powered command execution
+  - `📊 Show Workflow Status` - Real-time monitoring
+  - `🪝 Configure Hooks` - Customize automation behaviors
+  - `🧠 View Memory & Learning Insights` - AI learning dashboard
+
+#### 🔧 Improved
+- **Production Readiness**
+  - Replaced 149 console.log statements with production logger
+  - Comprehensive error handling and recovery
+  - Resource management and cleanup
+  - Performance optimization throughout
+  
+- **Architecture**
+  - Modular agent system for extensibility
+  - Clean separation of concerns
+  - Type-safe implementations
+  - Dependency injection pattern
+  
+- **User Experience**
+  - Automatic error detection and fixing
+  - Intelligent file monitoring and response
+  - Smart task resumption after interruptions
+  - Real-time status updates
+
+#### 🐛 Fixed
+- Fixed missing path import in AutomaticWorkflowSystem
+- Fixed sqlite module external dependencies in build configuration
+- Resolved TypeScript compilation errors in agent system
+- Fixed command registration for new Hive-Mind features
+
+#### 🔒 Security
+- Secure SQLite storage for sensitive data
+- Safe task execution boundaries
+- Protected hook execution environment
+- Input validation on all natural language commands
+
+#### 📚 Technical Details
+- **New Dependencies**: sqlite, sqlite3 for persistent storage
+- **New Modules**: 10+ new TypeScript modules for Hive-Mind system
+- **Configuration**: New settings for workflow modes and agent behavior
+- **Performance**: Optimized for handling 50+ parallel agents
 
 ## [3.9.1] - 2025-08-05
 

@@ -14,7 +14,7 @@ async function main() {
     sourcesContent: false,
     platform: 'node',
     outfile: 'out/extension.js',
-    external: ['vscode'],
+    external: ['vscode', 'sqlite', 'sqlite3'],
     logLevel: 'info',
     plugins: [
       {

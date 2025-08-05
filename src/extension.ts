@@ -33,6 +33,8 @@ import { getEnhancedConfig } from './config/enhanced-config';
 import { getHookManager } from './hooks/HookManager';
 import { getAgentCoordinator, resetAgentCoordinator } from './agents/AgentCoordinator';
 import { getSystemMonitor, resetSystemMonitor } from './monitoring/SystemMonitor';
+import { AutomaticWorkflowSystem } from './automation/AutomaticWorkflowSystem';
+import { log } from './utils/productionLogger';
 
 // Development-only imports
 let simulateUsageLimit: (() => void) | undefined;
@@ -90,6 +92,7 @@ export async function activate(context: vscode.ExtensionContext) {
     let hookManager: any = null;
     let agentCoordinator: any = null;
     let systemMonitor: any = null;
+    let workflowSystem: AutomaticWorkflowSystem | null = null;
 
     // Initialize automation if workspace is available
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -121,12 +124,18 @@ export async function activate(context: vscode.ExtensionContext) {
             await systemMonitor.initialize();
             debugLog('System monitor initialized');
             
+            // Initialize workflow system
+            workflowSystem = AutomaticWorkflowSystem.getInstance(workspaceFolder.uri.fsPath);
+            await workflowSystem.initialize();
+            log.info('Automatic workflow system initialized');
+            
             // Store globally for access by other modules
             (global as any).memoryManager = memoryManager;
             (global as any).enhancedConfig = enhancedConfig;
             (global as any).hookManager = hookManager;
             (global as any).agentCoordinator = agentCoordinator;
             (global as any).systemMonitor = systemMonitor;
+            (global as any).workflowSystem = workflowSystem;
             
         } catch (error) {
             errorLog('Failed to initialize enhanced systems', { error });
@@ -892,6 +901,93 @@ export async function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage(`Session info command failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     });
+    
+    // New Hive-Mind commands
+    const startHiveMindCommand = vscode.commands.registerCommand('autoclaude.startHiveMind', async () => {
+        if (!workflowSystem) {
+            vscode.window.showErrorMessage('Workflow system not initialized. Please open a workspace.');
+            return;
+        }
+        
+        await workflowSystem.startSession('hive-mind');
+        vscode.window.showInformationMessage('🧠 Hive-Mind mode activated! Complex project orchestration enabled.');
+    });
+    
+    const startSwarmCommand = vscode.commands.registerCommand('autoclaude.startSwarm', async () => {
+        if (!workflowSystem) {
+            vscode.window.showErrorMessage('Workflow system not initialized. Please open a workspace.');
+            return;
+        }
+        
+        await workflowSystem.startSession('swarm');
+        vscode.window.showInformationMessage('🐝 Swarm mode activated! Quick task processing enabled.');
+    });
+    
+    const executeNaturalCommandCommand = vscode.commands.registerCommand('autoclaude.executeNaturalCommand', async () => {
+        if (!workflowSystem) {
+            vscode.window.showErrorMessage('Workflow system not initialized. Please open a workspace.');
+            return;
+        }
+        
+        const command = await vscode.window.showInputBox({
+            prompt: 'What would you like AutoClaude to do?',
+            placeHolder: 'e.g., "make project production ready", "fix all tests", "add documentation"',
+            ignoreFocusOut: true
+        });
+        
+        if (command) {
+            await workflowSystem.processNaturalLanguageCommand(command);
+        }
+    });
+    
+    const showWorkflowStatusCommand = vscode.commands.registerCommand('autoclaude.showWorkflowStatus', async () => {
+        if (!workflowSystem) {
+            vscode.window.showInformationMessage('Workflow system not initialized.');
+            return;
+        }
+        
+        const status = await workflowSystem.getStatus();
+        const statusContent = [
+            '# AutoClaude Workflow Status',
+            '',
+            `## Mode: ${status.mode === 'hive-mind' ? '🧠 Hive-Mind' : '🐝 Swarm'}`,
+            `- Active: ${status.active ? '✅' : '❌'}`,
+            `- Session ID: ${status.sessionId || 'None'}`,
+            `- Queue Size: ${status.queueSize}`,
+            `- Processing: ${status.isProcessing ? 'Yes' : 'No'}`,
+            '',
+            '## Configuration',
+            `- Max Agents: ${status.config.maxAgents}`,
+            `- Auto Scale: ${status.config.autoScale ? 'Enabled' : 'Disabled'}`,
+            `- Load Balancing: ${status.config.loadBalancing ? 'Enabled' : 'Disabled'}`,
+            `- Learning: ${status.config.learningEnabled ? 'Enabled' : 'Disabled'}`,
+            '',
+            '## Active Hooks',
+            ...Object.entries(status.hooks).map(([type, hooks]: [string, any]) => 
+                `### ${type}\n${(hooks as any[]).map(h => `- ${h.name} (${h.enabled ? '✅' : '❌'})`).join('\n')}`
+            ).join('\n\n')
+        ].join('\n');
+        
+        const doc = await vscode.workspace.openTextDocument({
+            content: statusContent,
+            language: 'markdown'
+        });
+        
+        await vscode.window.showTextDocument(doc);
+    });
+    
+    const toggleHookCommand = vscode.commands.registerCommand('autoclaude.toggleHook', async () => {
+        vscode.window.showInformationMessage('Hook configuration UI coming soon!');
+    });
+    
+    const viewMemoryInsightsCommand = vscode.commands.registerCommand('autoclaude.viewMemoryInsights', async () => {
+        if (!memoryManager) {
+            vscode.window.showInformationMessage('Memory system not initialized.');
+            return;
+        }
+        
+        vscode.window.showInformationMessage('Memory insights UI coming soon!');
+    });
 
     context.subscriptions.push(
         startCommand, stopCommand, addMessageCommand, runScriptChecksCommand, runScriptLoopCommand,
@@ -905,6 +1001,8 @@ export async function activate(context: vscode.ExtensionContext) {
         validateConfigurationCommand, resetToDefaultsCommand, showSessionInfoCommand,
         submitAgentTaskCommand, showAgentStatusCommand, showMemoryStatsCommand,
         exportMemoryCommand, showHookStatsCommand,
+        startHiveMindCommand, startSwarmCommand, executeNaturalCommandCommand,
+        showWorkflowStatusCommand, toggleHookCommand, viewMemoryInsightsCommand,
         configWatcher
     );
     

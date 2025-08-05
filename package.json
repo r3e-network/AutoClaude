@@ -2,7 +2,7 @@
   "name": "autoclaude",
   "displayName": "AutoClaude",
   "description": "Automated Claude Code assistant with smart task completion, queue management, and workflow automation for VS Code",
-  "version": "3.9.1",
+  "version": "3.10.0",
   "publisher": "R3ENetwork",
   "icon": "img/autoclaude.png",
   "engines": {
@@ -204,6 +204,42 @@
         "title": "🔄 Reset to Default Settings",
         "category": "Claude",
         "icon": "$(discard)"
+      },
+      {
+        "command": "autoclaude.startHiveMind",
+        "title": "🧠 Start Hive-Mind Mode",
+        "category": "Claude",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "autoclaude.startSwarm",
+        "title": "🐝 Start Swarm Mode",
+        "category": "Claude",
+        "icon": "$(symbol-namespace)"
+      },
+      {
+        "command": "autoclaude.executeNaturalCommand",
+        "title": "💬 Execute Natural Language Command",
+        "category": "Claude",
+        "icon": "$(comment)"
+      },
+      {
+        "command": "autoclaude.showWorkflowStatus",
+        "title": "📊 Show Workflow Status",
+        "category": "Claude",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "autoclaude.toggleHook",
+        "title": "🪝 Configure Hooks",
+        "category": "Claude",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "autoclaude.viewMemoryInsights",
+        "title": "🧠 View Memory & Learning Insights",
+        "category": "Claude",
+        "icon": "$(graph)"
       }
     ],
     "menus": {
@@ -576,6 +612,68 @@
           "minimum": 10,
           "maximum": 600,
           "description": "Interval in seconds to check for new work"
+        },
+        "autoclaude.workflow.mode": {
+          "type": "string",
+          "default": "swarm",
+          "enum": ["swarm", "hive-mind"],
+          "description": "Workflow mode: 'swarm' for quick tasks, 'hive-mind' for complex projects"
+        },
+        "autoclaude.workflow.autoScale": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically scale agents based on workload"
+        },
+        "autoclaude.workflow.maxAgents": {
+          "type": "number",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 50,
+          "description": "Maximum number of agents in Hive-Mind mode"
+        },
+        "autoclaude.workflow.loadBalancing": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable intelligent load balancing across agents"
+        },
+        "autoclaude.workflow.faultTolerance": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable fault tolerance with automatic agent recovery"
+        },
+        "autoclaude.workflow.memoryPersistence": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable SQLite-based memory persistence across sessions"
+        },
+        "autoclaude.workflow.learningEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable pattern learning and AI improvement"
+        },
+        "autoclaude.hooks.preOperation": {
+          "type": "array",
+          "default": ["auto-agent-assignment", "cache-search", "context-enrichment"],
+          "description": "Pre-operation hooks to enable",
+          "items": {
+            "type": "string"
+          }
+        },
+        "autoclaude.hooks.postOperation": {
+          "type": "array",
+          "default": ["auto-format-code", "pattern-learning", "test-runner"],
+          "description": "Post-operation hooks to enable",
+          "items": {
+            "type": "string"
+          }
+        },
+        "autoclaude.hooks.sessionHooks": {
+          "type": "array",
+          "default": ["session-restore", "session-summary"],
+          "description": "Session hooks to enable",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -675,6 +773,7 @@
     "theme": "dark"
   },
   "dependencies": {
+    "sqlite": "^5.1.1",
     "sqlite3": "^5.1.6"
   }
 }
