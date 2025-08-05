@@ -260,7 +260,7 @@ export function getValidatedConfig(): ClaudeAutopilotConfig {
             // Show warning to user about invalid configuration
             const errorCount = errors.length;
             vscode.window.showWarningMessage(
-                `Claude Autopilot has ${errorCount} configuration error${errorCount > 1 ? 's' : ''}. Using default values for invalid settings.`,
+                `AutoClaude has ${errorCount} configuration error${errorCount > 1 ? 's' : ''}. Using default values for invalid settings.`,
                 'View Details',
                 'Open Settings',
                 'Reset to Defaults'
@@ -286,7 +286,7 @@ export function getValidatedConfig(): ClaudeAutopilotConfig {
         
         debugLog('❌ Critical error loading configuration, using defaults');
         vscode.window.showErrorMessage(
-            'Failed to load Claude Autopilot configuration. Using default settings.',
+            'Failed to load AutoClaude configuration. Using default settings.',
             'Reset Configuration'
         ).then(choice => {
             if (choice === 'Reset Configuration') {
@@ -335,7 +335,7 @@ export function resetConfigToDefaults(): void {
     ];
     
     Promise.all(resetPromises).then(() => {
-        vscode.window.showInformationMessage('Claude Autopilot configuration reset to defaults');
+        vscode.window.showInformationMessage('AutoClaude configuration reset to defaults');
         debugLog('🔄 Configuration reset to defaults');
     }).catch(error => {
         vscode.window.showErrorMessage(`Failed to reset configuration: ${error}`);
@@ -348,7 +348,7 @@ export function showConfigValidationStatus(): void {
     const errors = validateConfig(config);
     
     if (errors.length === 0) {
-        vscode.window.showInformationMessage('✅ Claude Autopilot configuration is valid');
+        vscode.window.showInformationMessage('✅ AutoClaude configuration is valid');
     } else {
         const errorSummary = `${errors.length} configuration error(s) found:\n` +
                            errors.map(e => `• ${e.path}: ${e.message}`).join('\n');
@@ -369,7 +369,7 @@ export function showConfigValidationStatus(): void {
 
 export function showConfigValidationDetails(errors: ConfigValidationError[]): void {
     const details = [
-        'Claude Autopilot Configuration Validation Errors',
+        'AutoClaude Configuration Validation Errors',
         '='.repeat(50),
         '',
         ...errors.map(error => [
@@ -398,7 +398,7 @@ export function showConfigValidationDetails(errors: ConfigValidationError[]): vo
 export function watchConfigChanges(callback: (config: ClaudeAutopilotConfig) => void): vscode.Disposable {
     return vscode.workspace.onDidChangeConfiguration(event => {
         if (event.affectsConfiguration('autoclaude')) {
-            debugLog('🔧 Claude Autopilot configuration changed, revalidating...');
+            debugLog('🔧 AutoClaude configuration changed, revalidating...');
             const newConfig = getValidatedConfig();
             callback(newConfig);
         }

@@ -8,7 +8,7 @@ const chalk = require('chalk');
 console.log(chalk.cyan('\n🚀 Setting up AutoClaude...\n'));
 
 // Create config directory
-const configDir = path.join(os.homedir(), '.claude-autopilot');
+const configDir = path.join(os.homedir(), '.autoclaude');
 const dirs = [
     configDir,
     path.join(configDir, 'data'),
@@ -79,6 +79,6 @@ if (!fs.existsSync(configFile)) {
 
 console.log(chalk.green('\n✅ Setup complete!'));
 console.log(chalk.blue('\nQuick start:'));
-console.log('  claude-autopilot         # Start interactive mode');
-console.log('  claude-autopilot --help  # Show all commands');
-console.log('  cap                      # Short alias\n');
+console.log('  autoclaude         # Start interactive mode');
+console.log('  autoclaude --help  # Show all commands');
+console.log('  ac                 # Short alias\n');

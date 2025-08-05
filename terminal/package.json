@@ -1,11 +1,11 @@
 {
-  "name": "claude-autopilot",
-  "version": "3.9.0",
-  "description": "Terminal-based Claude Code automation tool with task queuing and workflow management",
+  "name": "autoclaude-terminal",
+  "version": "3.9.1",
+  "description": "Terminal-based AutoClaude automation tool with task queuing and workflow management",
   "main": "src/index.ts",
   "bin": {
-    "claude-autopilot": "./bin/autoclaude",
-    "cap": "./bin/autoclaude"
+    "autoclaude": "./bin/autoclaude",
+    "ac": "./bin/autoclaude"
   },
   "scripts": {
     "build": "tsc",

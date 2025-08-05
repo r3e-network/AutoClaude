@@ -302,7 +302,7 @@ export class ResilienceManager {
         });
 
         const content = [
-            'Claude Autopilot Service Health Dashboard',
+            'AutoClaude Service Health Dashboard',
             '='.repeat(40),
             '',
             ...healthData,

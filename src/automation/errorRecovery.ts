@@ -356,7 +356,7 @@ export class ErrorRecoverySystem {
                 
                 // Schedule retry
                 setTimeout(() => {
-                    vscode.commands.executeCommand('claude-autopilot.start');
+                    vscode.commands.executeCommand('autoclaude.start');
                 }, waitTime);
                 
                 return true;

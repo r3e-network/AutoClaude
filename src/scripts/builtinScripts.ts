@@ -1,5 +1,5 @@
 /**
- * Built-in scripts for Claude Autopilot
+ * Built-in scripts for AutoClaude
  * These scripts are embedded in the extension and copied to workspace .autoclaude folder
  */
 

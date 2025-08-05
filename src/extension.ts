@@ -235,11 +235,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Register commands
     const startCommand = vscode.commands.registerCommand('autoclaude.start', () => {
-        startClaudeAutopilot(context);
+        startAutoClaude(context);
     });
 
     const stopCommand = vscode.commands.registerCommand('autoclaude.stop', () => {
-        stopClaudeAutopilot();
+        stopAutoClaude();
     });
 
     const addMessageCommand = vscode.commands.registerCommand('autoclaude.addMessage', () => {
@@ -786,7 +786,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const showErrorHistoryCommand = vscode.commands.registerCommand('autoclaude.showErrorHistory', () => {
         const errors = ErrorManager.getErrorHistory();
         const content = [
-            'Claude Autopilot Error History',
+            'AutoClaude Error History',
             '='.repeat(30),
             '',
             ...errors.map(error => [
@@ -831,14 +831,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const resetToDefaultsCommand = vscode.commands.registerCommand('autoclaude.resetToDefaults', async () => {
         const choice = await vscode.window.showWarningMessage(
-            'This will reset all Claude Autopilot settings to their default values. This cannot be undone.',
+            'This will reset all AutoClaude settings to their default values. This cannot be undone.',
             'Reset',
             'Cancel'
         );
         
         if (choice === 'Reset') {
             resetConfigToDefaults();
-            vscode.window.showInformationMessage('Claude Autopilot settings have been reset to defaults.');
+            vscode.window.showInformationMessage('AutoClaude settings have been reset to defaults.');
         }
     });
 
@@ -850,7 +850,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 const allSessions = getAllActiveSessions();
                 
                 const sessionInfo = [
-                    '# Claude Autopilot Session Isolation Info',
+                    '# AutoClaude Session Isolation Info',
                     '',
                     '## Current Session',
                     `- **Session ID**: ${currentSession.sessionId}`,
@@ -911,7 +911,7 @@ export async function activate(context: vscode.ExtensionContext) {
     // Auto-start or schedule Claude session based on configuration
     if (config.session.autoStart) {
         setTimeout(() => {
-            startClaudeAutopilot(context);
+            startAutoClaude(context);
         }, 1000); // Small delay to ensure extension is fully loaded
     } else if (config.session.scheduledStartTime) {
         // Start scheduler for timed session start
@@ -925,16 +925,16 @@ export async function activate(context: vscode.ExtensionContext) {
         }, 1000); // Small delay to ensure extension is fully loaded
     }
 
-    infoLog('Claude Autopilot extension activated successfully');
+    infoLog('AutoClaude extension activated successfully');
 
     } catch (error) {
-        errorLog('Failed to activate Claude Autopilot extension', {
+        errorLog('Failed to activate AutoClaude extension', {
             error: error instanceof Error ? error.message : String(error),
             stack: error instanceof Error ? error.stack : undefined
         });
         
         vscode.window.showErrorMessage(
-            'Claude Autopilot failed to activate. Please check the error logs and restart VS Code.',
+            'AutoClaude failed to activate. Please check the error logs and restart VS Code.',
             'Show Logs'
         ).then(choice => {
             if (choice === 'Show Logs') {
@@ -946,7 +946,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 }
 
-function startClaudeAutopilot(context: vscode.ExtensionContext): void {
+function startAutoClaude(context: vscode.ExtensionContext): void {
     if (isRunning && claudePanel) {
         claudePanel.reveal(vscode.ViewColumn.Two);
         vscode.window.showInformationMessage('AutoClaude is already running - showing existing panel');
@@ -1255,7 +1255,7 @@ async function getWorkspaceFiles(query: string, page: number = 0): Promise<void>
     }
 }
 
-function stopClaudeAutopilot(): void {
+function stopAutoClaude(): void {
     if (!isRunning) {
         return;
     }
@@ -1868,7 +1868,7 @@ export async function deactivate(): Promise<void> {
     try {
         flushClaudeOutput();
         clearClaudeOutput();
-        stopClaudeAutopilot();
+        stopAutoClaude();
     } catch (error) {
         console.error('Error during final cleanup:', error);
     }

@@ -6,7 +6,7 @@
       "description": "Checks for TODO, FIXME, placeholders, and incomplete implementations",
       "enabled": true,
       "predefined": true,
-      "path": "/home/neo/git/Claude-Autopilot/.autoclaude/scripts/production-readiness.sh"
+      "path": ".autoclaude/scripts/production-readiness.sh"
     },
     {
       "id": "build-check",
@@ -14,7 +14,7 @@
       "description": "Ensures the project can build successfully",
       "enabled": true,
       "predefined": true,
-      "path": "/home/neo/git/Claude-Autopilot/.autoclaude/scripts/build-check.sh"
+      "path": ".autoclaude/scripts/build-check.sh"
     },
     {
       "id": "test-check",
@@ -22,7 +22,7 @@
       "description": "Runs all tests and ensures they pass",
       "enabled": true,
       "predefined": true,
-      "path": "/home/neo/git/Claude-Autopilot/.autoclaude/scripts/test-check.sh"
+      "path": ".autoclaude/scripts/test-check.sh"
     },
     {
       "id": "format-check",
@@ -30,7 +30,7 @@
       "description": "Ensures code is properly formatted",
       "enabled": true,
       "predefined": true,
-      "path": "/home/neo/git/Claude-Autopilot/.autoclaude/scripts/format-check.sh"
+      "path": ".autoclaude/scripts/format-check.sh"
     },
     {
       "id": "github-actions",
@@ -38,7 +38,7 @@
       "description": "Validates GitHub Actions workflows",
       "enabled": true,
       "predefined": true,
-      "path": "/home/neo/git/Claude-Autopilot/.autoclaude/scripts/github-actions.sh"
+      "path": ".autoclaude/scripts/github-actions.sh"
     },
     {
       "id": "code-understanding-check",
@@ -46,7 +46,7 @@
       "description": "User-defined script: code-understanding-check.sh",
       "enabled": false,
       "predefined": false,
-      "path": "/home/neo/git/Claude-Autopilot/.autoclaude/scripts/code-understanding-check.sh"
+      "path": ".autoclaude/scripts/code-understanding-check.sh"
     },
     {
       "id": "context-check",
@@ -54,7 +54,7 @@
       "description": "User-defined script: context-check.sh",
       "enabled": false,
       "predefined": false,
-      "path": "/home/neo/git/Claude-Autopilot/.autoclaude/scripts/context-check.sh"
+      "path": ".autoclaude/scripts/context-check.sh"
     },
     {
       "id": "dependency-check",
@@ -62,7 +62,7 @@
       "description": "User-defined script: dependency-check.sh",
       "enabled": false,
       "predefined": false,
-      "path": "/home/neo/git/Claude-Autopilot/.autoclaude/scripts/dependency-check.sh"
+      "path": ".autoclaude/scripts/dependency-check.sh"
     },
     {
       "id": "integration-testing-check",
@@ -70,7 +70,7 @@
       "description": "User-defined script: integration-testing-check.sh",
       "enabled": false,
       "predefined": false,
-      "path": "/home/neo/git/Claude-Autopilot/.autoclaude/scripts/integration-testing-check.sh"
+      "path": ".autoclaude/scripts/integration-testing-check.sh"
     },
     {
       "id": "performance-check",
@@ -78,7 +78,7 @@
       "description": "User-defined script: performance-check.sh",
       "enabled": false,
       "predefined": false,
-      "path": "/home/neo/git/Claude-Autopilot/.autoclaude/scripts/performance-check.sh"
+      "path": ".autoclaude/scripts/performance-check.sh"
     },
     {
       "id": "security-audit-check",
@@ -86,7 +86,7 @@
       "description": "User-defined script: security-audit-check.sh",
       "enabled": false,
       "predefined": false,
-      "path": "/home/neo/git/Claude-Autopilot/.autoclaude/scripts/security-audit-check.sh"
+      "path": ".autoclaude/scripts/security-audit-check.sh"
     }
   ],
   "maxIterations": 5,

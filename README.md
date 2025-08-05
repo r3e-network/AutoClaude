@@ -1,6 +1,6 @@
-# Claude Autopilot - Automated Claude Code Assistant
+# AutoClaude - Automated Claude Code Assistant
 
-[![Version](https://img.shields.io/badge/version-3.8.0-blue)](https://github.com/claude-code/claude-autopilot/releases/tag/v3.8.0)
+[![Version](https://img.shields.io/badge/version-3.9.0-blue)](https://github.com/r3e-network/AutoClaude/releases/tag/v3.9.0)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **AutoClaude** is an enterprise-grade automated assistant for Claude Code that provides intelligent task queuing, workflow automation, and 24/7 processing capabilities. Now featuring **Universal Language Conversion** with advanced Neo-rs specialization, persistent learning, multi-agent coordination, and production-ready automation systems.
@@ -197,24 +197,24 @@ AutoClaude learns your project:
 
 #### 🖥️ **Terminal Version (Standalone)**
 ```bash
-npm install -g claude-autopilot
-claude-autopilot  # Start the terminal interface
-cap               # Short alias
+npm install -g autoclaude-terminal
+autoclaude  # Start the terminal interface
+ac          # Short alias
 ```
 
 #### 📦 **VS Code Extension**
-1. Install via command palette: `Extensions: Install Extensions` → Search "Claude Autopilot"
-2. Or install from VSIX: Download from [GitHub Releases](https://github.com/claude-code/claude-autopilot/releases)
-3. **Cursor**: Claude Autopilot works seamlessly in Cursor with the same installation process
+1. Install via command palette: `Extensions: Install Extensions` → Search "AutoClaude"
+2. Or install from VSIX: Download from [GitHub Releases](https://github.com/r3e-network/AutoClaude/releases)
+3. **Cursor**: AutoClaude works seamlessly in Cursor with the same installation process
 4. **VS Code Web**: Full compatibility with vscode.dev and github.dev
 
 ### Basic Usage
 
-1. **Start Claude Autopilot**: Open Command Palette (`Cmd/Ctrl+Shift+P`) → `Claude: Start Claude Assistant`
+1. **Start AutoClaude**: Open Command Palette (`Cmd/Ctrl+Shift+P`) → `Claude: Start Claude Assistant`
 2. **Add Messages**: Queue up all your tasks - add 10, 50, or 200+ messages
 3. **Start Processing**: Click "Start Processing" and walk away
 4. **Live Your Life**: Go eat dinner, play with kids, sleep, or enjoy your weekend
-5. **Return to Completed Work**: Claude Autopilot handles everything automatically, even through Claude usage limits
+5. **Return to Completed Work**: AutoClaude handles everything automatically, even through Claude usage limits
 
 ### 🔍 Script Runner - Automated Quality Checks
 

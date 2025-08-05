@@ -52,7 +52,7 @@ class Logger {
                 if (!fs.existsSync(logDir)) {
                     fs.mkdirSync(logDir, { recursive: true });
                 }
-                this.logFilePath = path.join(logDir, `claude-autopilot-${new Date().toISOString().split('T')[0]}.log`);
+                this.logFilePath = path.join(logDir, `autoclaude-${new Date().toISOString().split('T')[0]}.log`);
                 this.logToFile = true;
             }
         } catch (error) {

@@ -1,4 +1,4 @@
-# Coverage configuration for Claude-Autopilot
+# Coverage configuration for AutoClaude
 [run]
 source = src/
 omit = 

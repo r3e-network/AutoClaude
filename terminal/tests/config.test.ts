@@ -5,7 +5,7 @@ import path from 'path';
 
 describe('Config', () => {
     let config: Config;
-    const testConfigDir = path.join(os.tmpdir(), 'claude-autopilot-test');
+    const testConfigDir = path.join(os.tmpdir(), 'autoclaude-test');
 
     beforeEach(() => {
         // Clean up test directory

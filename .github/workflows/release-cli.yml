@@ -92,7 +92,7 @@ jobs:
           # Create release
           gh release create "v$VERSION" \
             --title "Release v$VERSION" \
-            --notes "## Claude Autopilot v$VERSION
+            --notes "## AutoClaude v$VERSION
 
 ### Installation
 

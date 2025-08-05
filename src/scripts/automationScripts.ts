@@ -1,5 +1,5 @@
 /**
- * Additional automation scripts for Claude Autopilot
+ * Additional automation scripts for AutoClaude
  * These are advanced scripts for enhanced automation
  */
 

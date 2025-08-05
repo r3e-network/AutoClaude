@@ -5,6 +5,34 @@ All notable changes to the Claude Autopilot extension will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.9.1] - 2025-08-05
+
+### 🧹 Complete Codebase Cleanup & Branding Consistency
+
+This release completes the transition to AutoClaude branding by removing all remaining references to the old naming.
+
+#### 🔄 Branding Updates
+- **Complete Name Migration** - Removed all "claude-autopilot" references throughout the codebase
+- **Terminal Package Renamed** - Changed from `claude-autopilot` to `autoclaude-terminal`
+- **Command Updates** - Terminal commands changed from `claude-autopilot/cap` to `autoclaude/ac`
+- **Config Directory** - Updated from `.claude-autopilot` to `.autoclaude`
+
+#### 🛠️ Code Improvements
+- **Source Code Cleanup** - Updated all function names, error messages, and UI text
+- **Configuration Updates** - Fixed all config paths to use relative paths instead of absolute
+- **Documentation Sync** - Updated README and all documentation to reflect new branding
+- **Build Scripts** - Updated GitHub Actions workflows and release scripts
+
+#### 🐛 Bug Fixes
+- **Extension Commands** - Fixed "command not found" errors by ensuring proper command registration
+- **Config Paths** - Fixed hardcoded paths in .autoclaude/config.json
+- **Log File Names** - Updated log file naming from `claude-autopilot-*.log` to `autoclaude-*.log`
+
+#### 📦 Technical Details
+- **Version Sync** - Both VS Code extension and terminal versions at 3.9.1
+- **Clean Build** - Extension builds successfully with all references updated
+- **Backward Compatibility** - No breaking changes for existing users
+
 ## [3.9.0] - 2025-08-05
 
 ### 🔧 Stability & Reliability Improvements
