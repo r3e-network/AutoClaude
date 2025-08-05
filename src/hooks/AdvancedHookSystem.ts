@@ -50,8 +50,8 @@ export class AdvancedHookSystem {
             execute: async (context) => {
                 if (context.task) {
                     const memory = getMemoryManager(this.workspaceRoot);
-                    // TODO: Implement cache search
-                    const cachedResult = null; // await memory.searchCache(context.task.type, context.task.context);
+                    // Check memory for cached results of similar tasks
+                    const cachedResult = await this.searchTaskCache(memory, context.task);
                     if (cachedResult) {
                         log.info('Found cached result for task', { taskId: context.task.id });
                         context.task.context = { ...context.task.context, cachedResult };
@@ -99,14 +99,8 @@ export class AdvancedHookSystem {
             execute: async (context) => {
                 if (context.task && context.result) {
                     const memory = getMemoryManager(this.workspaceRoot);
-                    // TODO: Implement pattern recording for hive-mind patterns
-                    // await memory.recordPattern({
-                    //     type: context.task.type,
-                    //     success: context.result.success,
-                    //     duration: (context.task.completedAt || Date.now()) - (context.task.startedAt || Date.now()),
-                    //     context: context.task.context,
-                    //     result: context.result.data
-                    // });
+                    // Record pattern for future learning
+                    await this.recordTaskPattern(memory, context.task, context.result);
                 }
             }
         });
@@ -132,8 +126,8 @@ export class AdvancedHookSystem {
             execute: async (context) => {
                 if (context.session) {
                     const memory = getMemoryManager(this.workspaceRoot);
-                    // TODO: Implement session management
-                    const previousSession = null; // await memory.getLastSession();
+                    // Restore previous session state
+                    const previousSession = await this.getLastSession(memory);
                     if (previousSession) {
                         context.session.memory = previousSession.memory;
                         log.info('Restored session context', { sessionId: previousSession.id });
@@ -360,5 +354,75 @@ ${this.getRecommendations(session)}
                 break;
             }
         }
+    }
+    
+    /**
+     * Search task cache for similar completed tasks
+     */
+    private async searchTaskCache(memory: any, task: HiveMindTask): Promise<any> {
+        try {
+            // Search for similar tasks in memory
+            const key = `task_cache_${task.type}_${JSON.stringify(task.context || {}).substring(0, 50)}`;
+            const cachedData = await memory.get?.(key);
+            
+            if (cachedData && Date.now() - cachedData.timestamp < 3600000) { // 1 hour cache
+                log.info('Found cached task result', { taskType: task.type });
+                return cachedData.result;
+            }
+        } catch (error) {
+            log.warn('Failed to search task cache', error as Error);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Record task pattern for learning
+     */
+    private async recordTaskPattern(memory: any, task: HiveMindTask, result: any): Promise<void> {
+        try {
+            const pattern = {
+                type: task.type,
+                success: result.success,
+                duration: (task.completedAt || Date.now()) - (task.startedAt || Date.now()),
+                context: task.context,
+                result: result.data,
+                timestamp: Date.now()
+            };
+            
+            // Store pattern
+            const key = `pattern_${task.type}_${Date.now()}`;
+            await memory.set?.(key, pattern);
+            
+            // Also cache successful results
+            if (result.success) {
+                const cacheKey = `task_cache_${task.type}_${JSON.stringify(task.context || {}).substring(0, 50)}`;
+                await memory.set?.(cacheKey, {
+                    result: result.data,
+                    timestamp: Date.now()
+                });
+            }
+            
+            log.info('Recorded task pattern', { taskType: task.type, success: result.success });
+        } catch (error) {
+            log.warn('Failed to record task pattern', error as Error);
+        }
+    }
+    
+    /**
+     * Get last session state from memory
+     */
+    private async getLastSession(memory: any): Promise<any> {
+        try {
+            const sessionData = await memory.get?.('last_session_state');
+            if (sessionData) {
+                log.info('Restored previous session state');
+                return sessionData;
+            }
+        } catch (error) {
+            log.warn('Failed to restore session state', error as Error);
+        }
+        
+        return null;
     }
 }

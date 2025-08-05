@@ -401,9 +401,19 @@ export class AutomaticWorkflowSystem {
     }
     
     private async monitorTerminal(terminal: vscode.Terminal): Promise<void> {
-        // Monitor terminal for patterns like test failures
-        // This is a simplified implementation
-        log.info('Monitoring terminal', { name: terminal.name });
+        // Monitor terminal output for actionable patterns
+        log.info('Monitoring terminal for patterns', { name: terminal.name });
+        
+        // Set up terminal event monitoring
+        const disposable = vscode.window.onDidCloseTerminal((closedTerminal) => {
+            if (closedTerminal === terminal) {
+                log.info('Terminal closed', { name: terminal.name });
+                disposable.dispose();
+            }
+        });
+        
+        // Store disposable for cleanup
+        this.context?.subscriptions.push(disposable);
     }
     
     private startAutomaticMonitoring(): void {

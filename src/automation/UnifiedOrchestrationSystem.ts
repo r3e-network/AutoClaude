@@ -1,0 +1,902 @@
+import * as vscode from 'vscode';
+import { TextDecoder } from 'util';
+import { log } from '../utils/productionLogger';
+import { AutomaticWorkflowSystem } from './AutomaticWorkflowSystem';
+import { SubAgentRunner } from '../subagents/SubAgentRunner';
+import { ParallelAgentOrchestrator } from '../agents/ParallelAgentOrchestrator';
+import { getMemoryManager } from '../memory';
+import { getHookManager } from '../hooks/HookManager';
+import { getAgentCoordinator } from '../agents/AgentCoordinator';
+import { getSystemMonitor } from '../monitoring/SystemMonitor';
+import { ContextManager } from './contextManager';
+import { TaskCompletionEngine } from './taskCompletion';
+import { ErrorRecoverySystem } from './errorRecovery';
+import { HiveMindTask, TaskPriority, TaskStatus } from '../agents/hivemind/types';
+
+/**
+ * Unified Orchestration System - Integrates all AutoClaude features
+ * 
+ * This system automatically coordinates:
+ * - Hive-Mind AI agents for complex tasks
+ * - SubAgents for specialized checks and fixes
+ * - Parallel agents for distributed work
+ * - Memory and context management
+ * - Automatic task planning and execution
+ * - Error recovery and resilience
+ */
+export class UnifiedOrchestrationSystem {
+    private static instance: UnifiedOrchestrationSystem | null = null;
+    
+    private workflowSystem: AutomaticWorkflowSystem;
+    private subAgentRunner: SubAgentRunner;
+    private parallelOrchestrator: ParallelAgentOrchestrator | null = null;
+    private contextManager: ContextManager;
+    private taskEngine: TaskCompletionEngine;
+    private errorRecovery: ErrorRecoverySystem;
+    private memoryManager: any;
+    private hookManager: any;
+    private agentCoordinator: any;
+    private systemMonitor: any;
+    
+    private isRunning = false;
+    private activeWorkflows = new Map<string, any>();
+    private taskQueue: HiveMindTask[] = [];
+    
+    constructor(private workspaceRoot: string) {
+        this.workflowSystem = AutomaticWorkflowSystem.getInstance(workspaceRoot);
+        this.subAgentRunner = new SubAgentRunner(workspaceRoot);
+        this.contextManager = new ContextManager(workspaceRoot);
+        this.taskEngine = new TaskCompletionEngine(workspaceRoot);
+        this.errorRecovery = new ErrorRecoverySystem(this.contextManager, workspaceRoot);
+        
+        // Get singleton instances
+        this.memoryManager = getMemoryManager(workspaceRoot);
+        this.hookManager = getHookManager(workspaceRoot);
+        this.agentCoordinator = getAgentCoordinator(workspaceRoot);
+        this.systemMonitor = getSystemMonitor(workspaceRoot);
+    }
+    
+    static getInstance(workspaceRoot: string): UnifiedOrchestrationSystem {
+        if (!UnifiedOrchestrationSystem.instance) {
+            UnifiedOrchestrationSystem.instance = new UnifiedOrchestrationSystem(workspaceRoot);
+        }
+        return UnifiedOrchestrationSystem.instance;
+    }
+    
+    async initialize(): Promise<void> {
+        log.info('Initializing Unified Orchestration System');
+        
+        try {
+            // Initialize all subsystems
+            await Promise.all([
+                this.workflowSystem.initialize(),
+                this.subAgentRunner.initialize(),
+                this.contextManager.initialize(),
+                this.memoryManager.initialize(),
+                this.hookManager.initialize(),
+                this.agentCoordinator.initialize(),
+                this.systemMonitor.initialize()
+            ]);
+            
+            // Set up automatic coordination
+            await this.setupAutomaticCoordination();
+            
+            // Load previous session state if available
+            await this.restorePreviousSession();
+            
+            // Start automatic monitoring
+            await this.startAutomaticMonitoring();
+            
+            log.info('Unified Orchestration System initialized successfully');
+        } catch (error) {
+            log.error('Failed to initialize Unified Orchestration System', error as Error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Process a natural language command with full orchestration
+     */
+    async processNaturalCommand(command: string): Promise<void> {
+        log.info('Processing natural language command', { command });
+        
+        try {
+            // Run pre-operation hooks
+            await this.hookManager.runHooks('pre-operation', { command });
+            
+            // Analyze command intent
+            const intent = await this.analyzeCommandIntent(command);
+            
+            // Plan tasks based on intent
+            const tasks = await this.planTasks(intent);
+            
+            // Check if we need parallel processing
+            if (this.shouldUseParallelProcessing(tasks)) {
+                await this.initializeParallelProcessing(tasks.length);
+            }
+            
+            // Execute tasks with full orchestration
+            for (const task of tasks) {
+                await this.executeTaskWithOrchestration(task);
+            }
+            
+            // Run post-operation hooks
+            await this.hookManager.runHooks('post-operation', { 
+                command, 
+                tasksCompleted: tasks.length 
+            });
+            
+            // Save to memory for learning
+            await this.memoryManager.recordCommand(command, tasks, true);
+            
+        } catch (error) {
+            log.error('Failed to process natural command', error as Error);
+            await this.handleOrchestrationError(error as Error, command);
+        }
+    }
+    
+    /**
+     * Execute a task with full orchestration capabilities
+     */
+    private async executeTaskWithOrchestration(task: HiveMindTask): Promise<void> {
+        log.info('Executing task with orchestration', { taskId: task.id, type: task.type });
+        
+        try {
+            // Update task status
+            task.status = TaskStatus.IN_PROGRESS;
+            task.startedAt = Date.now();
+            
+            // Determine execution strategy
+            const strategy = await this.determineExecutionStrategy(task);
+            
+            switch (strategy) {
+                case 'hive-mind':
+                    // Use Hive-Mind for complex tasks
+                    await this.workflowSystem.processTask(task);
+                    break;
+                    
+                case 'sub-agent':
+                    // Use specialized SubAgent
+                    await this.executeWithSubAgent(task);
+                    break;
+                    
+                case 'parallel':
+                    // Distribute to parallel agents
+                    await this.executeWithParallelAgents(task);
+                    break;
+                    
+                case 'direct':
+                    // Execute directly
+                    await this.executeDirectTask(task);
+                    break;
+                    
+                default:
+                    // Default to workflow system
+                    await this.workflowSystem.processTask(task);
+            }
+            
+            // Update task completion
+            task.status = TaskStatus.COMPLETED;
+            task.completedAt = Date.now();
+            task.duration = task.completedAt - task.startedAt;
+            
+            // Record metrics
+            await this.recordTaskMetrics(task);
+            
+        } catch (error) {
+            log.error('Task execution failed', error as Error, { taskId: task.id });
+            task.status = TaskStatus.FAILED;
+            
+            // Attempt recovery
+            const recovered = await this.errorRecovery.attemptRecovery(error as Error, task);
+            if (!recovered) {
+                throw error;
+            }
+        }
+    }
+    
+    /**
+     * Execute task using SubAgent system
+     */
+    private async executeWithSubAgent(task: HiveMindTask): Promise<void> {
+        log.info('Executing task with SubAgent', { taskId: task.id });
+        
+        // Map task type to SubAgent
+        const agentId = this.mapTaskToSubAgent(task.type);
+        if (!agentId) {
+            throw new Error(`No SubAgent found for task type: ${task.type}`);
+        }
+        
+        // Run SubAgent check
+        const result = await this.subAgentRunner.runSingleAgent(agentId);
+        
+        if (result && !result.passed) {
+            // Run SubAgent analysis and fix
+            await this.subAgentRunner.runAgentAnalysis(agentId, result);
+            
+            // Run iterative fixes if needed
+            let iterations = 0;
+            const maxIterations = 5;
+            
+            while (!result.passed && iterations < maxIterations) {
+                await this.subAgentRunner.runAgentFix(agentId, result);
+                const newResult = await this.subAgentRunner.runSingleAgent(agentId);
+                if (newResult) {
+                    Object.assign(result, newResult);
+                }
+                iterations++;
+            }
+        }
+        
+        task.result = {
+            success: result?.passed || false,
+            data: result
+        };
+    }
+    
+    /**
+     * Execute task using parallel agents
+     */
+    private async executeWithParallelAgents(task: HiveMindTask): Promise<void> {
+        log.info('Executing task with parallel agents', { taskId: task.id });
+        
+        if (!this.parallelOrchestrator) {
+            await this.initializeParallelProcessing();
+        }
+        
+        // Distribute task to available agents
+        const assignedAgents = await this.parallelOrchestrator!.distributeTask(task);
+        
+        // Wait for completion
+        const results = await Promise.all(
+            assignedAgents.map(agentId => 
+                this.parallelOrchestrator!.waitForTaskCompletion(agentId, task.id)
+            )
+        );
+        
+        task.result = {
+            success: results.every(r => r.success),
+            data: results
+        };
+    }
+    
+    /**
+     * Set up automatic coordination between systems
+     */
+    private async setupAutomaticCoordination(): Promise<void> {
+        // Monitor for new work and automatically start processing
+        this.systemMonitor.on('high-cpu-usage', async () => {
+            log.warn('High CPU usage detected, throttling operations');
+            await this.throttleOperations();
+        });
+        
+        this.systemMonitor.on('memory-pressure', async () => {
+            log.warn('Memory pressure detected, clearing caches');
+            await this.clearCaches();
+        });
+        
+        // Set up automatic task detection
+        setInterval(async () => {
+            if (this.isRunning) {
+                await this.detectAndProcessPendingWork();
+            }
+        }, 30000); // Check every 30 seconds
+        
+        // Set up automatic context updates
+        vscode.workspace.onDidSaveTextDocument(async (document) => {
+            if (this.isRunning) {
+                await this.contextManager.updateContext(document.uri.fsPath);
+            }
+        });
+    }
+    
+    /**
+     * Detect and process pending work automatically
+     */
+    private async detectAndProcessPendingWork(): Promise<void> {
+        try {
+            // Check for TODOs and FIXMEs in code
+            const pendingWork = await this.contextManager.findPendingWork();
+            
+            if (pendingWork.length > 0) {
+                log.info(`Found ${pendingWork.length} pending work items`);
+                
+                // Convert to tasks
+                const tasks = pendingWork.map(work => this.createTaskFromPendingWork(work));
+                
+                // Add to queue
+                this.taskQueue.push(...tasks);
+                
+                // Process queue
+                await this.processTaskQueue();
+            }
+            
+            // Check for failing tests
+            const failingTests = await this.detectFailingTests();
+            if (failingTests.length > 0) {
+                const testTasks = failingTests.map(test => this.createTestFixTask(test));
+                this.taskQueue.push(...testTasks);
+                await this.processTaskQueue();
+            }
+            
+        } catch (error) {
+            log.error('Failed to detect pending work', error as Error);
+        }
+    }
+    
+    /**
+     * Process the task queue
+     */
+    private async processTaskQueue(): Promise<void> {
+        while (this.taskQueue.length > 0) {
+            const task = this.taskQueue.shift()!;
+            await this.executeTaskWithOrchestration(task);
+        }
+    }
+    
+    /**
+     * Analyze command intent using AI
+     */
+    private async analyzeCommandIntent(command: string): Promise<any> {
+        // Use memory to find similar commands
+        const similarCommands = await this.memoryManager.findSimilarCommands(command);
+        
+        // Analyze intent
+        const intent = {
+            command,
+            type: this.classifyCommandType(command),
+            complexity: this.assessComplexity(command),
+            suggestedApproach: this.determineBestApproach(command),
+            similarCommands
+        };
+        
+        return intent;
+    }
+    
+    /**
+     * Plan tasks based on intent
+     */
+    private async planTasks(intent: any): Promise<HiveMindTask[]> {
+        const tasks: HiveMindTask[] = [];
+        
+        // Use different planning strategies based on intent type
+        switch (intent.type) {
+            case 'feature-implementation':
+                tasks.push(...await this.planFeatureTasks(intent));
+                break;
+                
+            case 'bug-fix':
+                tasks.push(...await this.planBugFixTasks(intent));
+                break;
+                
+            case 'refactoring':
+                tasks.push(...await this.planRefactoringTasks(intent));
+                break;
+                
+            case 'testing':
+                tasks.push(...await this.planTestingTasks(intent));
+                break;
+                
+            case 'optimization':
+                tasks.push(...await this.planOptimizationTasks(intent));
+                break;
+                
+            case 'documentation':
+                tasks.push(...await this.planDocumentationTasks(intent));
+                break;
+                
+            default:
+                // Generic task planning
+                tasks.push(this.createGenericTask(intent));
+        }
+        
+        return tasks;
+    }
+    
+    /**
+     * Initialize parallel processing
+     */
+    private async initializeParallelProcessing(suggestedAgents: number = 5): Promise<void> {
+        if (!this.parallelOrchestrator) {
+            this.parallelOrchestrator = new ParallelAgentOrchestrator(this.workspaceRoot);
+            await this.parallelOrchestrator.initialize();
+        }
+        
+        const currentAgents = await this.parallelOrchestrator.getActiveAgentCount();
+        if (currentAgents < suggestedAgents) {
+            await this.parallelOrchestrator.startAgents(suggestedAgents - currentAgents);
+        }
+    }
+    
+    /**
+     * Map task type to SubAgent ID
+     */
+    private mapTaskToSubAgent(taskType: string): string | null {
+        const mapping: Record<string, string> = {
+            'production-check': 'production-readiness',
+            'build-check': 'build-check',
+            'test-check': 'test-check',
+            'format-check': 'format-check',
+            'github-actions': 'github-actions',
+            'security-check': 'security-audit',
+            'performance-check': 'performance-optimization',
+            'integration-test': 'integration-testing'
+        };
+        
+        return mapping[taskType] || null;
+    }
+    
+    /**
+     * Start the unified orchestration system
+     */
+    async start(): Promise<void> {
+        if (this.isRunning) {
+            log.warn('Unified Orchestration System already running');
+            return;
+        }
+        
+        log.info('Starting Unified Orchestration System');
+        this.isRunning = true;
+        
+        // Start all subsystems
+        await this.workflowSystem.startProcessing();
+        
+        // Start monitoring
+        await this.systemMonitor.startMonitoring();
+        
+        // Process any pending work
+        await this.detectAndProcessPendingWork();
+        
+        vscode.window.showInformationMessage('AutoClaude Unified System activated - Ready for intelligent automation!');
+    }
+    
+    /**
+     * Stop the unified orchestration system
+     */
+    async stop(): Promise<void> {
+        if (!this.isRunning) {
+            return;
+        }
+        
+        log.info('Stopping Unified Orchestration System');
+        this.isRunning = false;
+        
+        // Stop all subsystems
+        await this.workflowSystem.stopProcessing();
+        await this.systemMonitor.stopMonitoring();
+        
+        if (this.parallelOrchestrator) {
+            await this.parallelOrchestrator.stopAllAgents();
+        }
+        
+        // Save state
+        await this.saveCurrentState();
+    }
+    
+    /**
+     * Get system status
+     */
+    async getStatus(): Promise<any> {
+        return {
+            running: this.isRunning,
+            activeWorkflows: this.activeWorkflows.size,
+            pendingTasks: this.taskQueue.length,
+            workflowStatus: await this.workflowSystem.getStatus(),
+            systemHealth: await this.systemMonitor.getHealth(),
+            memoryUsage: await this.memoryManager.getUsageStats()
+        };
+    }
+    
+    // Helper methods
+    
+    private classifyCommandType(command: string): string {
+        const lowerCommand = command.toLowerCase();
+        
+        if (lowerCommand.includes('implement') || lowerCommand.includes('add') || lowerCommand.includes('create')) {
+            return 'feature-implementation';
+        } else if (lowerCommand.includes('fix') || lowerCommand.includes('bug') || lowerCommand.includes('error')) {
+            return 'bug-fix';
+        } else if (lowerCommand.includes('refactor') || lowerCommand.includes('improve') || lowerCommand.includes('clean')) {
+            return 'refactoring';
+        } else if (lowerCommand.includes('test') || lowerCommand.includes('coverage')) {
+            return 'testing';
+        } else if (lowerCommand.includes('optimize') || lowerCommand.includes('performance')) {
+            return 'optimization';
+        } else if (lowerCommand.includes('document') || lowerCommand.includes('readme')) {
+            return 'documentation';
+        }
+        
+        return 'general';
+    }
+    
+    private assessComplexity(command: string): 'low' | 'medium' | 'high' {
+        // Simple heuristic based on command length and keywords
+        const complexKeywords = ['entire', 'all', 'complete', 'full', 'system', 'architecture'];
+        const hasComplexKeywords = complexKeywords.some(keyword => 
+            command.toLowerCase().includes(keyword)
+        );
+        
+        if (hasComplexKeywords || command.length > 100) {
+            return 'high';
+        } else if (command.length > 50) {
+            return 'medium';
+        }
+        
+        return 'low';
+    }
+    
+    private determineBestApproach(command: string): string {
+        const complexity = this.assessComplexity(command);
+        const type = this.classifyCommandType(command);
+        
+        if (complexity === 'high') {
+            return 'hive-mind';
+        } else if (type === 'testing' || type === 'bug-fix') {
+            return 'sub-agent';
+        } else if (complexity === 'medium') {
+            return 'parallel';
+        }
+        
+        return 'direct';
+    }
+    
+    private async planFeatureTasks(intent: any): Promise<HiveMindTask[]> {
+        return [
+            this.createTask('architecture-design', 'Design feature architecture', TaskPriority.HIGH),
+            this.createTask('code-implementation', 'Implement feature code', TaskPriority.HIGH),
+            this.createTask('test-creation', 'Create unit and integration tests', TaskPriority.MEDIUM),
+            this.createTask('documentation', 'Document the new feature', TaskPriority.LOW),
+            this.createTask('integration-test', 'Run integration tests', TaskPriority.MEDIUM)
+        ];
+    }
+    
+    private async planBugFixTasks(intent: any): Promise<HiveMindTask[]> {
+        return [
+            this.createTask('bug-analysis', 'Analyze and reproduce the bug', TaskPriority.HIGH),
+            this.createTask('fix-implementation', 'Implement the bug fix', TaskPriority.HIGH),
+            this.createTask('test-creation', 'Create regression tests', TaskPriority.HIGH),
+            this.createTask('test-check', 'Verify all tests pass', TaskPriority.HIGH)
+        ];
+    }
+    
+    private createTask(type: string, description: string, priority: TaskPriority): HiveMindTask {
+        return {
+            id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            type,
+            description,
+            priority,
+            status: TaskStatus.PENDING,
+            createdAt: Date.now()
+        };
+    }
+    
+    private async saveCurrentState(): Promise<void> {
+        // Save current state to memory for restoration
+        await this.memoryManager.saveSessionState({
+            activeWorkflows: Array.from(this.activeWorkflows.entries()),
+            pendingTasks: this.taskQueue,
+            timestamp: Date.now()
+        });
+    }
+    
+    private async restorePreviousSession(): Promise<void> {
+        try {
+            const previousState = await this.memoryManager.getLastSessionState();
+            if (previousState && previousState.pendingTasks) {
+                this.taskQueue = previousState.pendingTasks;
+                log.info(`Restored ${this.taskQueue.length} pending tasks from previous session`);
+            }
+        } catch (error) {
+            log.warn('Could not restore previous session', error as Error);
+        }
+    }
+    
+    private shouldUseParallelProcessing(tasks: HiveMindTask[]): boolean {
+        return tasks.length > 3 || tasks.some(t => t.type.includes('parallel'));
+    }
+    
+    private async determineExecutionStrategy(task: HiveMindTask): Promise<string> {
+        // Check if task type maps to a specific strategy
+        if (this.mapTaskToSubAgent(task.type)) {
+            return 'sub-agent';
+        }
+        
+        // Check task complexity
+        if (task.estimatedTime && task.estimatedTime > 300) {
+            return 'hive-mind';
+        }
+        
+        // Check if task requires multiple agents
+        if (task.requiredCapabilities && task.requiredCapabilities.length > 2) {
+            return 'hive-mind';
+        }
+        
+        return 'direct';
+    }
+    
+    private async executeDirectTask(task: HiveMindTask): Promise<void> {
+        // Simple direct execution
+        await this.taskEngine.completeTask({
+            description: task.description,
+            type: task.type
+        } as any);
+        
+        task.result = {
+            success: true,
+            data: { completed: true }
+        };
+    }
+    
+    private async handleOrchestrationError(error: Error, command: string): Promise<void> {
+        log.error('Orchestration error', error, { command });
+        
+        // Attempt recovery
+        const recovered = await this.errorRecovery.attemptRecovery(error, { command });
+        
+        if (!recovered) {
+            vscode.window.showErrorMessage(
+                `Failed to process command: ${error.message}. Check logs for details.`
+            );
+        }
+    }
+    
+    private async recordTaskMetrics(task: HiveMindTask): Promise<void> {
+        await this.memoryManager.recordMetric('task_completion', 1, {
+            type: task.type,
+            duration: task.duration,
+            success: task.status === TaskStatus.COMPLETED
+        });
+    }
+    
+    private async throttleOperations(): Promise<void> {
+        // Reduce parallel agent count
+        if (this.parallelOrchestrator) {
+            const currentCount = await this.parallelOrchestrator.getActiveAgentCount();
+            if (currentCount > 2) {
+                await this.parallelOrchestrator.reduceAgents(Math.floor(currentCount / 2));
+            }
+        }
+        
+        // Pause non-critical operations
+        this.taskQueue = this.taskQueue.filter(t => t.priority <= TaskPriority.HIGH);
+    }
+    
+    private async clearCaches(): Promise<void> {
+        await this.memoryManager.clearCaches();
+        await this.contextManager.clearCache();
+    }
+    
+    private async startAutomaticMonitoring(): Promise<void> {
+        // Monitor for various triggers
+        setInterval(async () => {
+            if (!this.isRunning) return;
+            
+            // Check for code changes that need attention
+            const changes = await this.detectCodeChangesNeedingAttention();
+            if (changes.length > 0) {
+                await this.processCodeChanges(changes);
+            }
+            
+            // Check for broken builds
+            const buildStatus = await this.checkBuildStatus();
+            if (!buildStatus.success) {
+                await this.fixBuildIssues(buildStatus);
+            }
+            
+        }, 60000); // Every minute
+    }
+    
+    private async detectCodeChangesNeedingAttention(): Promise<any[]> {
+        const changes: any[] = [];
+        
+        try {
+            // Get uncommitted changes
+            const gitStatus = await vscode.commands.executeCommand('git.status');
+            
+            // Scan workspace for TODOs and FIXMEs
+            const todoPattern = /\b(TODO|FIXME|HACK|BUG|OPTIMIZE|REFACTOR)\b:?\s*(.+)/gi;
+            const files = await vscode.workspace.findFiles('**/*.{ts,js,tsx,jsx,py,java,cs,go,rs}', '**/node_modules/**');
+            
+            for (const file of files) {
+                const content = await vscode.workspace.fs.readFile(file).then(buffer => 
+                    new TextDecoder().decode(buffer)
+                );
+                
+                let match;
+                let lineNumber = 0;
+                const lines = content.split('\n');
+                
+                for (const line of lines) {
+                    lineNumber++;
+                    while ((match = todoPattern.exec(line)) !== null) {
+                        changes.push({
+                            file: file.fsPath,
+                            line: lineNumber,
+                            type: match[1].toUpperCase(),
+                            text: match[2].trim(),
+                            priority: this.getPriorityFromType(match[1].toUpperCase())
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            log.error('Failed to detect code changes', error as Error);
+        }
+        
+        return changes;
+    }
+    
+    private async processCodeChanges(changes: any[]): Promise<void> {
+        // Sort by priority
+        changes.sort((a, b) => a.priority - b.priority);
+        
+        // Convert to tasks and add to queue
+        for (const change of changes.slice(0, 10)) { // Process top 10
+            const task = this.createTask(
+                `fix-${change.type.toLowerCase()}`,
+                `${change.type}: ${change.text} (${change.file}:${change.line})`,
+                change.priority
+            );
+            
+            task.context = {
+                file: change.file,
+                line: change.line,
+                type: change.type,
+                text: change.text
+            };
+            
+            this.taskQueue.push(task);
+        }
+        
+        if (changes.length > 0) {
+            log.info(`Added ${Math.min(changes.length, 10)} code change tasks to queue`);
+            await this.processTaskQueue();
+        }
+    }
+    
+    private async checkBuildStatus(): Promise<any> {
+        try {
+            // Try to run build command
+            const buildResult = await this.subAgentRunner.runSingleAgent('build-check');
+            
+            return {
+                success: buildResult?.passed || false,
+                errors: buildResult?.errors || [],
+                output: buildResult?.output || ''
+            };
+        } catch (error) {
+            log.error('Failed to check build status', error as Error);
+            return { success: false, errors: [error.message] };
+        }
+    }
+    
+    private async fixBuildIssues(buildStatus: any): Promise<void> {
+        if (buildStatus.success) return;
+        
+        log.info('Attempting to fix build issues automatically');
+        
+        const task = this.createTask(
+            'fix-build',
+            'Fix build errors: ' + buildStatus.errors.join(', '),
+            TaskPriority.CRITICAL
+        );
+        
+        task.context = {
+            errors: buildStatus.errors,
+            output: buildStatus.output
+        };
+        
+        // Add to front of queue
+        this.taskQueue.unshift(task);
+        await this.executeTaskWithOrchestration(task);
+    }
+    
+    private async detectFailingTests(): Promise<any[]> {
+        const failingTests: any[] = [];
+        
+        try {
+            // Run test check
+            const testResult = await this.subAgentRunner.runSingleAgent('test-check');
+            
+            if (testResult && !testResult.passed && testResult.errors) {
+                // Parse test failures
+                for (const error of testResult.errors) {
+                    const testMatch = error.match(/(?:Test|test)\s+(.+?)\s+(?:failed|FAILED)/);
+                    if (testMatch) {
+                        failingTests.push({
+                            name: testMatch[1],
+                            error: error,
+                            file: this.extractFileFromError(error)
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            log.error('Failed to detect failing tests', error as Error);
+        }
+        
+        return failingTests;
+    }
+    
+    private createTaskFromPendingWork(work: any): HiveMindTask {
+        return this.createTask(
+            'fix-todo',
+            `Fix TODO: ${work.text}`,
+            TaskPriority.MEDIUM
+        );
+    }
+    
+    private createTestFixTask(test: any): HiveMindTask {
+        return this.createTask(
+            'fix-test',
+            `Fix failing test: ${test.name}`,
+            TaskPriority.HIGH
+        );
+    }
+    
+    private async planRefactoringTasks(intent: any): Promise<HiveMindTask[]> {
+        return [
+            this.createTask('code-analysis', 'Analyze code structure', TaskPriority.HIGH),
+            this.createTask('refactor-plan', 'Plan refactoring approach', TaskPriority.HIGH),
+            this.createTask('refactor-implementation', 'Implement refactoring', TaskPriority.MEDIUM),
+            this.createTask('test-check', 'Ensure tests still pass', TaskPriority.HIGH)
+        ];
+    }
+    
+    private async planTestingTasks(intent: any): Promise<HiveMindTask[]> {
+        return [
+            this.createTask('test-analysis', 'Analyze test coverage', TaskPriority.HIGH),
+            this.createTask('test-creation', 'Create missing tests', TaskPriority.HIGH),
+            this.createTask('test-execution', 'Run all tests', TaskPriority.MEDIUM),
+            this.createTask('coverage-report', 'Generate coverage report', TaskPriority.LOW)
+        ];
+    }
+    
+    private async planOptimizationTasks(intent: any): Promise<HiveMindTask[]> {
+        return [
+            this.createTask('performance-analysis', 'Analyze performance bottlenecks', TaskPriority.HIGH),
+            this.createTask('optimization-plan', 'Plan optimization strategy', TaskPriority.HIGH),
+            this.createTask('optimization-implementation', 'Implement optimizations', TaskPriority.MEDIUM),
+            this.createTask('performance-test', 'Verify performance improvements', TaskPriority.HIGH)
+        ];
+    }
+    
+    private async planDocumentationTasks(intent: any): Promise<HiveMindTask[]> {
+        return [
+            this.createTask('doc-analysis', 'Analyze documentation needs', TaskPriority.MEDIUM),
+            this.createTask('api-documentation', 'Generate API documentation', TaskPriority.MEDIUM),
+            this.createTask('readme-update', 'Update README files', TaskPriority.LOW),
+            this.createTask('example-creation', 'Create usage examples', TaskPriority.LOW)
+        ];
+    }
+    
+    private createGenericTask(intent: any): HiveMindTask {
+        return this.createTask(
+            'general',
+            intent.command,
+            TaskPriority.MEDIUM
+        );
+    }
+    
+    private getPriorityFromType(type: string): TaskPriority {
+        switch (type) {
+            case 'FIXME':
+            case 'BUG':
+                return TaskPriority.HIGH;
+            case 'TODO':
+            case 'HACK':
+                return TaskPriority.MEDIUM;
+            case 'OPTIMIZE':
+            case 'REFACTOR':
+                return TaskPriority.LOW;
+            default:
+                return TaskPriority.MEDIUM;
+        }
+    }
+    
+    private extractFileFromError(error: string): string | undefined {
+        // Try to extract file path from error message
+        const fileMatch = error.match(/(?:in|at)\s+(.+?\.[a-zA-Z]+)(?::(\d+))?/);
+        return fileMatch ? fileMatch[1] : undefined;
+    }
+}

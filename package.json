@@ -654,6 +654,11 @@
           "default": true,
           "description": "Enable pattern learning and AI improvement"
         },
+        "autoclaude.workflow.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically start the unified orchestration system when workspace opens"
+        },
         "autoclaude.hooks.preOperation": {
           "type": "array",
           "default": [

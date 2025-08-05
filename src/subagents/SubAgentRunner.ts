@@ -100,6 +100,30 @@ export class SubAgentRunner {
         await agent.execute(request);
     }
 
+    async runAgentFix(agentId: string, scriptResult: ScriptResult): Promise<void> {
+        const agent = this.registry.getAgent(agentId);
+        if (!agent) {
+            debugLog(`Agent not found: ${agentId}`);
+            return;
+        }
+
+        const context: SubAgentContext = {
+            workspacePath: this.workspacePath,
+            scriptResult,
+            iterationCount: 0,
+            maxIterations: this.config.maxIterations
+        };
+
+        const request: SubAgentRequest = {
+            action: 'fix',
+            context,
+            prompt: 'Fix the issues identified in the check results.',
+            confidence: 'high'
+        };
+
+        await agent.execute(request);
+    }
+
     async runAllAgents(stopOnFailure: boolean = false): Promise<{ allPassed: boolean; results: Map<string, ScriptResult> }> {
         const results = new Map<string, ScriptResult>();
         let allPassed = true;

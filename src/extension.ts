@@ -34,6 +34,7 @@ import { getHookManager } from './hooks/HookManager';
 import { getAgentCoordinator, resetAgentCoordinator } from './agents/AgentCoordinator';
 import { getSystemMonitor, resetSystemMonitor } from './monitoring/SystemMonitor';
 import { AutomaticWorkflowSystem } from './automation/AutomaticWorkflowSystem';
+import { UnifiedOrchestrationSystem } from './automation/UnifiedOrchestrationSystem';
 import { log } from './utils/productionLogger';
 
 // Development-only imports
@@ -93,6 +94,7 @@ export async function activate(context: vscode.ExtensionContext) {
     let agentCoordinator: any = null;
     let systemMonitor: any = null;
     let workflowSystem: AutomaticWorkflowSystem | null = null;
+    let unifiedSystem: UnifiedOrchestrationSystem | null = null;
 
     // Initialize automation if workspace is available
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -129,6 +131,18 @@ export async function activate(context: vscode.ExtensionContext) {
             await workflowSystem.initialize();
             log.info('Automatic workflow system initialized');
             
+            // Initialize unified orchestration system
+            unifiedSystem = UnifiedOrchestrationSystem.getInstance(workspaceFolder.uri.fsPath);
+            await unifiedSystem.initialize();
+            log.info('Unified orchestration system initialized');
+            
+            // Auto-start unified system if configured
+            const workflowConfig = vscode.workspace.getConfiguration('autoclaude.workflow');
+            if (workflowConfig.get<boolean>('autoStart', true)) {
+                await unifiedSystem.start();
+                log.info('Unified orchestration system auto-started');
+            }
+            
             // Store globally for access by other modules
             (global as any).memoryManager = memoryManager;
             (global as any).enhancedConfig = enhancedConfig;
@@ -136,6 +150,7 @@ export async function activate(context: vscode.ExtensionContext) {
             (global as any).agentCoordinator = agentCoordinator;
             (global as any).systemMonitor = systemMonitor;
             (global as any).workflowSystem = workflowSystem;
+            (global as any).unifiedSystem = unifiedSystem;
             
         } catch (error) {
             errorLog('Failed to initialize enhanced systems', { error });
@@ -924,8 +939,8 @@ export async function activate(context: vscode.ExtensionContext) {
     });
     
     const executeNaturalCommandCommand = vscode.commands.registerCommand('autoclaude.executeNaturalCommand', async () => {
-        if (!workflowSystem) {
-            vscode.window.showErrorMessage('Workflow system not initialized. Please open a workspace.');
+        if (!unifiedSystem) {
+            vscode.window.showErrorMessage('Unified system not initialized. Please open a workspace.');
             return;
         }
         
@@ -936,7 +951,7 @@ export async function activate(context: vscode.ExtensionContext) {
         });
         
         if (command) {
-            await workflowSystem.processNaturalLanguageCommand(command);
+            await unifiedSystem.processNaturalCommand(command);
         }
     });
     
