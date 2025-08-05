@@ -127,7 +127,7 @@ export class ResilienceManager {
             circuitBreaker.recordFailure();
             this.recordFailure(serviceName, error instanceof Error ? error : new Error(String(error)));
             
-            if (circuitBreaker.state === CircuitBreakerState.OPEN && options?.fallback) {
+            if (circuitBreaker.state !== CircuitBreakerState.CLOSED && options?.fallback) {
                 warnLog(`Circuit breaker opened for ${serviceName}, using fallback`);
                 return await options.fallback();
             }

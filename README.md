@@ -3,7 +3,7 @@
 [![Version](https://img.shields.io/badge/version-3.8.0-blue)](https://github.com/claude-code/claude-autopilot/releases/tag/v3.8.0)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-**Claude Autopilot** is an automated assistant for Claude Code that provides intelligent task queuing, workflow automation, and 24/7 processing capabilities. Queue up hundreds of tasks and let Claude work autonomously while you focus on what matters most.
+**AutoClaude** is an enterprise-grade automated assistant for Claude Code that provides intelligent task queuing, workflow automation, and 24/7 processing capabilities. Now featuring **Universal Language Conversion** with advanced Neo-rs specialization, persistent learning, multi-agent coordination, and production-ready automation systems.
 
 <div align="center">
   <img src="img/autoclaude.png" alt="AutoClaude Interface" width="600">
@@ -11,7 +11,58 @@
 
 > 💤 **"Queue up 100 tasks Friday evening, wake up Monday with everything done"**
 
-## 🆕 NEW in v3.6.0: Complete Session Isolation & Multi-Window Independence
+## 🚀 **NEW: Universal Language Conversion System**
+
+### 🌍 **Multi-Language Support**
+- **Universal Converter**: Intelligent conversion between 8+ programming languages
+- **Smart Detection**: Automatic source and target language identification
+- **Pattern Learning**: AI-powered conversion improvement over time
+- **Type Mapping**: Comprehensive type system translations across languages
+
+### 🎯 **Supported Language Pairs**
+- **C# ↔ Rust**: Complete Neo-rs ecosystem support with 25+ type mappings
+- **JavaScript ↔ TypeScript**: Seamless type annotation and modern syntax
+- **Python ↔ Rust**: Performance optimization conversions
+- **Java ↔ Kotlin**: Modern JVM language migration
+- **Extensible Framework**: Easy addition of new language pairs
+
+### 🧠 **Advanced Memory System**
+- **Persistent Learning**: SQLite-based storage with pattern recognition
+- **Multi-Language Patterns**: Cross-language conversion optimization
+- **Type Intelligence**: Dynamic type mapping learning and validation
+- **Conversion History**: Complete audit trail and performance analytics
+
+### 🤖 **Universal Agent System**
+- **Multi-Language Agents**: Converter and Validator agents for any language pair
+- **Task Orchestration**: Intelligent workload distribution and priority management
+- **Real-time Monitoring**: Live agent status and performance tracking
+- **Fault Tolerance**: Automatic retry logic and graceful error recovery
+
+### 🎯 **Agent Coordination**
+- **AgentCoordinator**: Centralized task management and agent orchestration
+- **Priority Queue System**: Intelligent task prioritization with deadline awareness
+- **Parallel Processing**: Concurrent execution across multiple specialized agents
+- **Load Balancing**: Dynamic workload distribution based on agent availability
+- **Task Dependencies**: Smart dependency resolution and execution ordering
+- **Memory Integration**: Shared learning across all agent operations
+- **Error Recovery**: Automatic retry logic with exponential backoff
+- **Performance Monitoring**: Real-time agent metrics and performance analytics
+
+### 🔗 **Universal Validation System**
+- **Multi-Language Validation**: Syntax checking for all supported languages
+- **Compatibility Verification**: Ensures functional equivalence across conversions
+- **Security Scanning**: Built-in vulnerability detection for all languages
+- **Performance Analysis**: Code quality and optimization recommendations
+
+### 📊 **System Monitoring & Analytics**
+- **Real-time Metrics**: CPU, memory, and conversion-specific performance tracking
+- **Alert System**: Configurable thresholds with VS Code notifications
+- **Export Capabilities**: Comprehensive metrics and learning data export
+- **Performance Dashboard**: System health overview and diagnostics
+
+> 📖 **[View Complete Enhanced Features Documentation →](ENHANCED_FEATURES.md)**
+
+## 🆕 v3.8.0: Complete Session Isolation & Multi-Window Independence
 
 ### 🔒 **Complete Session Isolation**
 - **Independent VS Code Windows**: Each window runs completely separate Claude sessions
@@ -81,6 +132,16 @@ AutoClaude learns your project:
 [Learn more about the Automation System →](docs/AUTOMATION_SYSTEM.md)
 
 ## ✨ Features
+
+### 🌍 **Universal Language Conversion**
+
+-   **Multi-Language Support**: Convert code between 8+ programming languages intelligently
+-   **Auto-Detection**: Automatically detect source language and suggest optimal target languages
+-   **Pattern Learning**: AI continuously improves conversion quality based on successful patterns
+-   **Type System Mapping**: Comprehensive type translations with language-specific optimizations
+-   **Neo-rs Specialization**: Advanced C# to Rust conversion with Neo blockchain compatibility
+-   **Validation & Quality**: Multi-layer validation ensures converted code maintains functionality
+-   **Security Scanning**: Built-in vulnerability detection across all supported languages
 
 ### 🚀 **24/7 Automated Processing**
 

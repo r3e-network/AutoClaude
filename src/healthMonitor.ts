@@ -8,7 +8,8 @@ interface Logger {
 }
 
 interface ClaudeSession {
-    on: (event: string, handler: Function) => void;
+    on: (event: string, handler: (...args: any[]) => void) => any;
+    removeListener: (event: string, handler: (...args: any[]) => void) => any;
     sendRawInput: (input: string) => void;
     isActive: () => boolean;
 }

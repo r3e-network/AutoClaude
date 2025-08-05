@@ -1,7 +1,15 @@
-import { sessionAdapter } from './claude/sessionAdapter';
+import { sessionAdapter, ClaudeSessionAdapter } from './claude/sessionAdapter';
 import { HealthMonitor } from './healthMonitor';
 import { RecoveryLogger, RecoveryConfig } from './utils/recoveryConfig';
 import { EventEmitter } from 'events';
+
+// Import the ClaudeSession interface
+interface ClaudeSession {
+    on: (event: string, handler: (...args: any[]) => void) => any;
+    removeListener: (event: string, handler: (...args: any[]) => void) => any;
+    sendRawInput: (input: string) => void;
+    isActive: () => boolean;
+}
 
 export interface RecoveryOptions {
     maxRetries: number;
@@ -47,13 +55,15 @@ export class SessionRecoveryManager extends EventEmitter {
     async initializeSession(skipPermissions: boolean = true): Promise<ClaudeSession> {
         try {
             // Create new session
-            this.session = new ClaudeSession(this.config, this.logger);
+            this.session = sessionAdapter;
             
             // Set up session event handlers
             this.setupSessionHandlers();
             
-            // Start the session
-            await this.session.start(skipPermissions);
+            // Start the session (if it has a start method)
+            if (this.session && 'start' in this.session) {
+                await (this.session as any).start(skipPermissions);
+            }
             
             // Create and start health monitor
             this.healthMonitor = new HealthMonitor(this.session, this.logger);
@@ -218,7 +228,7 @@ export class SessionRecoveryManager extends EventEmitter {
         }
 
         try {
-            const response = await this.session.sendMessage(message, onProgress);
+            const response = await (this.session as any).sendMessage(message);
             
             if (this.healthMonitor) {
                 this.healthMonitor.recordMessageSuccess();
@@ -238,7 +248,7 @@ export class SessionRecoveryManager extends EventEmitter {
                 
                 // Retry the message after recovery
                 if (this.session && this.session.isActive()) {
-                    return this.session.sendMessage(message, onProgress);
+                    return (this.session as any).sendMessage(message);
                 }
             }
             

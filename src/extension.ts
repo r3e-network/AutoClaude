@@ -28,6 +28,11 @@ import { ParallelAgentOrchestrator } from './agents/ParallelAgentOrchestrator';
 import { AgentMonitor } from './monitoring/AgentMonitor';
 import { WorkDistributor } from './agents/WorkDistributor';
 import { CoordinationProtocol } from './coordination/CoordinationProtocol';
+import { getMemoryManager, closeAllMemoryManagers } from './memory';
+import { getEnhancedConfig } from './config/enhanced-config';
+import { getHookManager } from './hooks/HookManager';
+import { getAgentCoordinator, resetAgentCoordinator } from './agents/AgentCoordinator';
+import { getSystemMonitor, resetSystemMonitor } from './monitoring/SystemMonitor';
 
 // Development-only imports
 let simulateUsageLimit: (() => void) | undefined;
@@ -49,7 +54,7 @@ if (isDevelopmentMode()) {
     });
 }
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
     try {
         extensionContext = context;
         setExtensionContext(context);
@@ -78,10 +83,55 @@ export function activate(context: vscode.ExtensionContext) {
     let agentMonitor: AgentMonitor | null = null;
     let workDistributor: WorkDistributor | null = null;
     let coordinationProtocol: CoordinationProtocol | null = null;
+    
+    // Enhanced system instances
+    let memoryManager: any = null;
+    let enhancedConfig: any = null;
+    let hookManager: any = null;
+    let agentCoordinator: any = null;
+    let systemMonitor: any = null;
 
     // Initialize automation if workspace is available
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (workspaceFolder) {
+        // Initialize enhanced systems
+        try {
+            // Initialize memory system
+            memoryManager = getMemoryManager(workspaceFolder.uri.fsPath);
+            await memoryManager.initialize();
+            debugLog('Memory system initialized');
+            
+            // Initialize enhanced configuration
+            enhancedConfig = getEnhancedConfig(workspaceFolder.uri.fsPath);
+            await enhancedConfig.initialize();
+            debugLog('Enhanced configuration initialized');
+            
+            // Initialize hook system
+            hookManager = getHookManager(workspaceFolder.uri.fsPath);
+            await hookManager.initialize();
+            debugLog('Hook system initialized');
+            
+            // Initialize agent coordinator
+            agentCoordinator = getAgentCoordinator(workspaceFolder.uri.fsPath);
+            await agentCoordinator.initialize();
+            debugLog('Agent coordinator initialized');
+            
+            // Initialize system monitor
+            systemMonitor = getSystemMonitor(workspaceFolder.uri.fsPath);
+            await systemMonitor.initialize();
+            debugLog('System monitor initialized');
+            
+            // Store globally for access by other modules
+            (global as any).memoryManager = memoryManager;
+            (global as any).enhancedConfig = enhancedConfig;
+            (global as any).hookManager = hookManager;
+            (global as any).agentCoordinator = agentCoordinator;
+            (global as any).systemMonitor = systemMonitor;
+            
+        } catch (error) {
+            errorLog('Failed to initialize enhanced systems', { error });
+            vscode.window.showWarningMessage('Some AutoClaude features may not work correctly. Check logs for details.');
+        }
         // Initialize automatic parallel agents if enabled
         const parallelConfig = vscode.workspace.getConfiguration('autoclaude.parallelAgents');
         if (parallelConfig.get<boolean>('enabled', false) && parallelConfig.get<boolean>('autoStart', false)) {
@@ -492,6 +542,213 @@ export function activate(context: vscode.ExtensionContext) {
         await statsManager.showStatisticsWebview(context);
     });
 
+    // Enhanced system commands
+    const submitAgentTaskCommand = vscode.commands.registerCommand('autoclaude.submitAgentTask', async () => {
+        if (!agentCoordinator) {
+            vscode.window.showErrorMessage('Agent system not initialized. Please wait and try again.');
+            return;
+        }
+
+        const taskType = await vscode.window.showQuickPick([
+            { label: '🔄 Convert File', value: 'convert-file', description: 'Convert C# file to Rust' },
+            { label: '✅ Validate Conversion', value: 'validate-conversion', description: 'Validate converted Rust code' },
+            { label: '⚡ Optimize Code', value: 'optimize-code', description: 'Optimize existing code' },
+            { label: '📋 Generate Tests', value: 'generate-tests', description: 'Generate unit tests' },
+            { label: '📚 Create Documentation', value: 'create-docs', description: 'Generate documentation' }
+        ], {
+            placeHolder: 'Select task type'
+        });
+
+        if (!taskType) return;
+
+        const description = await vscode.window.showInputBox({
+            prompt: 'Enter task description',
+            placeHolder: 'Describe what you want the agent to do...'
+        });
+
+        if (!description) return;
+
+        try {
+            const taskId = await agentCoordinator.submitTask({
+                type: taskType.value,
+                priority: 5,
+                description,
+                input: { description }
+            });
+
+            vscode.window.showInformationMessage(`Task ${taskId} submitted to agent system`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to submit task: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+
+    const showAgentStatusCommand = vscode.commands.registerCommand('autoclaude.showAgentStatus', async () => {
+        if (!agentCoordinator) {
+            vscode.window.showErrorMessage('Agent system not initialized');
+            return;
+        }
+
+        try {
+            const [agentStatus, queueStatus] = await Promise.all([
+                agentCoordinator.getAgentStatus(),
+                agentCoordinator.getQueueStatus()
+            ]);
+
+            const statusLines = [
+                '# Agent System Status',
+                '',
+                '## Queue Status',
+                `- Queue Length: ${queueStatus.queueLength}`,
+                `- Active Tasks: ${queueStatus.activeTasks}`,
+                `- Completed Tasks: ${queueStatus.completedTasks}`,
+                '',
+                '## Agent Status'
+            ];
+
+            agentStatus.forEach((agent: any) => {
+                statusLines.push(`### ${agent.name} (${agent.id})`);
+                statusLines.push(`- Status: ${agent.status}`);
+                statusLines.push(`- Type: ${agent.type}`);
+                if (agent.currentTask) {
+                    statusLines.push(`- Current Task: ${agent.currentTask}`);
+                }
+                if (agent.lastActivity) {
+                    statusLines.push(`- Last Activity: ${agent.lastActivity.toLocaleString()}`);
+                }
+                statusLines.push('');
+            });
+
+            const doc = await vscode.workspace.openTextDocument({
+                content: statusLines.join('\n'),
+                language: 'markdown'
+            });
+            await vscode.window.showTextDocument(doc);
+
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to get agent status: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+
+    const showMemoryStatsCommand = vscode.commands.registerCommand('autoclaude.showMemoryStats', async () => {
+        if (!memoryManager) {
+            vscode.window.showErrorMessage('Memory system not initialized');
+            return;
+        }
+
+        try {
+            const [performanceStats, conversionStats] = await Promise.all([
+                memoryManager.getPerformanceStats(),
+                memoryManager.getConversionStats()
+            ]);
+
+            const statsLines = [
+                '# Memory System Statistics',
+                '',
+                '## Performance',
+                `- Query Count: ${performanceStats.queryCount}`,
+                `- Average Query Time: ${performanceStats.averageQueryTime.toFixed(2)}ms`,
+                `- Database Size: ${(performanceStats.databaseSize / 1024).toFixed(2)} KB`,
+                '',
+                '## Table Statistics'
+            ];
+
+            Object.entries(performanceStats.tableStats).forEach(([table, count]) => {
+                statsLines.push(`- ${table}: ${count} records`);
+            });
+
+            statsLines.push('');
+            statsLines.push('## Conversion Statistics');
+            statsLines.push(`- Total Conversions: ${conversionStats.overall.total_conversions}`);
+            statsLines.push(`- Successful: ${conversionStats.overall.successful}`);
+            statsLines.push(`- Average Duration: ${conversionStats.overall.avg_duration_ms?.toFixed(2) || 'N/A'}ms`);
+            statsLines.push(`- Total Projects: ${conversionStats.overall.total_projects}`);
+
+            const doc = await vscode.workspace.openTextDocument({
+                content: statsLines.join('\n'),
+                language: 'markdown'
+            });
+            await vscode.window.showTextDocument(doc);
+
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to get memory stats: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+
+    const exportMemoryCommand = vscode.commands.registerCommand('autoclaude.exportMemory', async () => {
+        if (!memoryManager) {
+            vscode.window.showErrorMessage('Memory system not initialized');
+            return;
+        }
+
+        const uri = await vscode.window.showSaveDialog({
+            defaultUri: vscode.Uri.file('autoclaude-memory-export.json'),
+            filters: {
+                'JSON files': ['json'],
+                'All files': ['*']
+            }
+        });
+
+        if (uri) {
+            try {
+                await memoryManager.exportMemory(uri.fsPath);
+                vscode.window.showInformationMessage(`Memory exported to ${uri.fsPath}`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to export memory: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        }
+    });
+
+    const showHookStatsCommand = vscode.commands.registerCommand('autoclaude.showHookStats', async () => {
+        if (!hookManager) {
+            vscode.window.showErrorMessage('Hook system not initialized');
+            return;
+        }
+
+        try {
+            const stats = await hookManager.getHookStats();
+            const hooks = hookManager.getHooks();
+
+            const statsLines = [
+                '# Hook System Statistics',
+                '',
+                '## Overview',
+                `- Total Hooks: ${stats.totalHooks}`,
+                `- Enabled Hooks: ${stats.enabledHooks}`,
+                `- Recent Executions: ${stats.recentExecutions}`,
+                '',
+                '## Hooks by Operation'
+            ];
+
+            Object.entries(stats.hooksByOperation).forEach(([operation, count]) => {
+                statsLines.push(`- ${operation}: ${count} hooks`);
+            });
+
+            statsLines.push('');
+            statsLines.push('## Registered Hooks');
+
+            hooks.forEach((hook: any) => {
+                statsLines.push(`### ${hook.name}`);
+                statsLines.push(`- ID: ${hook.id}`);
+                statsLines.push(`- Operation: ${hook.operation}`);
+                statsLines.push(`- Type: ${hook.type}`);
+                statsLines.push(`- Priority: ${hook.priority}`);
+                statsLines.push(`- Enabled: ${hook.enabled ? '✅' : '❌'}`);
+                statsLines.push(`- Blocking: ${hook.blocking ? '🚫' : '⏭️'}`);
+                statsLines.push(`- Timeout: ${hook.timeout}ms`);
+                statsLines.push('');
+            });
+
+            const doc = await vscode.workspace.openTextDocument({
+                content: statsLines.join('\n'),
+                language: 'markdown'
+            });
+            await vscode.window.showTextDocument(doc);
+
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to get hook stats: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+
     const checkRemoteStatusCommand = vscode.commands.registerCommand('autoclaude.checkRemoteStatus', async () => {
         const { checkRemoteCompatibility, isRemoteEnvironment, getRemoteType } = await import('./utils/remoteDetection');
         
@@ -646,6 +903,8 @@ export function activate(context: vscode.ExtensionContext) {
         useTemplateCommand, manageTemplatesCommand, showStatisticsCommand, checkRemoteStatusCommand,
         showErrorHistoryCommand, showServiceHealthCommand, exportLogsCommand,
         validateConfigurationCommand, resetToDefaultsCommand, showSessionInfoCommand,
+        submitAgentTaskCommand, showAgentStatusCommand, showMemoryStatsCommand,
+        exportMemoryCommand, showHookStatsCommand,
         configWatcher
     );
     
@@ -1530,6 +1789,44 @@ export async function deactivate(): Promise<void> {
     stopHealthCheck();
     stopAutomaticMaintenance();
     stopScheduledSession();
+    
+    // Clean up enhanced systems first
+    try {
+        const agentCoordinator = (global as any).agentCoordinator;
+        if (agentCoordinator) {
+            await agentCoordinator.stopAllAgents();
+            resetAgentCoordinator();
+            debugLog('Agent coordinator cleaned up');
+        }
+        
+        const hookManager = (global as any).hookManager;
+        if (hookManager) {
+            hookManager.dispose();
+            debugLog('Hook manager cleaned up');
+        }
+        
+        const enhancedConfig = (global as any).enhancedConfig;
+        if (enhancedConfig) {
+            enhancedConfig.dispose();
+            debugLog('Enhanced config cleaned up');
+        }
+        
+        const systemMonitor = (global as any).systemMonitor;
+        if (systemMonitor) {
+            systemMonitor.dispose();
+            resetSystemMonitor();
+            debugLog('System monitor cleaned up');
+        }
+        
+        const memoryManager = (global as any).memoryManager;
+        if (memoryManager) {
+            await memoryManager.close();
+            await closeAllMemoryManagers();
+            debugLog('Memory system cleaned up');
+        }
+    } catch (error) {
+        debugLog(`Error cleaning up enhanced systems: ${error}`);
+    }
     
     // Clean up parallel agents
     const context = (global as any).extensionContext;

@@ -76,8 +76,8 @@ jest.mock('../../../src/utils/logging', () => ({
 }));
 
 // Import components after mocking
-import { ScriptRunner } from '../../../src/scripts';
-import { SubAgentRunner } from '../../../src/subagents';
+import { ScriptRunner } from '../../src/scripts';
+import { SubAgentRunner } from '../../src/subagents';
 
 describe('End-to-End Workflow Tests', () => {
   beforeAll(async () => {

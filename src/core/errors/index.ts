@@ -17,7 +17,9 @@ export enum ErrorCategory {
     FILE_SYSTEM = 'file_system',
     NETWORK = 'network',
     USER_INPUT = 'user_input',
-    INTERNAL = 'internal'
+    INTERNAL = 'internal',
+    DATABASE = 'database',
+    USAGE = 'usage'
 }
 
 export interface ErrorDetails {

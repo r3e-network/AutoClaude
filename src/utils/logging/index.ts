@@ -40,6 +40,12 @@ class Logger {
 
     private initializeLogFile(): void {
         try {
+            // Skip file logging in test environment
+            if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID) {
+                this.logToFile = false;
+                return;
+            }
+
             const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
             if (workspaceFolder) {
                 const logDir = path.join(workspaceFolder.uri.fsPath, '.autoclaude', 'logs');
@@ -50,7 +56,10 @@ class Logger {
                 this.logToFile = true;
             }
         } catch (error) {
-            console.error('Failed to initialize log file:', error);
+            // Don't log errors in test environment to avoid noise
+            if (!process.env.JEST_WORKER_ID) {
+                console.error('Failed to initialize log file:', error);
+            }
             this.logToFile = false;
         }
     }

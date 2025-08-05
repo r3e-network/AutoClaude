@@ -85,6 +85,13 @@ export class ClaudeSessionAdapter extends EventEmitter {
         return this.process !== null && !this.process.killed;
     }
     
+    // Add start method for compatibility with ClaudeSession interface
+    async start(skipPermissions: boolean = true): Promise<void> {
+        // In VS Code extension, the process is managed externally
+        // This method is a no-op for compatibility
+        return Promise.resolve();
+    }
+    
     async stop(): Promise<void> {
         if (this.process && !this.process.killed) {
             this.process.kill();
