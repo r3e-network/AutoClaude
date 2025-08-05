@@ -1,0 +1,667 @@
+id: neo-rs-parity-checker
+name: Neo N3 Rust Node Parity Checker
+description: Ensures Neo N3 Rust implementation has complete feature parity with C# reference implementation
+version: 1.0.0
+author: Neo Blockchain Development Team
+capabilities:
+  - C# to Rust feature parity validation
+  - Neo N3 protocol compliance checking
+  - RPC API completeness verification
+  - Consensus mechanism validation
+  - P2P network compatibility
+  - Smart contract execution parity
+  - Block validation accuracy
+  - Transaction processing compliance
+projectDetection:
+  - pattern: "**/neo-rs/**"
+  - pattern: "**/neo_csharp/**"
+  - files: ["Cargo.toml", "neo.sln"]
+  - keywords: ["neo-n3", "neo-blockchain", "neo-rs"]
+priority: critical
+enabled: true
+supportsTriggers: true
+supportsAnalysis: true
+supportsFix: true
+smartMode: true
+options:
+  strictParityMode: true
+  validateRpcCompliance: true
+  checkConsensusAccuracy: true
+  verifyP2pCompatibility: true
+  validateSmartContractExecution: true
+
+check:
+  script: |
+    #!/bin/bash
+    echo "🔗 Neo N3 Rust Node Parity Check - Ensuring complete C# feature parity"
+    
+    ERRORS=()
+    WARNINGS=()
+    PARITY_ISSUES=()
+    
+    # Check if both neo-rs and neo_csharp exist
+    if [ ! -d "neo-rs" ] && [ ! -d "neo_csharp" ]; then
+      echo "❌ Neither neo-rs nor neo_csharp directories found"
+      exit 1
+    fi
+    
+    # Function to extract C# public APIs
+    extract_csharp_apis() {
+      echo "📋 Extracting C# reference APIs..."
+      
+      if [ -d "neo_csharp" ]; then
+        # Extract public classes and methods from C# code
+        find neo_csharp -name "*.cs" -exec grep -H "public.*class\|public.*interface\|public.*method\|public.*enum" {} \; > /tmp/csharp_apis.txt
+        
+        # Extract RPC methods
+        find neo_csharp -name "*.cs" -exec grep -H "RpcMethod\|JsonRpc" {} \; > /tmp/csharp_rpc.txt
+        
+        # Extract consensus-related classes
+        find neo_csharp -name "*.cs" -path "*/Consensus/*" -exec grep -H "public.*class" {} \; > /tmp/csharp_consensus.txt
+        
+        # Extract P2P network classes  
+        find neo_csharp -name "*.cs" -path "*/Network/*" -exec grep -H "public.*class" {} \; > /tmp/csharp_network.txt
+      fi
+    }
+    
+    # Function to extract Rust implementations
+    extract_rust_implementations() {
+      echo "📋 Extracting Rust implementations..."
+      
+      if [ -d "neo-rs" ]; then
+        # Extract public structs and traits from Rust code
+        find neo-rs -name "*.rs" -exec grep -H "pub struct\|pub trait\|pub enum\|pub fn" {} \; > /tmp/rust_implementations.txt
+        
+        # Extract RPC implementations
+        find neo-rs -name "*.rs" -exec grep -H "rpc\|json_rpc" {} \; > /tmp/rust_rpc.txt
+        
+        # Extract consensus implementations
+        find neo-rs -name "*.rs" -path "*/consensus/*" -exec grep -H "pub struct\|pub trait" {} \; > /tmp/rust_consensus.txt
+        
+        # Extract network implementations
+        find neo-rs -name "*.rs" -path "*/network/*" -exec grep -H "pub struct\|pub trait" {} \; > /tmp/rust_network.txt
+      fi
+    }
+    
+    # Function to check RPC API parity
+    check_rpc_parity() {
+      echo "🌐 Checking RPC API parity..."
+      
+      # Check if critical RPC methods exist in Rust
+      critical_rpc_methods=(
+        "getbestblockhash"
+        "getblock"
+        "getblockcount" 
+        "getblockhash"
+        "getblockheader"
+        "getconnectioncount"
+        "getpeers"
+        "getrawmempool"
+        "getrawtransaction"
+        "gettransactionheight"
+        "getversion"
+        "sendrawtransaction"
+        "submitblock"
+        "validateaddress"
+        "invokefunction"
+        "invokescript"
+        "getcontractstate"
+        "getnep17balances"
+        "getnep17transfers"
+        "getapplicationlog"
+      )
+      
+      for method in "${critical_rpc_methods[@]}"; do
+        if [ -f "/tmp/rust_rpc.txt" ]; then
+          if ! grep -qi "$method" /tmp/rust_rpc.txt; then
+            PARITY_ISSUES+=("Missing RPC method in Rust: $method")
+          fi
+        fi
+      done
+    }
+    
+    # Function to check consensus parity
+    check_consensus_parity() {
+      echo "⚡ Checking consensus mechanism parity..."
+      
+      # Check for critical consensus components
+      consensus_components=(
+        "ConsensusContext"
+        "ConsensusMessage"
+        "ChangeView"
+        "PrepareRequest"
+        "PrepareResponse"
+        "Commit"
+        "RecoveryMessage"
+        "ConsensusService"
+      )
+      
+      for component in "${consensus_components[@]}"; do
+        if [ -f "/tmp/rust_consensus.txt" ]; then
+          if ! grep -qi "$component" /tmp/rust_consensus.txt; then
+            PARITY_ISSUES+=("Missing consensus component in Rust: $component")
+          fi
+        fi
+      done
+    }
+    
+    # Function to check P2P network parity
+    check_network_parity() {
+      echo "🌍 Checking P2P network parity..."
+      
+      # Check for critical network components
+      network_components=(
+        "LocalNode"
+        "RemoteNode"
+        "Message"
+        "ProtocolHandler"
+        "TaskManager"
+        "Peer"
+        "NodeCapability"
+        "NetworkSettings"
+      )
+      
+      for component in "${network_components[@]}"; do
+        if [ -f "/tmp/rust_network.txt" ]; then
+          if ! grep -qi "$component" /tmp/rust_network.txt; then
+            PARITY_ISSUES+=("Missing network component in Rust: $component")
+          fi
+        fi
+      done
+    }
+    
+    # Function to check smart contract execution parity
+    check_smartcontract_parity() {
+      echo "📜 Checking smart contract execution parity..."
+      
+      # Check for VM components
+      vm_components=(
+        "ExecutionEngine"
+        "ExecutionContext"
+        "EvaluationStack"
+        "InteropService"
+        "ApplicationEngine"
+        "Script"
+        "OpCode"
+        "VMState"
+      )
+      
+      for component in "${vm_components[@]}"; do
+        if [ -d "neo-rs" ]; then
+          if ! find neo-rs -name "*.rs" -exec grep -l "$component" {} \; | grep -q .; then
+            PARITY_ISSUES+=("Missing VM component in Rust: $component")
+          fi
+        fi
+      done
+    }
+    
+    # Function to check crypto parity
+    check_crypto_parity() {
+      echo "🔐 Checking cryptographic functions parity..."
+      
+      crypto_functions=(
+        "ECDsa"
+        "Secp256r1"
+        "Secp256k1"
+        "SHA256"
+        "RIPEMD160"
+        "MerkleTree"
+        "BloomFilter"
+        "Base58"
+        "Base64"
+      )
+      
+      for function in "${crypto_functions[@]}"; do
+        if [ -d "neo-rs" ]; then
+          if ! find neo-rs -name "*.rs" -exec grep -l "$function" {} \; | grep -q .; then
+            PARITY_ISSUES+=("Missing crypto function in Rust: $function")
+          fi
+        fi
+      done
+    }
+    
+    # Function to check storage parity
+    check_storage_parity() {
+      echo "💾 Checking storage layer parity..."
+      
+      storage_components=(
+        "MemoryStore"
+        "LevelDBStore" 
+        "RocksDBStore"
+        "Store"
+        "Snapshot"
+        "StoreView"
+        "DataCache"
+      )
+      
+      for component in "${storage_components[@]}"; do
+        if [ -d "neo-rs" ]; then
+          if ! find neo-rs -name "*.rs" -exec grep -l "$component" {} \; | grep -q .; then
+            PARITY_ISSUES+=("Missing storage component in Rust: $component")
+          fi
+        fi
+      done
+    }
+    
+    # Run all parity checks
+    extract_csharp_apis
+    extract_rust_implementations
+    check_rpc_parity
+    check_consensus_parity
+    check_network_parity
+    check_smartcontract_parity
+    check_crypto_parity
+    check_storage_parity
+    
+    # Check protocol version compatibility
+    echo "🔖 Checking protocol version..."
+    if [ -d "neo-rs" ] && [ -d "neo_csharp" ]; then
+      rust_version=$(find neo-rs -name "*.rs" -exec grep -h "PROTOCOL_VERSION\|ProtocolVersion" {} \; | head -1 || echo "")
+      csharp_version=$(find neo_csharp -name "*.cs" -exec grep -h "ProtocolVersion" {} \; | head -1 || echo "")
+      
+      if [ -n "$rust_version" ] && [ -n "$csharp_version" ]; then
+        if [ "$rust_version" != "$csharp_version" ]; then
+          ERRORS+=("Protocol version mismatch between Rust and C# implementations")
+        fi
+      fi
+    fi
+    
+    # Cleanup temp files
+    rm -f /tmp/csharp_*.txt /tmp/rust_*.txt
+    
+    # Output results
+    if [ ${#PARITY_ISSUES[@]} -eq 0 ] && [ ${#ERRORS[@]} -eq 0 ] && [ ${#WARNINGS[@]} -eq 0 ]; then
+      echo "✅ Neo N3 Rust node has complete feature parity with C# reference!"
+      exit 0
+    else
+      echo "❌ Neo N3 Rust node parity issues detected!"
+      
+      if [ ${#PARITY_ISSUES[@]} -gt 0 ]; then
+        echo -e "\n🔍 Feature Parity Issues:"
+        printf '%s\n' "${PARITY_ISSUES[@]}"
+      fi
+      
+      if [ ${#ERRORS[@]} -gt 0 ]; then
+        echo -e "\n❌ Critical Errors:"
+        printf '%s\n' "${ERRORS[@]}"
+      fi
+      
+      if [ ${#WARNINGS[@]} -gt 0 ]; then
+        echo -e "\n⚠️ Warnings:"
+        printf '%s\n' "${WARNINGS[@]}"
+      fi
+      
+      exit 1
+    fi
+
+analysis:
+  script: |
+    #!/bin/bash
+    echo "🔍 Analyzing Neo N3 Rust implementation completeness..."
+    
+    # Generate comprehensive parity analysis
+    echo -e "\n📊 Implementation Status Analysis:"
+    
+    # Analyze project structure
+    echo -e "\n🏗️ Project Structure:"
+    if [ -d "neo-rs" ]; then
+      echo "  ✓ neo-rs directory found"
+      echo "  Rust modules:"
+      find neo-rs -name "*.rs" -path "*/src/*" | head -10 | sed 's/^/    /'
+    fi
+    
+    if [ -d "neo_csharp" ]; then
+      echo "  ✓ neo_csharp directory found"
+      echo "  C# projects:"
+      find neo_csharp -name "*.csproj" | sed 's/^/    /'
+    fi
+    
+    # Analyze implementation gaps
+    echo -e "\n🎯 Implementation Priority Matrix:"
+    
+    echo "HIGH PRIORITY (Core Protocol):"
+    echo "  - Consensus Algorithm (dBFT 2.0)"
+    echo "  - P2P Network Protocol" 
+    echo "  - Block Validation Engine"
+    echo "  - Transaction Processing"
+    echo "  - Neo VM Implementation"
+    
+    echo -e "\nMEDIUM PRIORITY (RPC & Services):"
+    echo "  - JSON-RPC Server"
+    echo "  - Wallet Services"
+    echo "  - Node Management"
+    echo "  - Plugin System"
+    
+    echo -e "\nLOW PRIORITY (Utilities):"
+    echo "  - CLI Tools"
+    echo "  - Monitoring & Metrics"
+    echo "  - Developer Tools"
+    
+    # Performance comparison recommendations
+    echo -e "\n⚡ Performance Optimization Opportunities:"
+    echo "  - Memory management (Rust advantages)"
+    echo "  - Concurrent processing"
+    echo "  - Zero-copy serialization"
+    echo "  - SIMD optimizations"
+    
+    # Testing strategy
+    echo -e "\n🧪 Testing Strategy:"
+    echo "  - Cross-implementation test suite"
+    echo "  - Protocol compliance tests"
+    echo "  - Performance benchmarks"
+    echo "  - Integration tests with mainnet"
+
+fix:
+  script: |
+    #!/bin/bash
+    echo "🔧 Generating Rust implementation templates for missing Neo N3 features..."
+    
+    # Create missing RPC method templates
+    if [ ! -f "neo-rs/src/rpc/mod.rs" ]; then
+      mkdir -p neo-rs/src/rpc
+      cat > neo-rs/src/rpc/mod.rs << 'EOF'
+//! Neo N3 JSON-RPC Implementation
+//! Complete feature parity with Neo C# reference implementation
+
+use serde_json::{Value, json};
+use std::collections::HashMap;
+
+pub struct RpcServer {
+    blockchain: Arc<Blockchain>,
+    mempool: Arc<MemPool>,
+}
+
+impl RpcServer {
+    pub fn new(blockchain: Arc<Blockchain>, mempool: Arc<MemPool>) -> Self {
+        Self { blockchain, mempool }
+    }
+    
+    /// Get the hash of the most recent block
+    pub async fn get_best_block_hash(&self) -> Result<String, RpcError> {
+        let hash = self.blockchain.get_best_block_hash().await?;
+        Ok(format!("0x{}", hex::encode(hash)))
+    }
+    
+    /// Get block information
+    pub async fn get_block(&self, hash_or_index: Value, verbose: Option<bool>) -> Result<Value, RpcError> {
+        // Implementation matches C# GetBlock exactly
+        todo!("Implement get_block with C# parity")
+    }
+    
+    /// Get current block count
+    pub async fn get_block_count(&self) -> Result<u32, RpcError> {
+        Ok(self.blockchain.get_height().await? + 1)
+    }
+    
+    // Add all other RPC methods with exact C# parity...
+}
+EOF
+      echo "✅ Created RPC server template"
+    fi
+    
+    # Create consensus implementation template
+    if [ ! -f "neo-rs/src/consensus/mod.rs" ]; then
+      mkdir -p neo-rs/src/consensus
+      cat > neo-rs/src/consensus/mod.rs << 'EOF'
+//! Neo N3 dBFT 2.0 Consensus Implementation
+//! Exact implementation of C# consensus algorithm
+
+use tokio::time::{Duration, Instant};
+use std::collections::HashMap;
+
+pub struct ConsensusService {
+    context: ConsensusContext,
+    node: Arc<LocalNode>,
+    wallet: Option<Arc<Wallet>>,
+}
+
+pub struct ConsensusContext {
+    pub view_number: u8,
+    pub primary_index: u32,
+    pub validators: Vec<ECPoint>,
+    pub my_index: i32,
+    pub block: Option<Block>,
+    pub transactions: HashMap<UInt256, Transaction>,
+    pub preparations: HashMap<u32, PrepareResponse>,
+    pub commit_payloads: HashMap<u32, Commit>,
+    pub change_view_payloads: HashMap<u32, ChangeView>,
+}
+
+impl ConsensusService {
+    pub fn new(node: Arc<LocalNode>) -> Self {
+        Self {
+            context: ConsensusContext::new(),
+            node,
+            wallet: None,
+        }
+    }
+    
+    pub async fn start(&mut self) -> Result<(), ConsensusError> {
+        // Implement exact dBFT 2.0 algorithm from C# reference
+        todo!("Implement complete consensus algorithm")
+    }
+    
+    // All consensus message handlers with C# parity
+    pub async fn on_prepare_request(&mut self, payload: PrepareRequest) -> Result<(), ConsensusError> {
+        todo!("Implement PrepareRequest handling")
+    }
+    
+    pub async fn on_prepare_response(&mut self, payload: PrepareResponse) -> Result<(), ConsensusError> {
+        todo!("Implement PrepareResponse handling")  
+    }
+    
+    pub async fn on_commit(&mut self, payload: Commit) -> Result<(), ConsensusError> {
+        todo!("Implement Commit handling")
+    }
+    
+    pub async fn on_change_view(&mut self, payload: ChangeView) -> Result<(), ConsensusError> {
+        todo!("Implement ChangeView handling")
+    }
+}
+EOF
+      echo "✅ Created consensus implementation template"
+    fi
+    
+    # Create P2P network template
+    if [ ! -f "neo-rs/src/network/mod.rs" ]; then
+      mkdir -p neo-rs/src/network
+      cat > neo-rs/src/network/mod.rs << 'EOF'
+//! Neo N3 P2P Network Implementation
+//! Complete protocol compatibility with C# implementation
+
+use tokio::net::TcpStream;
+use std::collections::HashMap;
+
+pub struct LocalNode {
+    pub connected_peers: HashMap<SocketAddr, RemoteNode>,
+    pub protocol: ProtocolHandler,
+    pub capabilities: Vec<NodeCapability>,
+}
+
+pub struct RemoteNode {
+    pub socket: TcpStream,
+    pub version: Option<VersionPayload>,
+    pub last_block_index: u32,
+    pub tasks: Vec<TaskManagerTask>,
+}
+
+impl LocalNode {
+    pub fn new() -> Self {
+        Self {
+            connected_peers: HashMap::new(),
+            protocol: ProtocolHandler::new(),
+            capabilities: vec![
+                NodeCapability::TcpServer,
+                NodeCapability::WsServer,
+            ],
+        }
+    }
+    
+    pub async fn start(&mut self, port: u16) -> Result<(), NetworkError> {
+        // Implement exact P2P protocol from C# reference
+        todo!("Implement complete P2P networking")
+    }
+    
+    pub async fn connect_to(&mut self, endpoint: SocketAddr) -> Result<(), NetworkError> {
+        todo!("Implement peer connection")
+    }
+    
+    pub async fn broadcast_message(&self, message: Message) -> Result<(), NetworkError> {
+        todo!("Implement message broadcasting")
+    }
+}
+EOF
+      echo "✅ Created P2P network template"
+    fi
+    
+    # Create VM implementation template
+    if [ ! -f "neo-rs/src/vm/mod.rs" ]; then
+      mkdir -p neo-rs/src/vm
+      cat > neo-rs/src/vm/mod.rs << 'EOF'
+//! Neo N3 Virtual Machine Implementation
+//! Exact implementation of Neo VM from C# reference
+
+pub struct ExecutionEngine {
+    pub state: VMState,
+    pub invocation_stack: Stack<ExecutionContext>,
+    pub result_stack: EvaluationStack,
+    pub reference_counter: ReferenceCounter,
+}
+
+pub struct ApplicationEngine {
+    pub engine: ExecutionEngine,
+    pub trigger: TriggerType,
+    pub container: Option<IVerifiable>,
+    pub snapshot: DataCache,
+    pub gas_consumed: i64,
+    pub gas_limit: i64,
+}
+
+impl ApplicationEngine {
+    pub fn create(
+        trigger: TriggerType,
+        container: Option<IVerifiable>,
+        snapshot: DataCache,
+        gas_limit: i64,
+    ) -> Self {
+        Self {
+            engine: ExecutionEngine::new(),
+            trigger,
+            container,
+            snapshot,
+            gas_consumed: 0,
+            gas_limit,
+        }
+    }
+    
+    pub fn execute(&mut self) -> VMState {
+        // Implement exact VM execution logic from C# reference
+        todo!("Implement complete VM execution")
+    }
+    
+    pub fn load_script(&mut self, script: &[u8]) -> Result<(), VMError> {
+        todo!("Implement script loading")
+    }
+}
+EOF
+      echo "✅ Created VM implementation template"
+    fi
+    
+    # Generate parity checklist
+    cat > neo-rs/PARITY_CHECKLIST.md << 'EOF'
+# Neo N3 Rust Implementation Parity Checklist
+
+## Core Protocol Components
+- [ ] Block structure and validation
+- [ ] Transaction processing
+- [ ] Merkle tree implementation
+- [ ] Address generation and validation
+
+## Consensus (dBFT 2.0)
+- [ ] ConsensusService
+- [ ] ConsensusContext
+- [ ] PrepareRequest/Response handling
+- [ ] Commit message processing
+- [ ] ChangeView mechanism
+- [ ] Recovery message handling
+
+## P2P Network Protocol
+- [ ] TCP server/client
+- [ ] WebSocket support
+- [ ] Message serialization/deserialization
+- [ ] Peer discovery and management
+- [ ] Protocol handshake
+- [ ] Inventory management
+
+## Neo Virtual Machine
+- [ ] ExecutionEngine
+- [ ] ApplicationEngine
+- [ ] OpCode implementations
+- [ ] InteropService calls
+- [ ] Stack operations
+- [ ] Exception handling
+
+## RPC API (Complete)
+- [ ] Blockchain methods (getblock, getblockcount, etc.)
+- [ ] Node methods (getconnectioncount, getpeers, etc.)
+- [ ] Transaction methods (sendrawtransaction, etc.)
+- [ ] Smart contract methods (invokefunction, etc.)
+- [ ] Wallet methods (getnep17balances, etc.)
+- [ ] Utility methods (validateaddress, etc.)
+
+## Storage Layer
+- [ ] LevelDB integration
+- [ ] RocksDB support
+- [ ] Memory store for testing
+- [ ] Snapshot mechanism
+- [ ] State root calculation
+
+## Cryptography
+- [ ] ECDSA (secp256r1, secp256k1)
+- [ ] Hash functions (SHA256, RIPEMD160)
+- [ ] Merkle tree
+- [ ] Bloom filter
+- [ ] Base58/Base64 encoding
+
+## Plugin System
+- [ ] Plugin interface
+- [ ] Plugin loading/unloading
+- [ ] Event system
+- [ ] Configuration management
+
+## Testing
+- [ ] Unit tests for all components
+- [ ] Integration tests
+- [ ] Protocol compliance tests
+- [ ] Performance benchmarks
+- [ ] Mainnet compatibility tests
+EOF
+    
+    echo -e "\n✅ Generated complete implementation templates"
+    echo "📋 Created parity checklist: neo-rs/PARITY_CHECKLIST.md"
+    echo -e "\n📝 Next steps:"
+    echo "1. Review generated templates"
+    echo "2. Implement missing components following C# reference"
+    echo "3. Write comprehensive tests"
+    echo "4. Validate protocol compliance"
+    echo "5. Performance optimization"
+
+config:
+  requiredFiles:
+    - pattern: "neo-rs/Cargo.toml"
+      description: "Rust workspace configuration"
+    - pattern: "neo_csharp/**/*.sln"
+      description: "C# reference implementation"
+  forbiddenPatterns:
+    - pattern: "todo!.*incomplete"
+      description: "Incomplete implementations"
+    - pattern: "unimplemented!"
+      description: "Unimplemented features"
+  hooks:
+    preCommit: |
+      # Ensure parity before commits
+      echo "Running Neo N3 parity check..."
+      if ! ./check-parity.sh; then
+        echo "❌ Parity check failed - commit blocked"
+        exit 1
+      fi

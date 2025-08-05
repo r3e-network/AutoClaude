@@ -1,0 +1,432 @@
+id: tdd-enforcement
+name: Test-Driven Development Enforcement
+description: Ensures Test-Driven Development practices are followed - tests must be written BEFORE implementation
+version: 1.0.0
+author: AutoClaude TDD System
+capabilities:
+  - Test detection and validation
+  - Test-first enforcement
+  - Coverage analysis
+  - Test quality assessment
+  - Pre-implementation blocking
+priority: critical
+enabled: true
+supportsTriggers: true
+supportsAnalysis: true
+supportsFix: true
+smartMode: true
+options:
+  minCoverage: 90
+  requireTestsFirst: true
+  blockImplementationWithoutTests: true
+  requireFailingTestsFirst: true
+  enforceTestNaming: true
+  requireTestDocumentation: true
+
+check:
+  script: |
+    #!/bin/bash
+    echo "🧪 TDD Enforcement Check - Ensuring Test-Driven Development"
+    
+    ERRORS=()
+    WARNINGS=()
+    
+    # Function to check if implementation exists without tests
+    check_implementation_without_tests() {
+      local impl_file="$1"
+      local test_patterns=("${impl_file%.ts}.test.ts" "${impl_file%.ts}.spec.ts" "${impl_file%.js}.test.js" "${impl_file%.js}.spec.js")
+      local test_exists=false
+      
+      for pattern in "${test_patterns[@]}"; do
+        if [ -f "$pattern" ]; then
+          test_exists=true
+          break
+        fi
+      done
+      
+      if [ "$test_exists" = false ]; then
+        ERRORS+=("Implementation without tests: $impl_file")
+      fi
+    }
+    
+    # Check all TypeScript/JavaScript files
+    for file in $(find . -name "*.ts" -o -name "*.js" | grep -v node_modules | grep -v test | grep -v spec | grep -v "\.d\.ts"); do
+      # Skip test files themselves
+      if [[ ! "$file" =~ \.(test|spec)\.(ts|js)$ ]]; then
+        check_implementation_without_tests "$file"
+      fi
+    done
+    
+    # Check for recent commits that add code without tests
+    if command -v git &> /dev/null; then
+      # Get files changed in the last commit
+      if git rev-parse --git-dir > /dev/null 2>&1; then
+        changed_files=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+        
+        for file in $changed_files; do
+          if [[ "$file" =~ \.(ts|js|tsx|jsx)$ ]] && [[ ! "$file" =~ \.(test|spec)\. ]]; then
+            # Check if corresponding test was also changed
+            test_file=$(echo "$file" | sed 's/\.\(ts\|js\|tsx\|jsx\)$/.test.\1/')
+            if ! echo "$changed_files" | grep -q "$test_file"; then
+              ERRORS+=("Code changed without updating tests: $file")
+            fi
+          fi
+        done
+      fi
+    fi
+    
+    # Check test coverage if jest is available
+    if [ -f "package.json" ] && grep -q "jest" package.json; then
+      echo "Running coverage check..."
+      if npm test -- --coverage --silent 2>/dev/null; then
+        # Parse coverage report
+        if [ -f "coverage/coverage-summary.json" ]; then
+          coverage=$(node -e "
+            const coverage = require('./coverage/coverage-summary.json');
+            const total = coverage.total;
+            const avgCoverage = (total.lines.pct + total.statements.pct + total.functions.pct + total.branches.pct) / 4;
+            console.log(avgCoverage);
+          " 2>/dev/null || echo "0")
+          
+          if (( $(echo "$coverage < 90" | bc -l) )); then
+            ERRORS+=("Test coverage is below 90%: ${coverage}%")
+          fi
+        fi
+      else
+        WARNINGS+=("Could not run coverage analysis")
+      fi
+    fi
+    
+    # Check for empty test files
+    for test_file in $(find . -name "*.test.*" -o -name "*.spec.*" | grep -v node_modules); do
+      if [ -f "$test_file" ]; then
+        # Check if file has actual test cases
+        if ! grep -q -E "(test|it|describe)\s*\(" "$test_file"; then
+          ERRORS+=("Empty or invalid test file: $test_file")
+        fi
+      fi
+    done
+    
+    # Check for console.log in test files (should use proper assertions)
+    for test_file in $(find . -name "*.test.*" -o -name "*.spec.*" | grep -v node_modules); do
+      if grep -q "console.log" "$test_file" 2>/dev/null; then
+        WARNINGS+=("Test file contains console.log instead of assertions: $test_file")
+      fi
+    done
+    
+    # Output results
+    if [ ${#ERRORS[@]} -eq 0 ] && [ ${#WARNINGS[@]} -eq 0 ]; then
+      echo "✅ TDD practices are being followed correctly!"
+      exit 0
+    else
+      echo "❌ TDD violations detected!"
+      
+      if [ ${#ERRORS[@]} -gt 0 ]; then
+        echo -e "\nErrors:"
+        printf '%s\n' "${ERRORS[@]}"
+      fi
+      
+      if [ ${#WARNINGS[@]} -gt 0 ]; then
+        echo -e "\nWarnings:"
+        printf '%s\n' "${WARNINGS[@]}"
+      fi
+      
+      exit 1
+    fi
+
+analysis:
+  script: |
+    #!/bin/bash
+    echo "🔍 Analyzing TDD compliance and generating recommendations..."
+    
+    # Find all files without tests
+    echo -e "\n📋 Files without tests:"
+    for file in $(find . -name "*.ts" -o -name "*.js" | grep -v node_modules | grep -v test | grep -v spec); do
+      test_exists=false
+      for ext in test.ts spec.ts test.js spec.js; do
+        test_file="${file%.*}.${ext}"
+        if [ -f "$test_file" ]; then
+          test_exists=true
+          break
+        fi
+      done
+      
+      if [ "$test_exists" = false ]; then
+        echo "  - $file"
+      fi
+    done
+    
+    # Analyze test quality
+    echo -e "\n📊 Test Quality Analysis:"
+    total_tests=0
+    total_assertions=0
+    
+    for test_file in $(find . -name "*.test.*" -o -name "*.spec.*" | grep -v node_modules); do
+      if [ -f "$test_file" ]; then
+        test_count=$(grep -c -E "(test|it)\s*\(" "$test_file" 2>/dev/null || echo 0)
+        assertion_count=$(grep -c -E "(expect|assert|should)" "$test_file" 2>/dev/null || echo 0)
+        
+        total_tests=$((total_tests + test_count))
+        total_assertions=$((total_assertions + assertion_count))
+        
+        if [ $test_count -gt 0 ] && [ $assertion_count -eq 0 ]; then
+          echo "  ⚠️  $test_file has tests without assertions"
+        fi
+      fi
+    done
+    
+    echo "  Total tests: $total_tests"
+    echo "  Total assertions: $total_assertions"
+    if [ $total_tests -gt 0 ]; then
+      avg_assertions=$((total_assertions / total_tests))
+      echo "  Average assertions per test: $avg_assertions"
+    fi
+    
+    # Check for test organization
+    echo -e "\n🗂️  Test Organization:"
+    if [ -d "__tests__" ]; then
+      echo "  ✓ Using __tests__ directory"
+    fi
+    if find . -name "*.test.*" -o -name "*.spec.*" | grep -q -v node_modules; then
+      echo "  ✓ Co-located test files found"
+    fi
+    
+    # Generate TDD compliance report
+    echo -e "\n📈 TDD Compliance Report:"
+    total_files=$(find . -name "*.ts" -o -name "*.js" | grep -v node_modules | grep -v test | grep -v spec | wc -l)
+    tested_files=$(find . -name "*.test.*" -o -name "*.spec.*" | grep -v node_modules | wc -l)
+    
+    if [ $total_files -gt 0 ]; then
+      coverage_ratio=$((tested_files * 100 / total_files))
+      echo "  File coverage: ${coverage_ratio}% (${tested_files}/${total_files} files have tests)"
+    fi
+    
+    echo -e "\n💡 Recommendations:"
+    echo "1. Write tests BEFORE implementing any new features"
+    echo "2. Ensure all tests fail initially (Red phase)"
+    echo "3. Write minimal code to make tests pass (Green phase)"
+    echo "4. Refactor code while keeping tests green (Refactor phase)"
+    echo "5. Aim for >90% code coverage"
+    echo "6. Each test should have clear assertions"
+    echo "7. Use descriptive test names that explain the behavior"
+
+fix:
+  script: |
+    #!/bin/bash
+    echo "🔧 Generating test templates for files without tests..."
+    
+    TESTS_CREATED=0
+    
+    # Function to generate test template
+    generate_test_template() {
+      local impl_file="$1"
+      local test_file="${impl_file%.*}.test.${impl_file##*.}"
+      
+      if [ -f "$test_file" ]; then
+        echo "Test already exists for $impl_file"
+        return
+      fi
+      
+      echo "Creating test template: $test_file"
+      
+      # Extract file name without extension for test description
+      local module_name=$(basename "$impl_file" | sed 's/\.[^.]*$//')
+      
+      # Detect if TypeScript or JavaScript
+      if [[ "$impl_file" =~ \.ts$ ]]; then
+        cat > "$test_file" << 'EOF'
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { ${MODULE_NAME} } from './${MODULE_FILE}';
+
+describe('${MODULE_NAME}', () => {
+  beforeEach(() => {
+    // Setup before each test
+  });
+
+  afterEach(() => {
+    // Cleanup after each test
+  });
+
+  describe('initialization', () => {
+    test('should create instance correctly', () => {
+      // Arrange
+      const expected = {}; // Define expected behavior
+      
+      // Act
+      const result = new ${MODULE_NAME}();
+      
+      // Assert
+      expect(result).toBeDefined();
+      expect(result).toMatchObject(expected);
+    });
+  });
+
+  describe('core functionality', () => {
+    test('should [describe what it should do]', () => {
+      // Arrange
+      const input = {};
+      const expected = {};
+      
+      // Act
+      const result = /* call your function/method */;
+      
+      // Assert
+      expect(result).toEqual(expected);
+    });
+
+    test('should handle edge case [describe edge case]', () => {
+      // Arrange
+      const edgeCaseInput = null;
+      
+      // Act & Assert
+      expect(() => {
+        /* call your function with edge case */
+      }).toThrow('Expected error message');
+    });
+  });
+
+  describe('error handling', () => {
+    test('should throw error when [condition]', () => {
+      // Arrange
+      const invalidInput = {};
+      
+      // Act & Assert
+      expect(() => {
+        /* call your function with invalid input */
+      }).toThrow();
+    });
+  });
+
+  describe('integration', () => {
+    test('should work with [external dependency]', async () => {
+      // Arrange
+      const mockDependency = jest.fn();
+      
+      // Act
+      const result = await /* call async function */;
+      
+      // Assert
+      expect(mockDependency).toHaveBeenCalledWith(/* expected args */);
+      expect(result).toBe(/* expected result */);
+    });
+  });
+});
+EOF
+        # Replace placeholders
+        sed -i "s/\${MODULE_NAME}/$module_name/g" "$test_file"
+        sed -i "s/\${MODULE_FILE}/$(basename "$impl_file" .ts)/g" "$test_file"
+      else
+        # JavaScript template
+        cat > "$test_file" << 'EOF'
+const { ${MODULE_NAME} } = require('./${MODULE_FILE}');
+
+describe('${MODULE_NAME}', () => {
+  beforeEach(() => {
+    // Setup before each test
+  });
+
+  afterEach(() => {
+    // Cleanup after each test
+  });
+
+  describe('initialization', () => {
+    test('should create instance correctly', () => {
+      // Arrange
+      const expected = {}; // Define expected behavior
+      
+      // Act
+      const result = new ${MODULE_NAME}();
+      
+      // Assert
+      expect(result).toBeDefined();
+      expect(result).toMatchObject(expected);
+    });
+  });
+
+  describe('core functionality', () => {
+    test('should [describe what it should do]', () => {
+      // Arrange
+      const input = {};
+      const expected = {};
+      
+      // Act
+      const result = /* call your function/method */;
+      
+      // Assert
+      expect(result).toEqual(expected);
+    });
+  });
+});
+EOF
+        # Replace placeholders
+        sed -i "s/\${MODULE_NAME}/$module_name/g" "$test_file"
+        sed -i "s/\${MODULE_FILE}/$(basename "$impl_file" .js)/g" "$test_file"
+      fi
+      
+      TESTS_CREATED=$((TESTS_CREATED + 1))
+    }
+    
+    # Generate tests for all files without tests
+    for file in $(find . -name "*.ts" -o -name "*.js" | grep -v node_modules | grep -v test | grep -v spec | grep -v "\.d\.ts"); do
+      if [[ ! "$file" =~ \.(test|spec)\.(ts|js)$ ]]; then
+        test_exists=false
+        for ext in test.ts spec.ts test.js spec.js; do
+          test_file="${file%.*}.${ext}"
+          if [ -f "$test_file" ]; then
+            test_exists=true
+            break
+          fi
+        done
+        
+        if [ "$test_exists" = false ]; then
+          generate_test_template "$file"
+        fi
+      fi
+    done
+    
+    echo -e "\n✅ Created $TESTS_CREATED test templates"
+    echo -e "\n📝 Next steps:"
+    echo "1. Review and update the generated test templates"
+    echo "2. Write actual test cases for your functions"
+    echo "3. Ensure tests fail before implementing features"
+    echo "4. Implement code to make tests pass"
+    echo "5. Refactor while keeping tests green"
+    
+    # Update package.json to include test script if missing
+    if [ -f "package.json" ] && ! grep -q '"test"' package.json; then
+      echo -e "\n📦 Adding test script to package.json..."
+      # This is a simple approach - in production would use proper JSON manipulation
+      sed -i '/"scripts": {/a\    "test": "jest",' package.json
+      echo "Added jest test script to package.json"
+    fi
+
+config:
+  requiredFiles:
+    - pattern: "**/*.{test,spec}.{ts,js}"
+      description: "Test files for all source code"
+  requiredPatterns:
+    - pattern: "describe\\(|test\\(|it\\("
+      description: "Actual test cases in test files"
+  forbiddenPatterns:
+    - pattern: "console\\.log"
+      filePattern: "**/*.{test,spec}.*"
+      description: "Console logs in test files (use assertions instead)"
+  hooks:
+    preImplementation: |
+      # Check if tests exist before allowing implementation
+      if [ -n "$IMPLEMENTING_FILE" ]; then
+        test_file="${IMPLEMENTING_FILE%.*}.test.${IMPLEMENTING_FILE##*.}"
+        if [ ! -f "$test_file" ]; then
+          echo "❌ TDD Violation: No test found for $IMPLEMENTING_FILE"
+          echo "Please write tests first!"
+          exit 1
+        fi
+      fi
+    postTest: |
+      # Ensure tests are actually failing before implementation
+      if [ -n "$NEW_TEST_FILE" ]; then
+        if npm test "$NEW_TEST_FILE" 2>/dev/null; then
+          echo "⚠️  Warning: New tests are passing without implementation!"
+          echo "In TDD, tests should fail first (Red phase)"
+        fi
+      fi

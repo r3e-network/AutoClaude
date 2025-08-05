@@ -1,0 +1,1240 @@
+id: multivm-orchestrator
+name: MultiVM Dual-VM Orchestration System
+description: Ensures correct architecture and communication between MultiVM, Reth (EVM), and Agave (SVM) processes
+version: 1.0.0
+author: MultiVM Development Team
+capabilities:
+  - Dual-VM architecture validation
+  - Reth/Agave submodule verification
+  - RPC/JWT communication validation (Reth)
+  - IPC communication validation (Agave)
+  - Multi-account wallet management
+  - RPC relay system validation
+  - P2P/Consensus isolation enforcement
+  - Process orchestration verification
+projectDetection:
+  - pattern: "**/multivm/**"
+  - pattern: "**/multivm-reth/**"
+  - pattern: "**/multivm-agave/**"
+  - files: ["Cargo.toml", ".gitmodules"]
+  - keywords: ["multivm", "dual-vm", "evm", "svm"]
+priority: critical
+enabled: true
+supportsTriggers: true
+supportsAnalysis: true
+supportsFix: true
+smartMode: true
+options:
+  enforceSubmoduleVersions: true
+  validateCommunicationIsolation: true
+  ensureWalletIntegrity: true
+  verifyRpcRelay: true
+  checkProcessOrchestration: true
+
+check:
+  script: |
+    #!/bin/bash
+    echo "🔄 MultiVM Dual-VM Orchestration Check - Ensuring correct architecture"
+    
+    ERRORS=()
+    WARNINGS=()
+    ARCHITECTURE_ISSUES=()
+    
+    # Check if multivm project structure exists
+    if [ ! -f "Cargo.toml" ] || ! grep -q "multivm" Cargo.toml 2>/dev/null; then
+      echo "❌ Not a MultiVM project"
+      exit 1
+    fi
+    
+    echo "✅ MultiVM project detected"
+    
+    # Function to check submodule setup
+    check_submodules() {
+      echo "📦 Checking submodule configuration..."
+      
+      if [ ! -f ".gitmodules" ]; then
+        ERRORS+=("Missing .gitmodules file - submodules not configured")
+        return
+      fi
+      
+      # Check for multivm-reth submodule
+      if ! grep -q "multivm-reth" .gitmodules; then
+        ERRORS+=("multivm-reth submodule not found in .gitmodules")
+      else
+        if [ ! -d "multivm-reth" ]; then
+          ERRORS+=("multivm-reth submodule directory missing")
+        else
+          echo "  ✓ multivm-reth submodule found"
+        fi
+      fi
+      
+      # Check for multivm-agave submodule
+      if ! grep -q "multivm-agave" .gitmodules; then
+        ERRORS+=("multivm-agave submodule not found in .gitmodules")
+      else
+        if [ ! -d "multivm-agave" ]; then
+          ERRORS+=("multivm-agave submodule directory missing")
+        else
+          echo "  ✓ multivm-agave submodule found"
+        fi
+      fi
+      
+      # Verify submodules are on correct versions
+      if [ -d "multivm-reth" ]; then
+        cd multivm-reth
+        current_commit=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+        expected_commit=$(git ls-remote origin HEAD | cut -f1 2>/dev/null || echo "unknown")
+        if [ "$current_commit" != "$expected_commit" ] && [ "$expected_commit" != "unknown" ]; then
+          WARNINGS+=("multivm-reth submodule may not be on latest version")
+        fi
+        cd ..
+      fi
+      
+      if [ -d "multivm-agave" ]; then
+        cd multivm-agave
+        current_commit=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+        expected_commit=$(git ls-remote origin HEAD | cut -f1 2>/dev/null || echo "unknown")
+        if [ "$current_commit" != "$expected_commit" ] && [ "$expected_commit" != "unknown" ]; then
+          WARNINGS+=("multivm-agave submodule may not be on latest version")
+        fi
+        cd ..
+      fi
+    }
+    
+    # Function to check architecture separation
+    check_architecture_separation() {
+      echo "🏗️ Checking architecture separation..."
+      
+      # Check for ethereum execution engine crate
+      if [ ! -d "src/ethereum" ] && [ ! -d "crates/ethereum-engine" ]; then
+        ARCHITECTURE_ISSUES+=("Ethereum execution engine crate missing")
+      else
+        echo "  ✓ Ethereum execution engine found"
+        
+        # Check for RPC/JWT communication code
+        ethereum_dir=$(find . -path "*/ethereum*" -type d | head -1)
+        if [ -n "$ethereum_dir" ]; then
+          if ! find "$ethereum_dir" -name "*.rs" -exec grep -l "rpc\|jwt\|json" {} \; | grep -q .; then
+            ARCHITECTURE_ISSUES+=("Ethereum engine missing RPC/JWT communication code")
+          fi
+        fi
+      fi
+      
+      # Check for solana execution engine crate  
+      if [ ! -d "src/solana" ] && [ ! -d "crates/solana-engine" ]; then
+        ARCHITECTURE_ISSUES+=("Solana execution engine crate missing")
+      else
+        echo "  ✓ Solana execution engine found"
+        
+        # Check for IPC communication code
+        solana_dir=$(find . -path "*/solana*" -type d | head -1)
+        if [ -n "$solana_dir" ]; then
+          if ! find "$solana_dir" -name "*.rs" -exec grep -l "ipc\|pipe\|socket" {} \; | grep -q .; then
+            ARCHITECTURE_ISSUES+=("Solana engine missing IPC communication code")
+          fi
+        fi
+      fi
+      
+      # Check for multivm core that handles P2P and consensus
+      if [ ! -d "src/core" ] && [ ! -d "crates/multivm-core" ]; then
+        ARCHITECTURE_ISSUES+=("MultiVM core crate missing")
+      else
+        echo "  ✓ MultiVM core found"
+        
+        # Check for P2P and consensus code in core
+        core_dir=$(find . -path "*/core*" -type d -path "*/multivm*" | head -1)
+        if [ -n "$core_dir" ]; then
+          if ! find "$core_dir" -name "*.rs" -exec grep -l "p2p\|consensus" {} \; | grep -q .; then
+            ARCHITECTURE_ISSUES+=("MultiVM core missing P2P/consensus handling")
+          fi
+        fi
+      fi
+    }
+    
+    # Function to check communication isolation
+    check_communication_isolation() {
+      echo "🔒 Checking communication isolation..."
+      
+      # Ensure reth and agave don't have direct external communication
+      if [ -d "multivm-reth" ]; then
+        # Check reth config disables P2P and consensus
+        if find multivm-reth -name "*.toml" -o -name "*.json" -exec grep -l "p2p.*=.*false\|consensus.*=.*false" {} \; | grep -q .; then
+          echo "  ✓ Reth P2P/consensus properly disabled"
+        else
+          ERRORS+=("Reth P2P/consensus not properly disabled in config")
+        fi
+      fi
+      
+      if [ -d "multivm-agave" ]; then
+        # Check agave config disables external communication
+        if find multivm-agave -name "*.toml" -o -name "*.json" -exec grep -l "gossip.*=.*false\|rpc.*=.*false" {} \; | grep -q .; then
+          echo "  ✓ Agave external communication properly disabled"
+        else
+          ERRORS+=("Agave external communication not properly disabled")
+        fi
+      fi
+      
+      # Check that MultiVM handles all external communication
+      if find src -name "*.rs" -exec grep -l "tokio::net\|std::net\|async.*listen" {} \; | grep -q .; then
+        echo "  ✓ MultiVM handles external networking"
+      else
+        ARCHITECTURE_ISSUES+=("MultiVM not handling external networking")
+      fi
+    }
+    
+    # Function to check wallet architecture
+    check_wallet_architecture() {
+      echo "💼 Checking multi-account wallet architecture..."
+      
+      # Look for wallet implementation
+      wallet_files=$(find . -path "*/wallet*" -name "*.rs" 2>/dev/null)
+      if [ -z "$wallet_files" ]; then
+        ARCHITECTURE_ISSUES+=("Wallet implementation not found")
+        return
+      fi
+      
+      # Check for multi-account structure
+      for wallet_file in $wallet_files; do
+        if grep -q "multivm.*account\|ethereum.*account\|solana.*account" "$wallet_file"; then
+          echo "  ✓ Multi-account wallet structure found"
+          
+          # Check for all required account types
+          if ! grep -q "multivm.*addr" "$wallet_file"; then
+            ARCHITECTURE_ISSUES+=("Wallet missing MultiVM account address")
+          fi
+          if ! grep -q "ethereum.*addr.*prikey.*pubkey" "$wallet_file"; then
+            ARCHITECTURE_ISSUES+=("Wallet missing complete Ethereum account (addr, prikey, pubkey)")
+          fi
+          if ! grep -q "solana.*addr.*prikey.*pubkey" "$wallet_file"; then
+            ARCHITECTURE_ISSUES+=("Wallet missing complete Solana account (addr, prikey, pubkey)")
+          fi
+          break
+        fi
+      done
+    }
+    
+    # Function to check RPC relay system
+    check_rpc_relay() {
+      echo "🌐 Checking RPC relay system..."
+      
+      # Look for RPC server implementation
+      rpc_files=$(find . -path "*/rpc*" -name "*.rs" 2>/dev/null)
+      if [ -z "$rpc_files" ]; then
+        ARCHITECTURE_ISSUES+=("RPC server implementation not found")
+        return
+      fi
+      
+      # Check for relay functionality
+      relay_found=false
+      for rpc_file in $rpc_files; do
+        if grep -q "relay\|proxy\|forward" "$rpc_file"; then
+          echo "  ✓ RPC relay functionality found"
+          relay_found=true
+          
+          # Check for multivm-specific RPCs
+          if ! grep -q "multivm.*rpc\|multivm.*method" "$rpc_file"; then
+            ARCHITECTURE_ISSUES+=("MultiVM-specific RPC methods missing")
+          fi
+          
+          # Check for ethereum RPC relay
+          if ! grep -q "ethereum.*relay\|reth.*relay" "$rpc_file"; then
+            ARCHITECTURE_ISSUES+=("Ethereum RPC relay missing")
+          fi
+          
+          # Check for solana RPC relay
+          if ! grep -q "solana.*relay\|agave.*relay" "$rpc_file"; then
+            ARCHITECTURE_ISSUES+=("Solana RPC relay missing")
+          fi
+          break
+        fi
+      done
+      
+      if [ "$relay_found" = false ]; then
+        ARCHITECTURE_ISSUES+=("RPC relay functionality not implemented")
+      fi
+    }
+    
+    # Function to check process orchestration
+    check_process_orchestration() {
+      echo "🔄 Checking process orchestration..."
+      
+      # Look for process management code
+      if find src -name "*.rs" -exec grep -l "Command\|spawn\|process\|child" {} \; | grep -q .; then
+        echo "  ✓ Process management code found"
+        
+        # Check for reth process management
+        if ! find src -name "*.rs" -exec grep -l "reth.*spawn\|reth.*process" {} \; | grep -q .; then
+          ARCHITECTURE_ISSUES+=("Reth process management missing")
+        fi
+        
+        # Check for agave process management
+        if ! find src -name "*.rs" -exec grep -l "agave.*spawn\|solana.*process" {} \; | grep -q .; then
+          ARCHITECTURE_ISSUES+=("Agave process management missing")
+        fi
+      else
+        ARCHITECTURE_ISSUES+=("Process orchestration code missing")
+      fi
+    }
+    
+    # Run all checks
+    check_submodules
+    check_architecture_separation
+    check_communication_isolation  
+    check_wallet_architecture
+    check_rpc_relay
+    check_process_orchestration
+    
+    # Output results
+    if [ ${#ERRORS[@]} -eq 0 ] && [ ${#ARCHITECTURE_ISSUES[@]} -eq 0 ] && [ ${#WARNINGS[@]} -eq 0 ]; then
+      echo "✅ MultiVM architecture is correctly implemented!"
+      exit 0
+    else
+      echo "❌ MultiVM architecture issues detected!"
+      
+      if [ ${#ERRORS[@]} -gt 0 ]; then
+        echo -e "\n❌ Critical Errors:"
+        printf '%s\n' "${ERRORS[@]}"
+      fi
+      
+      if [ ${#ARCHITECTURE_ISSUES[@]} -gt 0 ]; then
+        echo -e "\n🏗️ Architecture Issues:"
+        printf '%s\n' "${ARCHITECTURE_ISSUES[@]}"
+      fi
+      
+      if [ ${#WARNINGS[@]} -gt 0 ]; then
+        echo -e "\n⚠️ Warnings:"
+        printf '%s\n' "${WARNINGS[@]}"
+      fi
+      
+      exit 1
+    fi
+
+analysis:
+  script: |
+    #!/bin/bash
+    echo "🔍 Analyzing MultiVM dual-VM architecture..."
+    
+    echo -e "\n🏗️ Architecture Analysis:"
+    
+    # Analyze current structure
+    echo "Current Project Structure:"
+    if [ -d "src" ]; then
+      tree src -L 2 2>/dev/null || find src -type d | head -10 | sed 's/^/  /'
+    fi
+    
+    echo -e "\nSubmodule Status:"
+    if [ -f ".gitmodules" ]; then
+      echo "  ✓ Submodules configured:"
+      grep "path" .gitmodules | sed 's/^/    /'
+    else
+      echo "  ❌ No submodules configured"
+    fi
+    
+    # Communication architecture analysis
+    echo -e "\n🔗 Communication Architecture:"
+    echo "  MultiVM Core: Handles P2P, consensus, transaction relay"
+    echo "  ├── Reth (EVM): RPC/JWT communication only"
+    echo "  └── Agave (SVM): IPC communication only"
+    
+    echo -e "\n💼 Wallet Architecture Analysis:"
+    echo "  Multi-Account Wallet Structure:"
+    echo "  ├── MultiVM Account (native address)"
+    echo "  ├── Ethereum Account (address, private key, public key)"
+    echo "  └── Solana Account (address, private key, public key)"
+    
+    echo -e "\n🌐 RPC Architecture Analysis:"
+    echo "  MultiVM RPC Server:"
+    echo "  ├── MultiVM-specific methods"
+    echo "  ├── Ethereum RPC relay (to Reth)"
+    echo "  └── Solana RPC relay (to Agave)"
+    echo "  Note: Reth and Agave have NO direct external access"
+    
+    # Performance considerations
+    echo -e "\n⚡ Performance Considerations:"
+    echo "  - IPC vs RPC communication overhead"
+    echo "  - Transaction routing efficiency"
+    echo "  - Memory sharing between processes"
+    echo "  - Concurrent execution optimization"
+    
+    # Security analysis
+    echo -e "\n🛡️ Security Architecture:"
+    echo "  - Process isolation (Reth/Agave sandboxed)"
+    echo "  - Communication encryption (JWT for Reth)"
+    echo "  - Wallet key management across VMs"
+    echo "  - Attack surface minimization"
+
+fix:
+  script: |
+    #!/bin/bash
+    echo "🔧 Setting up MultiVM dual-VM architecture..."
+    
+    # Create proper project structure
+    echo "📁 Creating MultiVM project structure..."
+    
+    # Create main workspace Cargo.toml
+    if [ ! -f "Cargo.toml" ]; then
+      cat > Cargo.toml << 'EOF'
+[workspace]
+members = [
+    "crates/multivm-core",
+    "crates/ethereum-engine",
+    "crates/solana-engine",
+    "crates/multivm-wallet",
+    "crates/multivm-rpc",
+    "crates/multivm-types",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["MultiVM Team"]
+license = "MIT"
+
+[workspace.dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+uuid = { version = "1.0", features = ["v4"] }
+EOF
+      echo "✅ Created workspace Cargo.toml"
+    fi
+    
+    # Create submodule configuration
+    if [ ! -f ".gitmodules" ]; then
+      cat > .gitmodules << 'EOF'
+[submodule "multivm-reth"]
+	path = multivm-reth
+	url = https://github.com/paradigmxyz/reth.git
+	branch = main
+
+[submodule "multivm-agave"]
+	path = multivm-agave
+	url = https://github.com/anza-xyz/agave.git
+	branch = master
+EOF
+      echo "✅ Created .gitmodules configuration"
+    fi
+    
+    # Create MultiVM core crate
+    mkdir -p crates/multivm-core/src
+    cat > crates/multivm-core/Cargo.toml << 'EOF'
+[package]
+name = "multivm-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+multivm-types = { path = "../multivm-types" }
+ethereum-engine = { path = "../ethereum-engine" }
+solana-engine = { path = "../solana-engine" }
+EOF
+    
+    cat > crates/multivm-core/src/lib.rs << 'EOF'
+//! MultiVM Core - P2P, Consensus, and Transaction Orchestration
+//! 
+//! This crate handles:
+//! - P2P networking with external peers
+//! - Consensus mechanism
+//! - Transaction routing between EVM and SVM
+//! - Process orchestration for Reth and Agave
+
+use std::process::{Command, Child};
+use tokio::sync::mpsc;
+use anyhow::Result;
+
+pub struct MultiVmCore {
+    reth_process: Option<Child>,
+    agave_process: Option<Child>,
+    ethereum_engine: ethereum_engine::EthereumEngine,
+    solana_engine: solana_engine::SolanaEngine,
+    p2p_service: P2pService,
+    consensus_service: ConsensusService,
+}
+
+impl MultiVmCore {
+    pub fn new() -> Self {
+        Self {
+            reth_process: None,
+            agave_process: None,
+            ethereum_engine: ethereum_engine::EthereumEngine::new(),
+            solana_engine: solana_engine::SolanaEngine::new(),
+            p2p_service: P2pService::new(),
+            consensus_service: ConsensusService::new(),
+        }
+    }
+    
+    /// Start MultiVM with dual-VM architecture
+    pub async fn start(&mut self) -> Result<()> {
+        tracing::info!("Starting MultiVM dual-VM architecture");
+        
+        // Start Reth process with P2P/consensus disabled
+        self.start_reth_process().await?;
+        
+        // Start Agave process with external communication disabled
+        self.start_agave_process().await?;
+        
+        // Start MultiVM services
+        self.p2p_service.start().await?;
+        self.consensus_service.start().await?;
+        
+        // Initialize communication channels
+        self.ethereum_engine.connect_to_reth().await?;
+        self.solana_engine.connect_to_agave().await?;
+        
+        tracing::info!("MultiVM started successfully");
+        Ok(())
+    }
+    
+    async fn start_reth_process(&mut self) -> Result<()> {
+        let mut cmd = Command::new("./multivm-reth/target/release/reth");
+        cmd.args(&[
+            "node",
+            "--http",
+            "--http.addr", "127.0.0.1",
+            "--http.port", "8545",
+            "--authrpc.addr", "127.0.0.1", 
+            "--authrpc.port", "8551",
+            "--authrpc.jwtsecret", "./jwt.hex",
+            "--disable-discovery", // Disable P2P
+            "--no-persist-peers",  // Disable consensus
+        ]);
+        
+        self.reth_process = Some(cmd.spawn()?);
+        tracing::info!("Reth process started with P2P/consensus disabled");
+        Ok(())
+    }
+    
+    async fn start_agave_process(&mut self) -> Result<()> {
+        let mut cmd = Command::new("./multivm-agave/target/release/solana-validator");
+        cmd.args(&[
+            "--ledger", "./solana-ledger",
+            "--rpc-port", "8899",
+            "--no-voting",           // Disable consensus
+            "--no-check-vote-account",
+            "--enable-rpc-exit",
+            "--private-rpc",         // No external RPC
+        ]);
+        
+        self.agave_process = Some(cmd.spawn()?);
+        tracing::info!("Agave process started with external communication disabled");
+        Ok(())
+    }
+    
+    /// Route transaction to appropriate VM
+    pub async fn route_transaction(&self, tx: &[u8]) -> Result<TransactionResult> {
+        // Determine if transaction is for EVM or SVM
+        if self.is_ethereum_transaction(tx) {
+            self.ethereum_engine.execute_transaction(tx).await
+        } else if self.is_solana_transaction(tx) {
+            self.solana_engine.execute_transaction(tx).await
+        } else {
+            anyhow::bail!("Unknown transaction type")
+        }
+    }
+    
+    fn is_ethereum_transaction(&self, tx: &[u8]) -> bool {
+        // Ethereum transaction detection logic
+        todo!("Implement Ethereum transaction detection")
+    }
+    
+    fn is_solana_transaction(&self, tx: &[u8]) -> bool {
+        // Solana transaction detection logic
+        todo!("Implement Solana transaction detection")
+    }
+}
+
+// P2P Service - handles external networking
+pub struct P2pService {
+    // P2P implementation
+}
+
+impl P2pService {
+    pub fn new() -> Self {
+        Self {}
+    }
+    
+    pub async fn start(&mut self) -> Result<()> {
+        // Start P2P networking
+        todo!("Implement P2P service")
+    }
+}
+
+// Consensus Service - handles consensus mechanism
+pub struct ConsensusService {
+    // Consensus implementation
+}
+
+impl ConsensusService {
+    pub fn new() -> Self {
+        Self {}
+    }
+    
+    pub async fn start(&mut self) -> Result<()> {
+        // Start consensus
+        todo!("Implement consensus service")
+    }
+}
+
+#[derive(Debug)]
+pub struct TransactionResult {
+    pub success: bool,
+    pub result: Vec<u8>,
+    pub gas_used: u64,
+}
+EOF
+    
+    # Create Ethereum engine crate
+    mkdir -p crates/ethereum-engine/src
+    cat > crates/ethereum-engine/Cargo.toml << 'EOF'
+[package]
+name = "ethereum-engine"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+reqwest = { version = "0.11", features = ["json"] }
+jsonrpsee = { version = "0.20", features = ["client", "server"] }
+EOF
+    
+    cat > crates/ethereum-engine/src/lib.rs << 'EOF'
+//! Ethereum Execution Engine
+//! 
+//! Communicates with Reth via RPC/JWT exclusively
+//! NO direct external communication allowed
+
+use anyhow::Result;
+use serde_json::Value;
+use std::time::Duration;
+
+pub struct EthereumEngine {
+    reth_client: Option<RethClient>,
+    jwt_secret: String,
+}
+
+impl EthereumEngine {
+    pub fn new() -> Self {
+        Self {
+            reth_client: None,
+            jwt_secret: std::env::var("JWT_SECRET").unwrap_or_default(),
+        }
+    }
+    
+    /// Connect to Reth process via RPC with JWT authentication
+    pub async fn connect_to_reth(&mut self) -> Result<()> {
+        self.reth_client = Some(RethClient::new("http://127.0.0.1:8545", &self.jwt_secret).await?);
+        tracing::info!("Connected to Reth via RPC/JWT");
+        Ok(())
+    }
+    
+    /// Execute Ethereum transaction via Reth
+    pub async fn execute_transaction(&self, tx: &[u8]) -> Result<crate::TransactionResult> {
+        let client = self.reth_client.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Not connected to Reth"))?;
+        
+        // Send transaction to Reth via authenticated RPC
+        let result = client.send_raw_transaction(tx).await?;
+        
+        Ok(crate::TransactionResult {
+            success: result.success,
+            result: result.data,
+            gas_used: result.gas_used,
+        })
+    }
+    
+    /// Get Ethereum block via Reth
+    pub async fn get_block(&self, block_number: u64) -> Result<Value> {
+        let client = self.reth_client.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Not connected to Reth"))?;
+        
+        client.get_block_by_number(block_number).await
+    }
+    
+    /// Get Ethereum account balance via Reth
+    pub async fn get_balance(&self, address: &str) -> Result<u64> {
+        let client = self.reth_client.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Not connected to Reth"))?;
+        
+        client.get_balance(address).await
+    }
+}
+
+struct RethClient {
+    base_url: String,
+    jwt_token: String,
+    client: reqwest::Client,
+}
+
+impl RethClient {
+    async fn new(url: &str, jwt_secret: &str) -> Result<Self> {
+        // Generate JWT token for authentication
+        let jwt_token = generate_jwt_token(jwt_secret)?;
+        
+        Ok(Self {
+            base_url: url.to_string(),
+            jwt_token,
+            client: reqwest::Client::new(),
+        })
+    }
+    
+    async fn send_raw_transaction(&self, tx: &[u8]) -> Result<RethTransactionResult> {
+        let tx_hex = hex::encode(tx);
+        
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "eth_sendRawTransaction",
+            "params": [format!("0x{}", tx_hex)],
+            "id": 1
+        });
+        
+        let response = self.client
+            .post(&self.base_url)
+            .header("Authorization", format!("Bearer {}", self.jwt_token))
+            .json(&request)
+            .send()
+            .await?;
+        
+        let result: Value = response.json().await?;
+        
+        // Parse Reth response
+        Ok(RethTransactionResult {
+            success: !result["error"].is_null(),
+            data: vec![], // Parse from result
+            gas_used: 0,  // Parse from result
+        })
+    }
+    
+    async fn get_block_by_number(&self, block_number: u64) -> Result<Value> {
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "eth_getBlockByNumber",
+            "params": [format!("0x{:x}", block_number), true],
+            "id": 1
+        });
+        
+        let response = self.client
+            .post(&self.base_url)
+            .header("Authorization", format!("Bearer {}", self.jwt_token))
+            .json(&request)
+            .send()
+            .await?;
+        
+        Ok(response.json().await?)
+    }
+    
+    async fn get_balance(&self, address: &str) -> Result<u64> {
+        let request = serde_json::json!({
+            "jsonrpc": "2.0", 
+            "method": "eth_getBalance",
+            "params": [address, "latest"],
+            "id": 1
+        });
+        
+        let response = self.client
+            .post(&self.base_url)
+            .header("Authorization", format!("Bearer {}", self.jwt_token))
+            .json(&request)
+            .send()
+            .await?;
+        
+        let result: Value = response.json().await?;
+        
+        // Parse hex balance to u64
+        let balance_hex = result["result"].as_str().unwrap_or("0x0");
+        let balance = u64::from_str_radix(&balance_hex[2..], 16)?;
+        
+        Ok(balance)
+    }
+}
+
+struct RethTransactionResult {
+    success: bool,
+    data: Vec<u8>,
+    gas_used: u64,
+}
+
+fn generate_jwt_token(secret: &str) -> Result<String> {
+    // JWT token generation logic
+    todo!("Implement JWT token generation")
+}
+EOF
+    
+    # Create Solana engine crate
+    mkdir -p crates/solana-engine/src
+    cat > crates/solana-engine/Cargo.toml << 'EOF'
+[package]
+name = "solana-engine"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+EOF
+    
+    cat > crates/solana-engine/src/lib.rs << 'EOF'
+//! Solana Execution Engine
+//! 
+//! Communicates with Agave via IPC exclusively
+//! NO direct external communication allowed
+
+use anyhow::Result;
+use std::os::unix::net::UnixStream;
+use std::io::{Read, Write};
+use serde_json::Value;
+
+pub struct SolanaEngine {
+    agave_connection: Option<UnixStream>,
+    ipc_socket_path: String,
+}
+
+impl SolanaEngine {
+    pub fn new() -> Self {
+        Self {
+            agave_connection: None,
+            ipc_socket_path: "/tmp/multivm-agave.sock".to_string(),
+        }
+    }
+    
+    /// Connect to Agave process via IPC
+    pub async fn connect_to_agave(&mut self) -> Result<()> {
+        // Wait for Agave to create IPC socket
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+        
+        let stream = UnixStream::connect(&self.ipc_socket_path)?;
+        self.agave_connection = Some(stream);
+        
+        tracing::info!("Connected to Agave via IPC");
+        Ok(())
+    }
+    
+    /// Execute Solana transaction via Agave IPC
+    pub async fn execute_transaction(&self, tx: &[u8]) -> Result<crate::TransactionResult> {
+        let mut connection = self.agave_connection.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Not connected to Agave"))?;
+        
+        // Send transaction via IPC
+        let request = IpcRequest::SendTransaction { 
+            transaction: tx.to_vec() 
+        };
+        
+        let request_bytes = serde_json::to_vec(&request)?;
+        connection.write_all(&request_bytes)?;
+        
+        // Read response
+        let mut response_bytes = Vec::new();
+        connection.read_to_end(&mut response_bytes)?;
+        
+        let response: IpcResponse = serde_json::from_slice(&response_bytes)?;
+        
+        match response {
+            IpcResponse::TransactionResult { success, signature, compute_units } => {
+                Ok(crate::TransactionResult {
+                    success,
+                    result: signature.into_bytes(),
+                    gas_used: compute_units,
+                })
+            }
+            IpcResponse::Error { message } => {
+                anyhow::bail!("Agave error: {}", message)
+            }
+        }
+    }
+    
+    /// Get Solana block via Agave IPC
+    pub async fn get_block(&self, slot: u64) -> Result<Value> {
+        let mut connection = self.agave_connection.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Not connected to Agave"))?;
+        
+        let request = IpcRequest::GetBlock { slot };
+        let request_bytes = serde_json::to_vec(&request)?;
+        connection.write_all(&request_bytes)?;
+        
+        let mut response_bytes = Vec::new();
+        connection.read_to_end(&mut response_bytes)?;
+        
+        let response: Value = serde_json::from_slice(&response_bytes)?;
+        Ok(response)
+    }
+    
+    /// Get Solana account balance via Agave IPC
+    pub async fn get_balance(&self, pubkey: &str) -> Result<u64> {
+        let mut connection = self.agave_connection.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Not connected to Agave"))?;
+        
+        let request = IpcRequest::GetBalance { 
+            pubkey: pubkey.to_string() 
+        };
+        let request_bytes = serde_json::to_vec(&request)?;
+        connection.write_all(&request_bytes)?;
+        
+        let mut response_bytes = Vec::new();
+        connection.read_to_end(&mut response_bytes)?;
+        
+        let response: IpcResponse = serde_json::from_slice(&response_bytes)?;
+        
+        match response {
+            IpcResponse::Balance { lamports } => Ok(lamports),
+            IpcResponse::Error { message } => {
+                anyhow::bail!("Agave error: {}", message)
+            }
+            _ => anyhow::bail!("Unexpected response type"),
+        }
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+enum IpcRequest {
+    SendTransaction { transaction: Vec<u8> },
+    GetBlock { slot: u64 },
+    GetBalance { pubkey: String },
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+enum IpcResponse {
+    TransactionResult { 
+        success: bool, 
+        signature: String, 
+        compute_units: u64 
+    },
+    Balance { lamports: u64 },
+    Error { message: String },
+}
+EOF
+    
+    # Create wallet crate
+    mkdir -p crates/multivm-wallet/src
+    cat > crates/multivm-wallet/src/lib.rs << 'EOF'
+//! MultiVM Multi-Account Wallet
+//! 
+//! Manages accounts for MultiVM, Ethereum, and Solana simultaneously
+
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MultiVmWallet {
+    pub multivm_account: MultiVmAccount,
+    pub ethereum_account: EthereumAccount,
+    pub solana_account: SolanaAccount,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MultiVmAccount {
+    pub address: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EthereumAccount {
+    pub address: String,
+    pub private_key: String,
+    pub public_key: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SolanaAccount {
+    pub address: String,
+    pub private_key: String,
+    pub public_key: String,
+}
+
+impl MultiVmWallet {
+    /// Create new MultiVM wallet with all account types
+    pub fn new() -> Result<Self> {
+        let multivm_account = Self::generate_multivm_account()?;
+        let ethereum_account = Self::generate_ethereum_account()?;
+        let solana_account = Self::generate_solana_account()?;
+        
+        Ok(Self {
+            multivm_account,
+            ethereum_account,
+            solana_account,
+        })
+    }
+    
+    fn generate_multivm_account() -> Result<MultiVmAccount> {
+        // Generate MultiVM native account
+        let address = format!("multivm_{}", uuid::Uuid::new_v4());
+        
+        Ok(MultiVmAccount { address })
+    }
+    
+    fn generate_ethereum_account() -> Result<EthereumAccount> {
+        // Generate Ethereum secp256k1 keypair
+        todo!("Implement Ethereum account generation")
+    }
+    
+    fn generate_solana_account() -> Result<SolanaAccount> {
+        // Generate Solana Ed25519 keypair
+        todo!("Implement Solana account generation")
+    }
+    
+    /// Get account for specific blockchain
+    pub fn get_account_for_chain(&self, chain: &str) -> Result<String> {
+        match chain {
+            "multivm" => Ok(self.multivm_account.address.clone()),
+            "ethereum" => Ok(self.ethereum_account.address.clone()),
+            "solana" => Ok(self.solana_account.address.clone()),
+            _ => anyhow::bail!("Unsupported chain: {}", chain),
+        }
+    }
+    
+    /// Sign transaction for specific chain
+    pub fn sign_transaction(&self, chain: &str, tx_data: &[u8]) -> Result<Vec<u8>> {
+        match chain {
+            "ethereum" => {
+                // Sign with Ethereum private key
+                todo!("Implement Ethereum transaction signing")
+            }
+            "solana" => {
+                // Sign with Solana private key
+                todo!("Implement Solana transaction signing")
+            }
+            _ => anyhow::bail!("Signing not supported for chain: {}", chain),
+        }
+    }
+}
+EOF
+    
+    # Create RPC relay crate
+    mkdir -p crates/multivm-rpc/src
+    cat > crates/multivm-rpc/src/lib.rs << 'EOF'
+//! MultiVM RPC Server with Relay Functionality
+//! 
+//! Provides:
+//! - MultiVM-specific RPC methods
+//! - Ethereum RPC relay to Reth
+//! - Solana RPC relay to Agave
+//! - NO direct external access for Reth/Agave
+
+use anyhow::Result;
+use serde_json::Value;
+use std::collections::HashMap;
+
+pub struct MultiVmRpcServer {
+    ethereum_engine: ethereum_engine::EthereumEngine,
+    solana_engine: solana_engine::SolanaEngine,
+    wallet: multivm_wallet::MultiVmWallet,
+}
+
+impl MultiVmRpcServer {
+    pub fn new(
+        ethereum_engine: ethereum_engine::EthereumEngine,
+        solana_engine: solana_engine::SolanaEngine,
+        wallet: multivm_wallet::MultiVmWallet,
+    ) -> Self {
+        Self {
+            ethereum_engine,
+            solana_engine,
+            wallet,
+        }
+    }
+    
+    /// Handle RPC request and route to appropriate handler
+    pub async fn handle_request(&self, method: &str, params: Value) -> Result<Value> {
+        match method {
+            // MultiVM-specific methods
+            "multivm_getAccount" => self.multivm_get_account(params).await,
+            "multivm_getBalance" => self.multivm_get_balance(params).await,
+            "multivm_sendTransaction" => self.multivm_send_transaction(params).await,
+            
+            // Ethereum RPC relay (prefix with eth_)
+            method if method.starts_with("eth_") => {
+                self.relay_ethereum_rpc(method, params).await
+            }
+            
+            // Solana RPC relay
+            method if method.starts_with("solana_") => {
+                self.relay_solana_rpc(method, params).await
+            }
+            
+            _ => anyhow::bail!("Unknown method: {}", method),
+        }
+    }
+    
+    // MultiVM-specific methods
+    async fn multivm_get_account(&self, params: Value) -> Result<Value> {
+        let chain = params[0].as_str().unwrap_or("multivm");
+        let account = self.wallet.get_account_for_chain(chain)?;
+        
+        Ok(serde_json::json!({
+            "chain": chain,
+            "account": account
+        }))
+    }
+    
+    async fn multivm_get_balance(&self, params: Value) -> Result<Value> {
+        let chain = params[0].as_str().unwrap_or("multivm");
+        let address = params[1].as_str().unwrap_or("");
+        
+        let balance = match chain {
+            "ethereum" => self.ethereum_engine.get_balance(address).await?,
+            "solana" => self.solana_engine.get_balance(address).await?,
+            "multivm" => 0, // MultiVM native balance
+            _ => anyhow::bail!("Unsupported chain: {}", chain),
+        };
+        
+        Ok(serde_json::json!({
+            "chain": chain,
+            "address": address,
+            "balance": balance
+        }))
+    }
+    
+    async fn multivm_send_transaction(&self, params: Value) -> Result<Value> {
+        let chain = params[0].as_str().unwrap_or("multivm");
+        let tx_data = params[1].as_str().unwrap_or("");
+        let tx_bytes = hex::decode(tx_data)?;
+        
+        let result = match chain {
+            "ethereum" => self.ethereum_engine.execute_transaction(&tx_bytes).await?,
+            "solana" => self.solana_engine.execute_transaction(&tx_bytes).await?,
+            "multivm" => {
+                // Handle MultiVM native transaction
+                todo!("Implement MultiVM native transaction handling")
+            }
+            _ => anyhow::bail!("Unsupported chain: {}", chain),
+        };
+        
+        Ok(serde_json::json!({
+            "success": result.success,
+            "result": hex::encode(result.result),
+            "gas_used": result.gas_used
+        }))
+    }
+    
+    // Ethereum RPC relay - forwards to Reth
+    async fn relay_ethereum_rpc(&self, method: &str, params: Value) -> Result<Value> {
+        tracing::debug!("Relaying Ethereum RPC: {}", method);
+        
+        match method {
+            "eth_getBalance" => {
+                let address = params[0].as_str().unwrap_or("");
+                let balance = self.ethereum_engine.get_balance(address).await?;
+                Ok(serde_json::json!(format!("0x{:x}", balance)))
+            }
+            "eth_getBlockByNumber" => {
+                let block_number = params[0].as_str().unwrap_or("latest");
+                let block_num = if block_number == "latest" {
+                    0 // Get latest block number first
+                } else {
+                    u64::from_str_radix(&block_number[2..], 16)?
+                };
+                let block = self.ethereum_engine.get_block(block_num).await?;
+                Ok(block)
+            }
+            "eth_sendRawTransaction" => {
+                let tx_hex = params[0].as_str().unwrap_or("");
+                let tx_bytes = hex::decode(&tx_hex[2..])?;
+                let result = self.ethereum_engine.execute_transaction(&tx_bytes).await?;
+                Ok(serde_json::json!({
+                    "hash": hex::encode(result.result),
+                    "success": result.success
+                }))
+            }
+            _ => {
+                anyhow::bail!("Ethereum RPC method not implemented: {}", method)
+            }
+        }
+    }
+    
+    // Solana RPC relay - forwards to Agave  
+    async fn relay_solana_rpc(&self, method: &str, params: Value) -> Result<Value> {
+        tracing::debug!("Relaying Solana RPC: {}", method);
+        
+        match method {
+            "solana_getBalance" => {
+                let pubkey = params[0].as_str().unwrap_or("");
+                let balance = self.solana_engine.get_balance(pubkey).await?;
+                Ok(serde_json::json!({
+                    "value": balance
+                }))
+            }
+            "solana_getBlock" => {
+                let slot = params[0].as_u64().unwrap_or(0);
+                let block = self.solana_engine.get_block(slot).await?;
+                Ok(block)
+            }
+            "solana_sendTransaction" => {
+                let tx_data = params[0].as_str().unwrap_or("");
+                let tx_bytes = base64::decode(tx_data)?;
+                let result = self.solana_engine.execute_transaction(&tx_bytes).await?;
+                Ok(serde_json::json!({
+                    "signature": String::from_utf8_lossy(&result.result),
+                    "success": result.success
+                }))
+            }
+            _ => {
+                anyhow::bail!("Solana RPC method not implemented: {}", method)
+            }
+        }
+    }
+    
+    /// Start RPC server
+    pub async fn start(&self, bind_address: &str) -> Result<()> {
+        tracing::info!("Starting MultiVM RPC server on {}", bind_address);
+        
+        // Start JSON-RPC server that handles all requests
+        // Route MultiVM, Ethereum, and Solana RPCs appropriately
+        todo!("Implement JSON-RPC server startup")
+    }
+}
+EOF
+    
+    echo -e "\n✅ MultiVM architecture setup complete!"
+    echo -e "\n📋 Generated Components:"
+    echo "  ✓ MultiVM Core (P2P, consensus, orchestration)"
+    echo "  ✓ Ethereum Engine (RPC/JWT communication with Reth)"
+    echo "  ✓ Solana Engine (IPC communication with Agave)"  
+    echo "  ✓ Multi-Account Wallet (MultiVM, Ethereum, Solana)"
+    echo "  ✓ RPC Relay Server (unified external interface)"
+    echo "  ✓ Submodule configuration (.gitmodules)"
+    echo -e "\n📚 Next Steps:"
+    echo "1. Initialize submodules: git submodule update --init --recursive"
+    echo "2. Build Reth: cd multivm-reth && cargo build --release"
+    echo "3. Build Agave: cd multivm-agave && cargo build --release"
+    echo "4. Implement remaining TODOs in generated code"
+    echo "5. Configure process isolation and communication"
+    echo "6. Test dual-VM functionality"
+
+config:
+  requiredFiles:
+    - pattern: ".gitmodules"
+      description: "Submodule configuration for Reth and Agave"
+    - pattern: "multivm-reth/**"
+      description: "Reth submodule"
+    - pattern: "multivm-agave/**" 
+      description: "Agave submodule"
+  forbiddenPatterns:
+    - pattern: "reth.*p2p.*=.*true"
+      filePattern: "**/reth/**/*.toml"
+      description: "Reth P2P must be disabled"
+    - pattern: "agave.*gossip.*=.*true"
+      filePattern: "**/agave/**/*.toml"
+      description: "Agave gossip must be disabled"
+  hooks:
+    preCommit: |
+      # Ensure architecture compliance
+      echo "Checking MultiVM architecture compliance..."
+      if ! ./check-multivm-architecture.sh; then
+        echo "❌ Architecture compliance failed"
+        exit 1
+      fi

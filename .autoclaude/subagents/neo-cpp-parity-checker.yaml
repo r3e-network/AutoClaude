@@ -1,0 +1,894 @@
+id: neo-cpp-parity-checker
+name: Neo N3 C++ Node Parity Checker
+description: Ensures Neo N3 C++ implementation has complete feature parity with C# reference implementation
+version: 1.0.0
+author: Neo Blockchain Development Team
+capabilities:
+  - C# to C++ feature parity validation
+  - Neo N3 protocol compliance checking
+  - CMake build system validation
+  - Memory management verification
+  - Performance optimization checks
+  - Cross-platform compatibility
+projectDetection:
+  - pattern: "**/neo_cpp/**"
+  - pattern: "**/neo_csharp/**"
+  - files: ["CMakeLists.txt", "neo.sln"]
+  - keywords: ["neo-n3", "neo-blockchain", "neo-cpp"]
+priority: critical
+enabled: true
+supportsTriggers: true
+supportsAnalysis: true
+supportsFix: true
+smartMode: true
+options:
+  strictParityMode: true
+  validateMemoryManagement: true
+  checkPerformanceOptimizations: true
+  ensureCrossPlatformCompatibility: true
+
+check:
+  script: |
+    #!/bin/bash
+    echo "⚡ Neo N3 C++ Node Parity Check - Ensuring complete C# feature parity"
+    
+    ERRORS=()
+    WARNINGS=()
+    PARITY_ISSUES=()
+    
+    # Check if both neo_cpp and neo_csharp exist
+    if [ ! -d "neo_cpp" ] && [ ! -d "neo_csharp" ]; then
+      echo "❌ Neither neo_cpp nor neo_csharp directories found"
+      exit 1
+    fi
+    
+    echo "✅ Neo C++ project detected"
+    
+    # Function to check CMake build system
+    check_cmake_setup() {
+      echo "🔧 Checking CMake build system..."
+      
+      if [ ! -f "neo_cpp/CMakeLists.txt" ]; then
+        ERRORS+=("Missing CMakeLists.txt in neo_cpp directory")
+        return
+      fi
+      
+      # Check for proper CMake version
+      if ! grep -q "cmake_minimum_required.*VERSION.*3\." neo_cpp/CMakeLists.txt; then
+        WARNINGS+=("CMake version requirement not specified or too old")
+      fi
+      
+      # Check for C++17 or newer
+      if ! grep -q "CXX_STANDARD.*1[7-9]\|CXX_STANDARD.*2[0-9]" neo_cpp/CMakeLists.txt; then
+        ERRORS+=("C++17 or newer standard not specified")
+      fi
+      
+      # Check for required dependencies
+      required_deps=("OpenSSL" "Boost" "leveldb" "rocksdb")
+      for dep in "${required_deps[@]}"; do
+        if ! grep -qi "$dep" neo_cpp/CMakeLists.txt; then
+          PARITY_ISSUES+=("Missing dependency in CMake: $dep")
+        fi
+      done
+    }
+    
+    # Function to check header structure parity
+    check_header_parity() {
+      echo "📋 Checking header file parity..."
+      
+      if [ ! -d "neo_cpp/include" ] && [ ! -d "neo_cpp/src" ]; then
+        ERRORS+=("No include or src directory found in neo_cpp")
+        return
+      fi
+      
+      # Check for core header files
+      core_headers=(
+        "Block.h"
+        "Transaction.h" 
+        "Blockchain.h"
+        "ConsensusContext.h"
+        "LocalNode.h"
+        "RemoteNode.h"
+        "ExecutionEngine.h"
+        "ApplicationEngine.h"
+        "RpcServer.h"
+        "Wallet.h"
+      )
+      
+      for header in "${core_headers[@]}"; do
+        if ! find neo_cpp -name "$header" | grep -q .; then
+          PARITY_ISSUES+=("Missing core header file: $header")
+        fi
+      done
+    }
+    
+    # Function to check implementation completeness
+    check_implementation_completeness() {
+      echo "💻 Checking implementation completeness..."
+      
+      # Check for RPC implementation
+      if ! find neo_cpp -name "*.cpp" -o -name "*.h" -exec grep -l "json.*rpc\|rpc.*server" {} \; | grep -q .; then
+        PARITY_ISSUES+=("RPC server implementation missing")
+      fi
+      
+      # Check for consensus implementation
+      if ! find neo_cpp -name "*.cpp" -o -name "*.h" -exec grep -l "consensus\|dbft" {} \; | grep -q .; then
+        PARITY_ISSUES+=("Consensus (dBFT) implementation missing")
+      fi
+      
+      # Check for P2P network implementation
+      if ! find neo_cpp -name "*.cpp" -o -name "*.h" -exec grep -l "network\|p2p\|socket" {} \; | grep -q .; then
+        PARITY_ISSUES+=("P2P network implementation missing")
+      fi
+      
+      # Check for VM implementation
+      if ! find neo_cpp -name "*.cpp" -o -name "*.h" -exec grep -l "virtual.*machine\|execution.*engine" {} \; | grep -q .; then
+        PARITY_ISSUES+=("Virtual Machine implementation missing")
+      fi
+      
+      # Check for cryptography implementation
+      if ! find neo_cpp -name "*.cpp" -o -name "*.h" -exec grep -l "crypto\|ecdsa\|sha256" {} \; | grep -q .; then
+        PARITY_ISSUES+=("Cryptography implementation missing")
+      fi
+    }
+    
+    # Function to check memory management
+    check_memory_management() {
+      echo "🧠 Checking memory management practices..."
+      
+      # Check for smart pointer usage
+      if find neo_cpp -name "*.cpp" -o -name "*.h" -exec grep -l "std::shared_ptr\|std::unique_ptr\|std::weak_ptr" {} \; | grep -q .; then
+        echo "  ✓ Smart pointers found"
+      else
+        WARNINGS+=("No smart pointer usage found - potential memory management issues")
+      fi
+      
+      # Check for raw pointer usage (should be minimal)
+      raw_pointer_count=$(find neo_cpp -name "*.cpp" -o -name "*.h" -exec grep -c "\*[a-zA-Z]" {} \; 2>/dev/null | awk '{sum+=$1} END {print sum}')
+      if [ "$raw_pointer_count" -gt 50 ]; then
+        WARNINGS+=("High raw pointer usage ($raw_pointer_count) - consider using smart pointers")
+      fi
+      
+      # Check for RAII patterns
+      if ! find neo_cpp -name "*.cpp" -o -name "*.h" -exec grep -l "~[A-Z][a-zA-Z]*(" {} \; | grep -q .; then
+        WARNINGS+=("No destructors found - RAII pattern may not be implemented")
+      fi
+    }
+    
+    # Function to check performance optimizations
+    check_performance_optimizations() {
+      echo "⚡ Checking performance optimizations..."
+      
+      # Check for move semantics
+      if find neo_cpp -name "*.cpp" -o -name "*.h" -exec grep -l "std::move\|&&[a-zA-Z]" {} \; | grep -q .; then
+        echo "  ✓ Move semantics found"
+      else
+        WARNINGS+=("Move semantics not used - potential performance impact")
+      fi
+      
+      # Check for const correctness
+      const_method_count=$(find neo_cpp -name "*.h" -exec grep -c ") const" {} \; 2>/dev/null | awk '{sum+=$1} END {print sum}')
+      if [ "$const_method_count" -lt 10 ]; then
+        WARNINGS+=("Low const method usage ($const_method_count) - const correctness may be lacking")
+      fi
+      
+      # Check for inline functions
+      if ! find neo_cpp -name "*.h" -exec grep -l "inline" {} \; | grep -q .; then
+        WARNINGS+=("No inline functions found - potential performance optimization missed")
+      fi
+    }
+    
+    # Function to check cross-platform compatibility
+    check_cross_platform() {
+      echo "🌍 Checking cross-platform compatibility..."
+      
+      # Check for platform-specific code isolation
+      if find neo_cpp -name "*.cpp" -o -name "*.h" -exec grep -l "#ifdef.*WIN32\|#ifdef.*LINUX\|#ifdef.*APPLE" {} \; | grep -q .; then
+        echo "  ✓ Platform-specific code isolation found"
+      else
+        WARNINGS+=("No platform-specific code isolation - may have portability issues")
+      fi
+      
+      # Check for standard library usage
+      if find neo_cpp -name "*.cpp" -o -name "*.h" -exec grep -l "std::" {} \; | grep -q .; then
+        echo "  ✓ Standard library usage found"
+      else
+        WARNINGS+=("Limited standard library usage - may be using non-portable code")
+      fi
+      
+      # Check for Boost library usage (portable C++ libraries)
+      if find neo_cpp -name "*.cpp" -o -name "*.h" -exec grep -l "boost::" {} \; | grep -q .; then
+        echo "  ✓ Boost library usage found"
+      else
+        WARNINGS+=("No Boost library usage - missing portable implementations")
+      fi
+    }
+    
+    # Function to check build configuration
+    check_build_config() {
+      echo "🔨 Checking build configuration..."
+      
+      # Check for debug/release configurations
+      if grep -q "CMAKE_BUILD_TYPE" neo_cpp/CMakeLists.txt 2>/dev/null; then
+        echo "  ✓ Build type configuration found"
+      else
+        WARNINGS+=("No build type configuration - debug/release builds not properly handled")
+      fi
+      
+      # Check for compiler flags
+      if grep -q "CMAKE_CXX_FLAGS\|target_compile_options" neo_cpp/CMakeLists.txt 2>/dev/null; then
+        echo "  ✓ Compiler flags configuration found"
+      else
+        WARNINGS+=("No compiler flags specified - optimization flags may be missing")
+      fi
+      
+      # Check for testing framework
+      if grep -q "enable_testing\|gtest\|catch" neo_cpp/CMakeLists.txt 2>/dev/null; then
+        echo "  ✓ Testing framework found"
+      else
+        ERRORS+=("No testing framework configured")
+      fi
+    }
+    
+    # Run all checks
+    check_cmake_setup
+    check_header_parity
+    check_implementation_completeness
+    check_memory_management
+    check_performance_optimizations
+    check_cross_platform
+    check_build_config
+    
+    # Output results
+    if [ ${#ERRORS[@]} -eq 0 ] && [ ${#PARITY_ISSUES[@]} -eq 0 ] && [ ${#WARNINGS[@]} -eq 0 ]; then
+      echo "✅ Neo N3 C++ node is properly implemented!"
+      exit 0
+    else
+      echo "❌ Neo N3 C++ node implementation issues detected!"
+      
+      if [ ${#ERRORS[@]} -gt 0 ]; then
+        echo -e "\n❌ Critical Errors:"
+        printf '%s\n' "${ERRORS[@]}"
+      fi
+      
+      if [ ${#PARITY_ISSUES[@]} -gt 0 ]; then
+        echo -e "\n🔍 Parity Issues:"
+        printf '%s\n' "${PARITY_ISSUES[@]}"
+      fi
+      
+      if [ ${#WARNINGS[@]} -gt 0 ]; then
+        echo -e "\n⚠️ Warnings:"
+        printf '%s\n' "${WARNINGS[@]}"
+      fi
+      
+      exit 1
+    fi
+
+analysis:
+  script: |
+    #!/bin/bash
+    echo "🔍 Analyzing Neo N3 C++ implementation..."
+    
+    echo -e "\n🏗️ C++ Implementation Architecture:"
+    
+    if [ -d "neo_cpp" ]; then
+      echo "Project Structure:"
+      if command -v tree >/dev/null 2>&1; then
+        tree neo_cpp -L 2 2>/dev/null || find neo_cpp -type d | head -10 | sed 's/^/  /'
+      else
+        find neo_cpp -type d | head -10 | sed 's/^/  /'
+      fi
+    fi
+    
+    # Analyze performance advantages
+    echo -e "\n⚡ C++ Performance Advantages:"
+    echo "  - Zero-cost abstractions"
+    echo "  - Manual memory management control"
+    echo "  - Compile-time optimizations"
+    echo "  - Direct hardware access"
+    echo "  - Minimal runtime overhead"
+    
+    # Memory management analysis
+    echo -e "\n🧠 Memory Management Strategy:"
+    echo "  - RAII (Resource Acquisition Is Initialization)"
+    echo "  - Smart pointers for automatic memory management" 
+    echo "  - Stack allocation for short-lived objects"
+    echo "  - Memory pools for frequent allocations"
+    echo "  - Custom allocators for performance-critical paths"
+    
+    # Cross-platform considerations
+    echo -e "\n🌍 Cross-Platform Implementation:"
+    echo "  - Abstract OS-specific functionality"
+    echo "  - Use portable libraries (Boost, STL)"
+    echo "  - Conditional compilation for platform differences"
+    echo "  - Unified build system with CMake"
+    
+    # Integration with C# reference
+    echo -e "\n🔗 C# Reference Integration:"
+    echo "  - Behavior compatibility testing"
+    echo "  - Protocol message format matching"
+    echo "  - RPC API exact compatibility"
+    echo "  - Performance benchmarking against C#"
+
+fix:
+  script: |
+    #!/bin/bash
+    echo "🔧 Generating Neo N3 C++ implementation structure..."
+    
+    # Create C++ project structure
+    mkdir -p neo_cpp/{include/neo,src,tests,cmake,scripts}
+    
+    # Create main CMakeLists.txt
+    cat > neo_cpp/CMakeLists.txt << 'EOF'
+cmake_minimum_required(VERSION 3.16)
+project(neo-cpp VERSION 3.0.0 LANGUAGES CXX)
+
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Build configuration
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+# Compiler flags
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra -DDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native")
+
+# Find required packages
+find_package(OpenSSL REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system filesystem thread program_options json)
+find_package(PkgConfig REQUIRED)
+
+# Find LevelDB
+pkg_check_modules(LEVELDB REQUIRED leveldb)
+
+# Find RocksDB
+find_path(ROCKSDB_INCLUDE_DIR rocksdb/db.h)
+find_library(ROCKSDB_LIBRARY rocksdb)
+
+# Include directories
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${LEVELDB_INCLUDE_DIRS})
+include_directories(${ROCKSDB_INCLUDE_DIR})
+
+# Source files
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE HEADERS "include/*.h")
+
+# Create library
+add_library(neo-core STATIC ${SOURCES} ${HEADERS})
+
+# Link libraries
+target_link_libraries(neo-core
+    ${Boost_LIBRARIES}
+    ${LEVELDB_LIBRARIES}
+    ${ROCKSDB_LIBRARY}
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    pthread
+)
+
+# Main executable
+add_executable(neo-node src/main.cpp)
+target_link_libraries(neo-node neo-core)
+
+# Testing
+enable_testing()
+find_package(GTest REQUIRED)
+
+file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
+add_executable(neo-tests ${TEST_SOURCES})
+target_link_libraries(neo-tests neo-core GTest::GTest GTest::Main)
+
+add_test(NAME neo-unit-tests COMMAND neo-tests)
+
+# Installation
+install(TARGETS neo-node RUNTIME DESTINATION bin)
+install(DIRECTORY include/ DESTINATION include)
+EOF
+    
+    # Create core header files
+    cat > neo_cpp/include/neo/Block.h << 'EOF'
+#pragma once
+
+#include <vector>
+#include <string>
+#include <memory>
+#include <cstdint>
+#include "Transaction.h"
+#include "Hash.h"
+
+namespace neo {
+
+class Block {
+public:
+    struct Header {
+        uint32_t version{0};
+        Hash previous_hash;
+        Hash merkle_root;
+        uint64_t timestamp{0};
+        uint32_t index{0};
+        uint64_t nonce{0};
+        Hash next_consensus;
+        std::vector<uint8_t> witness;
+        
+        // Calculate hash of this header
+        Hash calculate_hash() const;
+    };
+    
+    Header header;
+    std::vector<std::shared_ptr<Transaction>> transactions;
+    
+    Block() = default;
+    Block(const Block&) = delete;
+    Block& operator=(const Block&) = delete;
+    Block(Block&&) = default;
+    Block& operator=(Block&&) = default;
+    
+    // Calculate block hash
+    Hash get_hash() const;
+    
+    // Validate block structure and transactions
+    bool validate() const;
+    
+    // Serialize block for network transmission
+    std::vector<uint8_t> serialize() const;
+    
+    // Deserialize block from network data
+    static std::unique_ptr<Block> deserialize(const std::vector<uint8_t>& data);
+    
+    // Get block size in bytes
+    size_t get_size() const;
+    
+    // Verify block witness signatures
+    bool verify_witness() const;
+    
+private:
+    mutable Hash cached_hash_;
+    mutable bool hash_calculated_{false};
+};
+
+} // namespace neo
+EOF
+    
+    cat > neo_cpp/include/neo/Transaction.h << 'EOF'
+#pragma once
+
+#include <vector>
+#include <string>
+#include <memory>
+#include <cstdint>
+#include "Hash.h"
+
+namespace neo {
+
+class Transaction {
+public:
+    enum class Type : uint8_t {
+        InvocationTransaction = 0xd1
+    };
+    
+    uint8_t version{0};
+    uint64_t nonce{0};
+    uint64_t system_fee{0};
+    uint64_t network_fee{0};
+    uint32_t valid_until_block{0};
+    std::vector<uint8_t> script;
+    std::vector<std::vector<uint8_t>> witnesses;
+    
+    Transaction() = default;
+    Transaction(const Transaction&) = delete;
+    Transaction& operator=(const Transaction&) = delete;
+    Transaction(Transaction&&) = default;
+    Transaction& operator=(Transaction&&) = default;
+    
+    // Calculate transaction hash
+    Hash get_hash() const;
+    
+    // Validate transaction
+    bool validate() const;
+    
+    // Serialize transaction for network transmission
+    std::vector<uint8_t> serialize() const;
+    
+    // Deserialize transaction from network data
+    static std::unique_ptr<Transaction> deserialize(const std::vector<uint8_t>& data);
+    
+    // Get transaction size in bytes
+    size_t get_size() const;
+    
+    // Verify transaction witnesses
+    bool verify_witnesses() const;
+    
+    // Get transaction fee
+    uint64_t get_fee() const;
+    
+private:
+    mutable Hash cached_hash_;
+    mutable bool hash_calculated_{false};
+};
+
+} // namespace neo
+EOF
+    
+    cat > neo_cpp/include/neo/Blockchain.h << 'EOF'
+#pragma once
+
+#include <memory>
+#include <vector>
+#include <unordered_map>
+#include <functional>
+#include "Block.h"
+#include "Transaction.h"
+#include "Storage.h"
+
+namespace neo {
+
+class Blockchain {
+public:
+    using BlockAddedCallback = std::function<void(const Block&)>;
+    
+    Blockchain(std::unique_ptr<Storage> storage);
+    ~Blockchain();
+    
+    // Non-copyable, movable
+    Blockchain(const Blockchain&) = delete;
+    Blockchain& operator=(const Blockchain&) = delete;
+    Blockchain(Blockchain&&) = default;
+    Blockchain& operator=(Blockchain&&) = default;
+    
+    // Get current blockchain height
+    uint32_t get_height() const;
+    
+    // Get best block hash
+    Hash get_best_block_hash() const;
+    
+    // Get block by hash
+    std::shared_ptr<const Block> get_block(const Hash& hash) const;
+    
+    // Get block by index
+    std::shared_ptr<const Block> get_block(uint32_t index) const;
+    
+    // Add block to blockchain
+    bool add_block(std::unique_ptr<Block> block);
+    
+    // Validate block before adding
+    bool validate_block(const Block& block) const;
+    
+    // Get transaction by hash
+    std::shared_ptr<const Transaction> get_transaction(const Hash& hash) const;
+    
+    // Check if transaction exists
+    bool contains_transaction(const Hash& hash) const;
+    
+    // Register callback for new blocks
+    void register_block_added_callback(BlockAddedCallback callback);
+    
+    // Get unconfirmed transaction pool
+    const std::vector<std::shared_ptr<Transaction>>& get_mempool() const;
+    
+    // Add transaction to mempool
+    bool add_transaction_to_mempool(std::shared_ptr<Transaction> tx);
+    
+private:
+    std::unique_ptr<Storage> storage_;
+    std::vector<BlockAddedCallback> block_added_callbacks_;
+    std::vector<std::shared_ptr<Transaction>> mempool_;
+    std::unordered_map<Hash, std::shared_ptr<Transaction>, Hash::Hasher> mempool_index_;
+    
+    mutable uint32_t cached_height_{0};
+    mutable Hash cached_best_hash_;
+    mutable bool cache_valid_{false};
+    
+    void invalidate_cache();
+    void notify_block_added(const Block& block);
+};
+
+} // namespace neo
+EOF
+    
+    # Create RPC server header
+    cat > neo_cpp/include/neo/RpcServer.h << 'EOF'
+#pragma once
+
+#include <string>
+#include <memory>
+#include <functional>
+#include <unordered_map>
+#include "json.hpp"
+
+namespace neo {
+
+class Blockchain;
+class LocalNode;
+
+class RpcServer {
+public:
+    using JsonRpcHandler = std::function<nlohmann::json(const nlohmann::json&)>;
+    
+    RpcServer(std::shared_ptr<Blockchain> blockchain, std::shared_ptr<LocalNode> local_node);
+    ~RpcServer();
+    
+    // Start RPC server on specified port
+    bool start(uint16_t port);
+    
+    // Stop RPC server
+    void stop();
+    
+    // Check if server is running
+    bool is_running() const;
+    
+private:
+    std::shared_ptr<Blockchain> blockchain_;
+    std::shared_ptr<LocalNode> local_node_;
+    std::unordered_map<std::string, JsonRpcHandler> handlers_;
+    bool running_{false};
+    
+    void setup_handlers();
+    
+    // RPC method handlers (exact C# parity)
+    nlohmann::json handle_getbestblockhash(const nlohmann::json& params);
+    nlohmann::json handle_getblock(const nlohmann::json& params);
+    nlohmann::json handle_getblockcount(const nlohmann::json& params);
+    nlohmann::json handle_getblockhash(const nlohmann::json& params);
+    nlohmann::json handle_getconnectioncount(const nlohmann::json& params);
+    nlohmann::json handle_getpeers(const nlohmann::json& params);
+    nlohmann::json handle_getrawmempool(const nlohmann::json& params);
+    nlohmann::json handle_getrawtransaction(const nlohmann::json& params);
+    nlohmann::json handle_sendrawtransaction(const nlohmann::json& params);
+    nlohmann::json handle_validateaddress(const nlohmann::json& params);
+    nlohmann::json handle_invokefunction(const nlohmann::json& params);
+    nlohmann::json handle_invokescript(const nlohmann::json& params);
+    nlohmann::json handle_getcontractstate(const nlohmann::json& params);
+    nlohmann::json handle_getnep17balances(const nlohmann::json& params);
+    nlohmann::json handle_getnep17transfers(const nlohmann::json& params);
+    nlohmann::json handle_getapplicationlog(const nlohmann::json& params);
+};
+
+} // namespace neo
+EOF
+    
+    # Create main.cpp
+    cat > neo_cpp/src/main.cpp << 'EOF'
+#include <iostream>
+#include <memory>
+#include <csignal>
+#include <boost/program_options.hpp>
+
+#include "neo/Blockchain.h"
+#include "neo/LocalNode.h"
+#include "neo/RpcServer.h"
+#include "neo/Storage.h"
+
+namespace po = boost::program_options;
+
+static std::atomic<bool> g_shutdown{false};
+
+void signal_handler(int signal) {
+    std::cout << "Received signal " << signal << ", shutting down..." << std::endl;
+    g_shutdown = true;
+}
+
+int main(int argc, char* argv[]) {
+    try {
+        // Parse command line options
+        po::options_description desc("Neo N3 C++ Node Options");
+        desc.add_options()
+            ("help,h", "Show help message")
+            ("config,c", po::value<std::string>()->default_value("config.json"), "Configuration file path")
+            ("port,p", po::value<uint16_t>()->default_value(10333), "P2P port")
+            ("rpc-port", po::value<uint16_t>()->default_value(10332), "RPC port")
+            ("datadir,d", po::value<std::string>()->default_value("./data"), "Data directory")
+            ("testnet", "Use testnet configuration");
+        
+        po::variables_map vm;
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+        po::notify(vm);
+        
+        if (vm.count("help")) {
+            std::cout << desc << std::endl;
+            return 0;
+        }
+        
+        // Set up signal handlers
+        std::signal(SIGINT, signal_handler);
+        std::signal(SIGTERM, signal_handler);
+        
+        std::cout << "Starting Neo N3 C++ Node..." << std::endl;
+        
+        // Initialize storage
+        auto storage = std::make_unique<neo::LevelDBStorage>(vm["datadir"].as<std::string>());
+        
+        // Initialize blockchain
+        auto blockchain = std::make_shared<neo::Blockchain>(std::move(storage));
+        
+        // Initialize local node
+        auto local_node = std::make_shared<neo::LocalNode>(blockchain);
+        
+        // Initialize RPC server
+        auto rpc_server = std::make_unique<neo::RpcServer>(blockchain, local_node);
+        
+        // Start services
+        if (!local_node->start(vm["port"].as<uint16_t>())) {
+            std::cerr << "Failed to start P2P service" << std::endl;
+            return 1;
+        }
+        
+        if (!rpc_server->start(vm["rpc-port"].as<uint16_t>())) {
+            std::cerr << "Failed to start RPC service" << std::endl;
+            return 1;
+        }
+        
+        std::cout << "Neo N3 C++ Node started successfully" << std::endl;
+        std::cout << "P2P Port: " << vm["port"].as<uint16_t>() << std::endl;
+        std::cout << "RPC Port: " << vm["rpc-port"].as<uint16_t>() << std::endl;
+        
+        // Main loop
+        while (!g_shutdown) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        
+        std::cout << "Shutting down..." << std::endl;
+        
+        // Cleanup
+        rpc_server->stop();
+        local_node->stop();
+        
+        std::cout << "Neo N3 C++ Node stopped" << std::endl;
+        return 0;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+}
+EOF
+    
+    # Create build script
+    cat > neo_cpp/scripts/build.sh << 'EOF'
+#!/bin/bash
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo -e "${GREEN}Building Neo N3 C++ Node...${NC}"
+
+# Create build directory
+mkdir -p build
+cd build
+
+# Configure with CMake
+echo -e "${YELLOW}Configuring build...${NC}"
+cmake -DCMAKE_BUILD_TYPE=Release ..
+
+# Build
+echo -e "${YELLOW}Compiling...${NC}"
+make -j$(nproc)
+
+# Run tests
+echo -e "${YELLOW}Running tests...${NC}"
+ctest --output-on-failure
+
+echo -e "${GREEN}Build completed successfully!${NC}"
+echo -e "${GREEN}Executable: build/neo-node${NC}"
+EOF
+    
+    chmod +x neo_cpp/scripts/build.sh
+    
+    # Create parity checklist
+    cat > neo_cpp/CPP_PARITY_CHECKLIST.md << 'EOF'
+# Neo N3 C++ Implementation Parity Checklist
+
+## Core Components
+- [ ] Block structure and serialization
+- [ ] Transaction processing and validation
+- [ ] Blockchain state management
+- [ ] Storage layer (LevelDB/RocksDB)
+
+## Consensus (dBFT 2.0)
+- [ ] ConsensusContext implementation
+- [ ] ConsensusService with exact C# behavior
+- [ ] Message handling (PrepareRequest, PrepareResponse, Commit, ChangeView)
+- [ ] Recovery mechanism
+- [ ] View change handling
+
+## P2P Network
+- [ ] LocalNode implementation
+- [ ] RemoteNode management
+- [ ] Protocol message serialization/deserialization
+- [ ] Peer discovery and management
+- [ ] Network protocol version compatibility
+
+## Neo Virtual Machine
+- [ ] ExecutionEngine with stack-based execution
+- [ ] ApplicationEngine for smart contracts
+- [ ] OpCode implementations (exact behavior match)
+- [ ] InteropService system calls
+- [ ] Gas calculation and limits
+
+## RPC API (Complete Compatibility)
+- [ ] All blockchain query methods
+- [ ] Transaction submission methods
+- [ ] Smart contract invocation methods
+- [ ] Wallet-related methods
+- [ ] Node status and peer methods
+
+## Cryptography
+- [ ] ECDSA (secp256r1, secp256k1) 
+- [ ] Hash functions (SHA256, RIPEMD160)
+- [ ] Merkle tree implementation
+- [ ] Address generation and validation
+- [ ] Signature verification
+
+## Performance Optimizations
+- [ ] Memory pool management
+- [ ] Efficient serialization/deserialization
+- [ ] Multi-threading for consensus and networking
+- [ ] SIMD optimizations where applicable
+- [ ] Memory management with smart pointers
+
+## Cross-Platform Support
+- [ ] Windows build and testing
+- [ ] Linux build and testing  
+- [ ] macOS build and testing
+- [ ] Docker containerization
+- [ ] CI/CD pipeline setup
+
+## Testing
+- [ ] Unit tests for all components
+- [ ] Integration tests with C# reference
+- [ ] Protocol compliance tests
+- [ ] Performance benchmarks
+- [ ] Memory leak detection
+- [ ] Thread safety validation
+
+## Build System
+- [ ] CMake configuration for all platforms
+- [ ] Dependency management
+- [ ] Debug/Release configurations
+- [ ] Static analysis integration
+- [ ] Documentation generation
+EOF
+    
+    echo -e "\n✅ Neo N3 C++ project structure created!"
+    echo -e "\n📋 Generated Components:"
+    echo "  ✓ CMake build system with all dependencies"
+    echo "  ✓ Core header files (Block, Transaction, Blockchain, RPC)"
+    echo "  ✓ Main application with command-line options"
+    echo "  ✓ Build script with testing"
+    echo "  ✓ C++ parity checklist"
+    echo -e "\n📚 Next Steps:"
+    echo "1. Install dependencies: sudo apt install libboost-all-dev libleveldb-dev librocksdb-dev libssl-dev"
+    echo "2. Build project: cd neo_cpp && ./scripts/build.sh"
+    echo "3. Implement missing components following C# reference"
+    echo "4. Run tests and validate protocol compliance"
+    echo "5. Performance tuning and optimization"
+
+config:
+  requiredFiles:
+    - pattern: "neo_cpp/CMakeLists.txt"
+      description: "CMake build configuration"
+    - pattern: "neo_cpp/include/**/*.h"
+      description: "C++ header files with exact C# parity"
+  forbiddenPatterns:
+    - pattern: "malloc\\(|free\\("
+      description: "Raw malloc/free usage (use smart pointers instead)"
+    - pattern: "new.*without.*std::"
+      description: "Raw new/delete (use smart pointers)"
+  hooks:
+    preCommit: |
+      # Build and test before commit
+      cd neo_cpp && ./scripts/build.sh
+      if [ $? -ne 0 ]; then
+        echo "❌ Build failed - commit blocked"
+        exit 1
+      fi

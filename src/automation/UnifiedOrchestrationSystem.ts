@@ -13,6 +13,8 @@ import { TaskCompletionEngine } from './taskCompletion';
 import { ErrorRecoverySystem } from './errorRecovery';
 import { HiveMindTask, TaskPriority, TaskStatus } from '../agents/hivemind/types';
 import { ProductionReadinessValidator } from '../validation/ProductionReadinessValidator';
+import { PreTaskValidator } from '../validation/PreTaskValidator';
+import { IntelligentTaskAnalyzer, TaskAnalysisResult } from './IntelligentTaskAnalyzer';
 
 /**
  * Unified Orchestration System - Integrates all AutoClaude features
@@ -39,6 +41,8 @@ export class UnifiedOrchestrationSystem {
     private agentCoordinator: any;
     private systemMonitor: any;
     private productionValidator: ProductionReadinessValidator;
+    private preTaskValidator: PreTaskValidator;
+    private taskAnalyzer: IntelligentTaskAnalyzer;
     
     private isRunning = false;
     private activeWorkflows = new Map<string, any>();
@@ -52,6 +56,8 @@ export class UnifiedOrchestrationSystem {
         this.taskEngine = new TaskCompletionEngine(workspaceRoot);
         this.errorRecovery = new ErrorRecoverySystem(this.contextManager, workspaceRoot);
         this.productionValidator = ProductionReadinessValidator.getInstance(workspaceRoot);
+        this.preTaskValidator = PreTaskValidator.getInstance(workspaceRoot);
+        this.taskAnalyzer = new IntelligentTaskAnalyzer(workspaceRoot);
         
         // Get singleton instances
         this.memoryManager = getMemoryManager(workspaceRoot);
@@ -108,30 +114,62 @@ export class UnifiedOrchestrationSystem {
             // Run pre-operation hooks
             await this.hookManager.runHooks('pre-operation', { command });
             
-            // Analyze command intent
-            const intent = await this.analyzeCommandIntent(command);
+            // Use IntelligentTaskAnalyzer to analyze and decompose the task
+            const analysisResult = await this.taskAnalyzer.analyzeTask(command);
             
-            // Plan tasks based on intent
-            const tasks = await this.planTasks(intent);
+            log.info('Task analysis completed', {
+                complexity: analysisResult.complexity,
+                subtaskCount: analysisResult.subtasks.length,
+                confidence: analysisResult.confidence,
+                estimatedDuration: analysisResult.estimatedDuration
+            });
             
-            // Check if we need parallel processing
-            if (this.shouldUseParallelProcessing(tasks)) {
-                await this.initializeParallelProcessing(tasks.length);
+            // Show analysis to user
+            const durationInMinutes = Math.ceil(analysisResult.estimatedDuration / 60);
+            vscode.window.showInformationMessage(
+                `Task analyzed: ${analysisResult.subtasks.length} subtasks, ` +
+                `complexity: ${analysisResult.complexity}, ` +
+                `estimated duration: ${durationInMinutes} minutes`
+            );
+            
+            // Check if we need parallel processing based on analysis
+            if (analysisResult.executionPlan.parallelOpportunities > 0 || 
+                analysisResult.subtasks.length > 3) {
+                await this.initializeParallelProcessing(
+                    Math.min(analysisResult.executionPlan.parallelOpportunities + 1, 10)
+                );
             }
             
-            // Execute tasks with full orchestration
-            for (const task of tasks) {
-                await this.executeTaskWithOrchestration(task);
+            // Execute subtasks according to the execution plan
+            for (const phase of analysisResult.executionPlan.phases) {
+                // Execute tasks in parallel within each phase
+                const phasePromises = phase.tasks.map(async taskInfo => {
+                    const hiveMindTask = this.convertSubtaskToHiveMindTask(
+                        taskInfo.subtask,
+                        taskInfo.agent,
+                        taskInfo.tools
+                    );
+                    
+                    return this.executeTaskWithOrchestration(hiveMindTask);
+                });
+                
+                // Wait for all tasks in the phase to complete
+                await Promise.all(phasePromises);
             }
             
             // Run post-operation hooks
             await this.hookManager.runHooks('post-operation', { 
                 command, 
-                tasksCompleted: tasks.length 
+                tasksCompleted: analysisResult.subtasks.length,
+                analysisResult 
             });
             
             // Save to memory for learning
-            await this.memoryManager.recordCommand(command, tasks, true);
+            await this.memoryManager.recordCommand(command, analysisResult.subtasks, true);
+            
+            vscode.window.showInformationMessage(
+                `✅ Task completed successfully! Executed ${analysisResult.subtasks.length} subtasks.`
+            );
             
         } catch (error) {
             log.error('Failed to process natural command', error as Error);
@@ -143,40 +181,94 @@ export class UnifiedOrchestrationSystem {
      * Execute a task with full orchestration capabilities
      */
     private async executeTaskWithOrchestration(task: HiveMindTask): Promise<void> {
-        log.info('Executing task with orchestration', { taskId: task.id, type: task.type });
+        log.info('Executing task with orchestration', { 
+            taskId: task.id, 
+            type: task.type,
+            assignedAgent: task.context?.assignedAgent,
+            requiredTools: task.context?.requiredTools
+        });
         
         try {
+            // CRITICAL: Pre-task validation for TDD/DDD enforcement
+            const preValidation = await this.preTaskValidator.validatePreTask(task);
+            if (!preValidation.passed) {
+                log.error('Pre-task validation failed - blocking task execution', {
+                    taskId: task.id,
+                    blockers: preValidation.blockers.length,
+                    errors: preValidation.errors.length
+                });
+                
+                // Show validation errors to user
+                const errorMessages = [
+                    ...preValidation.blockers.map(b => `🚫 ${b.message}`),
+                    ...preValidation.errors.map(e => `❌ ${e.message}`)
+                ].join('\n');
+                
+                vscode.window.showErrorMessage(
+                    `Task blocked: TDD/DDD violations detected`,
+                    'Show Details'
+                ).then(action => {
+                    if (action === 'Show Details') {
+                        const outputChannel = vscode.window.createOutputChannel('TDD/DDD Validation');
+                        outputChannel.appendLine('Pre-Task Validation Failed\n');
+                        outputChannel.appendLine(errorMessages);
+                        outputChannel.show();
+                    }
+                });
+                
+                // Mark task as failed due to validation
+                task.status = TaskStatus.FAILED;
+                task.result = {
+                    success: false,
+                    error: 'Pre-task validation failed: TDD/DDD requirements not met',
+                    validationResult: preValidation
+                };
+                throw new Error('Pre-task validation failed: TDD/DDD requirements not met');
+            }
+            
+            // Show warnings if any
+            if (preValidation.warnings.length > 0) {
+                const warningMessages = preValidation.warnings.map(w => w.message).join('\n');
+                vscode.window.showWarningMessage(`TDD/DDD Warnings: ${warningMessages}`);
+            }
+            
             // Update task status
             task.status = TaskStatus.IN_PROGRESS;
             task.startedAt = Date.now();
             
-            // Determine execution strategy
-            const strategy = await this.determineExecutionStrategy(task);
-            
-            switch (strategy) {
-                case 'hive-mind':
-                    // Use Hive-Mind for complex tasks
-                    await this.workflowSystem.processTask(task);
-                    break;
-                    
-                case 'sub-agent':
-                    // Use specialized SubAgent
-                    await this.executeWithSubAgent(task);
-                    break;
-                    
-                case 'parallel':
-                    // Distribute to parallel agents
-                    await this.executeWithParallelAgents(task);
-                    break;
-                    
-                case 'direct':
-                    // Execute directly
-                    await this.executeDirectTask(task);
-                    break;
-                    
-                default:
-                    // Default to workflow system
-                    await this.workflowSystem.processTask(task);
+            // Check if task has a pre-assigned agent (from IntelligentTaskAnalyzer)
+            if (task.context?.assignedAgent) {
+                // Execute with the assigned agent and tools
+                await this.executeWithAssignedAgent(task);
+            } else {
+                // Determine execution strategy dynamically
+                const strategy = await this.determineExecutionStrategy(task);
+                
+                switch (strategy) {
+                    case 'hive-mind':
+                        // Use Hive-Mind for complex tasks
+                        await this.workflowSystem.processTask(task);
+                        break;
+                        
+                    case 'sub-agent':
+                        // Use specialized SubAgent
+                        await this.executeWithSubAgent(task);
+                        break;
+                        
+                    case 'parallel':
+                        // Distribute to parallel agents
+                        await this.executeWithParallelAgents(task);
+                        break;
+                        
+                    case 'direct':
+                        // Execute directly
+                        await this.executeDirectTask(task);
+                        break;
+                        
+                    default:
+                        // Default to workflow system
+                        await this.workflowSystem.processTask(task);
+                }
             }
             
             // CRITICAL: Validate production readiness before marking as complete
@@ -244,13 +336,49 @@ export class UnifiedOrchestrationSystem {
     }
     
     /**
+     * Execute task with a pre-assigned agent and tools
+     */
+    private async executeWithAssignedAgent(task: HiveMindTask): Promise<void> {
+        log.info('Executing task with assigned agent', { 
+            taskId: task.id,
+            agent: task.context.assignedAgent,
+            tools: task.context.requiredTools
+        });
+        
+        const agentId = task.context.assignedAgent;
+        
+        // Check if it's a SubAgent task
+        if (this.isSubAgentId(agentId)) {
+            await this.executeWithSubAgent(task);
+            return;
+        }
+        
+        // Check if it's a Hive-Mind agent
+        if (this.isHiveMindAgent(agentId)) {
+            // Set the preferred agent in context
+            task.context.preferredAgent = agentId;
+            await this.workflowSystem.processTask(task);
+            return;
+        }
+        
+        // Otherwise, execute with the agent coordinator
+        const result = await this.agentCoordinator.executeTaskWithAgent(
+            task,
+            agentId,
+            task.context.requiredTools
+        );
+        
+        task.result = result;
+    }
+    
+    /**
      * Execute task using SubAgent system
      */
     private async executeWithSubAgent(task: HiveMindTask): Promise<void> {
         log.info('Executing task with SubAgent', { taskId: task.id });
         
         // Map task type to SubAgent
-        const agentId = this.mapTaskToSubAgent(task.type);
+        const agentId = task.context?.assignedAgent || this.mapTaskToSubAgent(task.type);
         if (!agentId) {
             throw new Error(`No SubAgent found for task type: ${task.type}`);
         }
@@ -477,7 +605,11 @@ export class UnifiedOrchestrationSystem {
             'github-actions': 'github-actions',
             'security-check': 'security-audit',
             'performance-check': 'performance-optimization',
-            'integration-test': 'integration-testing'
+            'integration-test': 'integration-testing',
+            'testing': 'tdd-enforcement',
+            'test-validation': 'tdd-enforcement',
+            'documentation': 'ddd-enforcement',
+            'documentation-validation': 'ddd-enforcement'
         };
         
         return mapping[taskType] || null;
@@ -951,10 +1083,73 @@ export class UnifiedOrchestrationSystem {
         }
     }
     
+    /**
+     * Check if agent ID is a SubAgent
+     */
+    private isSubAgentId(agentId: string): boolean {
+        const subAgentIds = [
+            'production-readiness',
+            'build-check',
+            'test-check',
+            'format-check',
+            'github-actions',
+            'security-audit',
+            'performance-optimization',
+            'integration-testing',
+            'tdd-enforcement',
+            'ddd-enforcement'
+        ];
+        
+        return subAgentIds.includes(agentId);
+    }
+    
+    /**
+     * Check if agent ID is a Hive-Mind agent
+     */
+    private isHiveMindAgent(agentId: string): boolean {
+        const hiveMindAgents = [
+            'architect-agent',
+            'coder-agent',
+            'tester-agent',
+            'researcher-agent',
+            'security-agent',
+            'documentation-agent',
+            'optimization-agent'
+        ];
+        
+        return hiveMindAgents.includes(agentId);
+    }
+    
     private extractFileFromError(error: string): string | undefined {
         // Try to extract file path from error message
         const fileMatch = error.match(/(?:in|at)\s+(.+?\.[a-zA-Z]+)(?::(\d+))?/);
         return fileMatch ? fileMatch[1] : undefined;
+    }
+    
+    /**
+     * Convert a subtask from the analyzer to a HiveMindTask
+     */
+    private convertSubtaskToHiveMindTask(
+        subtask: any,
+        agent: string,
+        tools: string[]
+    ): HiveMindTask {
+        return {
+            id: subtask.id,
+            type: subtask.type,
+            description: subtask.description,
+            priority: subtask.priority,
+            status: TaskStatus.PENDING,
+            requiredCapabilities: subtask.requiredCapabilities,
+            estimatedTime: subtask.estimatedDuration * 1000, // Convert to milliseconds
+            context: {
+                ...subtask.context,
+                assignedAgent: agent,
+                requiredTools: tools
+            },
+            dependencies: subtask.dependencies,
+            createdAt: Date.now()
+        };
     }
     
     /**

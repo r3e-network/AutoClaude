@@ -13,11 +13,13 @@ import { ProductionReadinessValidator } from '../validation/ProductionReadinessV
  */
 export class AutomaticWorkflowSystem {
     private static instance: AutomaticWorkflowSystem;
+    private productionValidator: ProductionReadinessValidator;
     private queenAgent: QueenAgent;
     private hookSystem: AdvancedHookSystem;
     private memorySystem: SQLiteMemorySystem;
     private isActive = false;
     private currentSession: string | null = null;
+    private context: vscode.ExtensionContext | undefined;
     private config: SwarmConfiguration = {
         mode: 'swarm',
         maxAgents: 10,
@@ -543,6 +545,53 @@ export class AutomaticWorkflowSystem {
             config: this.config,
             hooks: this.hookSystem.getHookStatus()
         };
+    }
+    
+    /**
+     * Process a single task (called from UnifiedOrchestrationSystem)
+     */
+    async processTask(task: HiveMindTask): Promise<void> {
+        await this.queueTask(task);
+        
+        // Start processing if not already running
+        if (!this.isProcessing) {
+            await this.startProcessing();
+        }
+        
+        // Wait for this specific task to complete
+        return new Promise((resolve, reject) => {
+            const checkInterval = setInterval(() => {
+                if (task.status === TaskStatus.COMPLETED) {
+                    clearInterval(checkInterval);
+                    resolve();
+                } else if (task.status === TaskStatus.FAILED) {
+                    clearInterval(checkInterval);
+                    reject(new Error(`Task failed: ${task.result?.error || 'Unknown error'}`));
+                }
+            }, 100);
+            
+            // Timeout after 30 minutes
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                reject(new Error('Task processing timeout'));
+            }, 30 * 60 * 1000);
+        });
+    }
+    
+    /**
+     * Start automatic processing (called from UnifiedOrchestrationSystem)
+     */
+    async startAutomaticProcessing(): Promise<void> {
+        if (!this.isActive) {
+            await this.startSession();
+        }
+    }
+    
+    /**
+     * Stop automatic processing (called from UnifiedOrchestrationSystem)
+     */
+    async stopProcessing(): Promise<void> {
+        await this.stopSession();
     }
     
     async shutdown(): Promise<void> {

@@ -168,6 +168,22 @@ export class ProductionReadinessValidator {
                 result.errors.push(...testResult.errors);
             }
             
+            // Step 4.1: CRITICAL - TDD Enforcement Check
+            const tddResult = await this.runTDDCheck();
+            if (!tddResult.passed) {
+                result.isProductionReady = false;
+                result.criticalIssues.push(...tddResult.errors);
+                log.error('TDD violations detected - blocking task completion');
+            }
+            
+            // Step 4.2: CRITICAL - DDD Enforcement Check  
+            const dddResult = await this.runDDDCheck();
+            if (!dddResult.passed) {
+                result.isProductionReady = false;
+                result.criticalIssues.push(...dddResult.errors);
+                log.error('DDD violations detected - blocking task completion');
+            }
+            
             // Step 5: Check code formatting
             const formatResult = await this.runFormatCheck();
             if (!formatResult.passed) {
@@ -443,6 +459,66 @@ export class ProductionReadinessValidator {
                     file: 'security-check',
                     line: 0,
                     message: `Security check failed: ${(error as Error).message}`,
+                    severity: 'critical'
+                }]
+            };
+        }
+    }
+    
+    /**
+     * Run TDD enforcement check
+     */
+    private async runTDDCheck(): Promise<CheckResult> {
+        try {
+            const result = await this.subAgentRunner.runSingleAgent('tdd-enforcement');
+            
+            return {
+                passed: result?.passed || false,
+                errors: result?.errors?.map(e => ({
+                    file: 'tdd-enforcement',
+                    line: 0,
+                    message: `TDD Violation: ${e}`,
+                    severity: 'critical' as const
+                })) || []
+            };
+        } catch (error) {
+            log.error('TDD enforcement check failed', error as Error);
+            return {
+                passed: false,
+                errors: [{
+                    file: 'tdd-enforcement',
+                    line: 0,
+                    message: `TDD enforcement failed: ${(error as Error).message}`,
+                    severity: 'critical'
+                }]
+            };
+        }
+    }
+    
+    /**
+     * Run DDD enforcement check
+     */
+    private async runDDDCheck(): Promise<CheckResult> {
+        try {
+            const result = await this.subAgentRunner.runSingleAgent('ddd-enforcement');
+            
+            return {
+                passed: result?.passed || false,
+                errors: result?.errors?.map(e => ({
+                    file: 'ddd-enforcement',
+                    line: 0,
+                    message: `DDD Violation: ${e}`,
+                    severity: 'critical' as const
+                })) || []
+            };
+        } catch (error) {
+            log.error('DDD enforcement check failed', error as Error);
+            return {
+                passed: false,
+                errors: [{
+                    file: 'ddd-enforcement',
+                    line: 0,
+                    message: `DDD enforcement failed: ${(error as Error).message}`,
                     severity: 'critical'
                 }]
             };

@@ -1,0 +1,500 @@
+id: ddd-enforcement
+name: Document-Driven Development Enforcement
+description: Ensures Document-Driven Development practices - documentation must be written BEFORE implementation
+version: 1.0.0
+author: AutoClaude DDD System
+capabilities:
+  - Documentation detection and validation
+  - Documentation-first enforcement
+  - API documentation analysis
+  - Documentation quality assessment
+  - Pre-implementation documentation requirements
+priority: critical
+enabled: true
+supportsTriggers: true
+supportsAnalysis: true
+supportsFix: true
+smartMode: true
+options:
+  requireDocsFirst: true
+  blockImplementationWithoutDocs: true
+  requireAPIDocumentation: true
+  requireUsageExamples: true
+  requireArchitectureDesign: true
+  minDocumentationScore: 80
+
+check:
+  script: |
+    #!/bin/bash
+    echo "📚 DDD Enforcement Check - Ensuring Document-Driven Development"
+    
+    ERRORS=()
+    WARNINGS=()
+    
+    # Function to check if implementation has documentation
+    check_documentation_exists() {
+      local impl_file="$1"
+      local doc_found=false
+      
+      # Check for inline documentation
+      if [ -f "$impl_file" ]; then
+        # Check for JSDoc/TSDoc comments
+        if grep -q -E "^[[:space:]]*\/\*\*" "$impl_file"; then
+          doc_found=true
+        fi
+        
+        # Check for comprehensive function documentation
+        function_count=$(grep -c -E "^[[:space:]]*(export[[:space:]]+)?(function|const|class)" "$impl_file" 2>/dev/null || echo 0)
+        doc_count=$(grep -c -E "^[[:space:]]*\/\*\*" "$impl_file" 2>/dev/null || echo 0)
+        
+        if [ $function_count -gt 0 ] && [ $doc_count -lt $function_count ]; then
+          WARNINGS+=("Incomplete documentation in $impl_file: $doc_count/$function_count functions documented")
+        fi
+      fi
+      
+      # Check for external documentation
+      local base_name=$(basename "$impl_file" | sed 's/\.[^.]*$//')
+      local dir_name=$(dirname "$impl_file")
+      
+      # Look for corresponding .md files
+      if [ ! -f "$dir_name/$base_name.md" ] && [ ! -f "$dir_name/README.md" ] && [ "$doc_found" = false ]; then
+        ERRORS+=("No documentation found for: $impl_file")
+      fi
+    }
+    
+    # Check all source files
+    for file in $(find . -name "*.ts" -o -name "*.js" -o -name "*.tsx" -o -name "*.jsx" | grep -v node_modules | grep -v test | grep -v spec); do
+      check_documentation_exists "$file"
+    done
+    
+    # Check if README.md exists
+    if [ ! -f "README.md" ]; then
+      ERRORS+=("No README.md found in project root")
+    else
+      # Check README quality
+      readme_size=$(wc -c < README.md)
+      if [ $readme_size -lt 500 ]; then
+        WARNINGS+=("README.md is too short (less than 500 characters)")
+      fi
+      
+      # Check for required sections
+      required_sections=("Installation" "Usage" "API" "Examples")
+      for section in "${required_sections[@]}"; do
+        if ! grep -q -i "^#.*$section" README.md; then
+          WARNINGS+=("README.md missing section: $section")
+        fi
+      done
+    fi
+    
+    # Check for API documentation
+    if [ -d "src" ] || [ -d "lib" ]; then
+      api_files=$(find . \( -path ./src -o -path ./lib \) -name "*.ts" -o -name "*.js" | grep -E "(api|service|controller)" | grep -v node_modules)
+      for api_file in $api_files; do
+        if ! grep -q "@api" "$api_file" 2>/dev/null && ! grep -q "@endpoint" "$api_file" 2>/dev/null; then
+          WARNINGS+=("API file lacks API documentation: $api_file")
+        fi
+      done
+    fi
+    
+    # Check for architecture documentation
+    if [ ! -f "ARCHITECTURE.md" ] && [ ! -f "docs/ARCHITECTURE.md" ] && [ ! -f "docs/architecture.md" ]; then
+      ERRORS+=("No architecture documentation found")
+    fi
+    
+    # Check for changes without documentation updates
+    if command -v git &> /dev/null && git rev-parse --git-dir > /dev/null 2>&1; then
+      changed_files=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+      code_changed=false
+      docs_changed=false
+      
+      for file in $changed_files; do
+        if [[ "$file" =~ \.(ts|js|tsx|jsx)$ ]] && [[ ! "$file" =~ \.(test|spec)\. ]]; then
+          code_changed=true
+        fi
+        if [[ "$file" =~ \.(md)$ ]] || [[ "$file" =~ \.(ts|js)$ ]] && grep -q "\/\*\*" "$file" 2>/dev/null; then
+          docs_changed=true
+        fi
+      done
+      
+      if [ "$code_changed" = true ] && [ "$docs_changed" = false ]; then
+        ERRORS+=("Code changed without updating documentation")
+      fi
+    fi
+    
+    # Check for empty documentation blocks
+    for file in $(find . -name "*.ts" -o -name "*.js" | grep -v node_modules); do
+      if grep -q -E "\/\*\*[[:space:]]*\*\/" "$file" 2>/dev/null; then
+        WARNINGS+=("Empty documentation block found in: $file")
+      fi
+    done
+    
+    # Output results
+    if [ ${#ERRORS[@]} -eq 0 ] && [ ${#WARNINGS[@]} -eq 0 ]; then
+      echo "✅ DDD practices are being followed correctly!"
+      exit 0
+    else
+      echo "❌ DDD violations detected!"
+      
+      if [ ${#ERRORS[@]} -gt 0 ]; then
+        echo -e "\nErrors:"
+        printf '%s\n' "${ERRORS[@]}"
+      fi
+      
+      if [ ${#WARNINGS[@]} -gt 0 ]; then
+        echo -e "\nWarnings:"
+        printf '%s\n' "${WARNINGS[@]}"
+      fi
+      
+      exit 1
+    fi
+
+analysis:
+  script: |
+    #!/bin/bash
+    echo "🔍 Analyzing DDD compliance and documentation quality..."
+    
+    # Analyze documentation coverage
+    echo -e "\n📊 Documentation Coverage Analysis:"
+    
+    total_files=0
+    documented_files=0
+    total_functions=0
+    documented_functions=0
+    
+    for file in $(find . -name "*.ts" -o -name "*.js" | grep -v node_modules | grep -v test); do
+      if [ -f "$file" ]; then
+        total_files=$((total_files + 1))
+        
+        # Check if file has any documentation
+        if grep -q -E "\/\*\*" "$file" 2>/dev/null; then
+          documented_files=$((documented_files + 1))
+        fi
+        
+        # Count functions and documented functions
+        func_count=$(grep -c -E "^[[:space:]]*(export[[:space:]]+)?(function|const.*=>|class)" "$file" 2>/dev/null || echo 0)
+        doc_func_count=$(grep -B1 -E "^[[:space:]]*(export[[:space:]]+)?(function|const.*=>|class)" "$file" 2>/dev/null | grep -c "^\*\/" || echo 0)
+        
+        total_functions=$((total_functions + func_count))
+        documented_functions=$((documented_functions + doc_func_count))
+      fi
+    done
+    
+    if [ $total_files -gt 0 ]; then
+      file_coverage=$((documented_files * 100 / total_files))
+      echo "  File documentation coverage: ${file_coverage}% (${documented_files}/${total_files})"
+    fi
+    
+    if [ $total_functions -gt 0 ]; then
+      func_coverage=$((documented_functions * 100 / total_functions))
+      echo "  Function documentation coverage: ${func_coverage}% (${documented_functions}/${total_functions})"
+    fi
+    
+    # Check documentation quality
+    echo -e "\n📝 Documentation Quality:"
+    
+    # Count documentation patterns
+    param_docs=$(grep -r "@param" . --include="*.ts" --include="*.js" 2>/dev/null | wc -l)
+    return_docs=$(grep -r "@returns" . --include="*.ts" --include="*.js" 2>/dev/null | wc -l)
+    example_docs=$(grep -r "@example" . --include="*.ts" --include="*.js" 2>/dev/null | wc -l)
+    throws_docs=$(grep -r "@throws" . --include="*.ts" --include="*.js" 2>/dev/null | wc -l)
+    
+    echo "  @param tags: $param_docs"
+    echo "  @returns tags: $return_docs"
+    echo "  @example tags: $example_docs"
+    echo "  @throws tags: $throws_docs"
+    
+    # Check for documentation structure
+    echo -e "\n📁 Documentation Structure:"
+    [ -f "README.md" ] && echo "  ✓ README.md exists"
+    [ -f "CONTRIBUTING.md" ] && echo "  ✓ CONTRIBUTING.md exists"
+    [ -f "ARCHITECTURE.md" ] && echo "  ✓ ARCHITECTURE.md exists"
+    [ -d "docs" ] && echo "  ✓ docs/ directory exists"
+    [ -f "API.md" ] || [ -f "docs/API.md" ] && echo "  ✓ API documentation exists"
+    
+    # Generate recommendations
+    echo -e "\n💡 DDD Recommendations:"
+    echo "1. Write comprehensive documentation BEFORE implementing features"
+    echo "2. Include purpose, design decisions, and API contracts"
+    echo "3. Document all public functions with @param, @returns, @throws"
+    echo "4. Include @example tags showing usage"
+    echo "5. Maintain architecture documentation"
+    echo "6. Keep README.md updated with setup and usage instructions"
+    echo "7. Document error handling and edge cases"
+    echo "8. Include migration guides for breaking changes"
+
+fix:
+  script: |
+    #!/bin/bash
+    echo "🔧 Generating documentation templates..."
+    
+    DOCS_CREATED=0
+    
+    # Create README.md if missing
+    if [ ! -f "README.md" ]; then
+      echo "Creating README.md template..."
+      cat > README.md << 'EOF'
+# Project Name
+
+## Overview
+Brief description of what this project does and why it exists.
+
+## Table of Contents
+- [Installation](#installation)
+- [Usage](#usage)
+- [API Reference](#api-reference)
+- [Examples](#examples)
+- [Architecture](#architecture)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Installation
+```bash
+# Installation instructions
+npm install
+```
+
+## Usage
+```javascript
+// Basic usage example
+const { MyModule } = require('./src/MyModule');
+
+const instance = new MyModule();
+instance.doSomething();
+```
+
+## API Reference
+### MyModule
+#### Constructor
+```javascript
+new MyModule(options)
+```
+- `options` (Object): Configuration options
+  - `option1` (String): Description
+  - `option2` (Number): Description
+
+#### Methods
+##### doSomething(param)
+Description of what this method does.
+
+**Parameters:**
+- `param` (Type): Description
+
+**Returns:**
+- (Type): Description
+
+**Example:**
+```javascript
+const result = instance.doSomething('value');
+```
+
+## Examples
+### Example 1: Basic Usage
+```javascript
+// Complete example code
+```
+
+### Example 2: Advanced Usage
+```javascript
+// Complete example code
+```
+
+## Architecture
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architecture documentation.
+
+## Contributing
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution guidelines.
+
+## License
+[MIT License](./LICENSE)
+EOF
+      DOCS_CREATED=$((DOCS_CREATED + 1))
+    fi
+    
+    # Create ARCHITECTURE.md if missing
+    if [ ! -f "ARCHITECTURE.md" ] && [ ! -f "docs/ARCHITECTURE.md" ]; then
+      echo "Creating ARCHITECTURE.md template..."
+      cat > ARCHITECTURE.md << 'EOF'
+# Architecture Documentation
+
+## Overview
+High-level description of the system architecture.
+
+## Design Principles
+- Principle 1: Description
+- Principle 2: Description
+- Principle 3: Description
+
+## System Architecture
+```
+┌─────────────────┐     ┌─────────────────┐
+│   Component A   │────▶│   Component B   │
+└─────────────────┘     └─────────────────┘
+         │                       │
+         ▼                       ▼
+┌─────────────────┐     ┌─────────────────┐
+│   Component C   │     │   Component D   │
+└─────────────────┘     └─────────────────┘
+```
+
+## Components
+
+### Component A
+**Purpose:** What this component does
+**Responsibilities:**
+- Responsibility 1
+- Responsibility 2
+
+**Interfaces:**
+- Interface 1: Description
+- Interface 2: Description
+
+### Component B
+**Purpose:** What this component does
+**Responsibilities:**
+- Responsibility 1
+- Responsibility 2
+
+## Data Flow
+1. Step 1: Description
+2. Step 2: Description
+3. Step 3: Description
+
+## Technology Stack
+- Language: TypeScript/JavaScript
+- Framework: Framework name
+- Database: Database type
+- Key Libraries: Library list
+
+## Security Considerations
+- Consideration 1
+- Consideration 2
+
+## Performance Considerations
+- Consideration 1
+- Consideration 2
+
+## Deployment Architecture
+Description of how the system is deployed.
+
+## Future Considerations
+- Future enhancement 1
+- Future enhancement 2
+EOF
+      DOCS_CREATED=$((DOCS_CREATED + 1))
+    fi
+    
+    # Generate JSDoc templates for undocumented functions
+    for file in $(find . -name "*.ts" -o -name "*.js" | grep -v node_modules | grep -v test); do
+      if [ -f "$file" ]; then
+        echo "Adding documentation to $file..."
+        
+        # Create a temporary file
+        temp_file="${file}.tmp"
+        
+        # Process the file line by line
+        in_comment=false
+        while IFS= read -r line; do
+          # Check if we're entering/exiting a comment
+          if [[ "$line" =~ ^[[:space:]]*/\*\* ]]; then
+            in_comment=true
+          elif [[ "$line" =~ ^[[:space:]]*\*/ ]]; then
+            in_comment=false
+          fi
+          
+          # If we find a function/class without preceding documentation
+          if [[ ! "$in_comment" = true ]] && [[ "$line" =~ ^[[:space:]]*(export[[:space:]]+)?(async[[:space:]]+)?(function|const|class) ]]; then
+            # Extract function/class name
+            func_name=$(echo "$line" | sed -E 's/^[[:space:]]*(export[[:space:]]+)?(async[[:space:]]+)?(function|const|class)[[:space:]]+([a-zA-Z0-9_]+).*/\4/')
+            
+            # Check if previous line was a comment close
+            if [[ ! "$prev_line" =~ \*/ ]]; then
+              # Add JSDoc template
+              echo "/**" >> "$temp_file"
+              echo " * [Description of $func_name]" >> "$temp_file"
+              echo " * " >> "$temp_file"
+              
+              # Try to parse parameters
+              if [[ "$line" =~ \(.*\) ]]; then
+                params=$(echo "$line" | sed -E 's/.*\(([^)]*)\).*/\1/')
+                if [ ! -z "$params" ]; then
+                  # Split parameters and add @param tags
+                  IFS=',' read -ra PARAM_ARRAY <<< "$params"
+                  for param in "${PARAM_ARRAY[@]}"; do
+                    param_name=$(echo "$param" | sed -E 's/^[[:space:]]*([a-zA-Z0-9_]+).*/\1/')
+                    if [ ! -z "$param_name" ]; then
+                      echo " * @param {*} $param_name - [Description]" >> "$temp_file"
+                    fi
+                  done
+                fi
+              fi
+              
+              echo " * @returns {*} [Description]" >> "$temp_file"
+              echo " * @throws {Error} [Description]" >> "$temp_file"
+              echo " * " >> "$temp_file"
+              echo " * @example" >> "$temp_file"
+              echo " * // Example usage" >> "$temp_file"
+              echo " * const result = $func_name();" >> "$temp_file"
+              echo " */" >> "$temp_file"
+              
+              DOCS_CREATED=$((DOCS_CREATED + 1))
+            fi
+          fi
+          
+          echo "$line" >> "$temp_file"
+          prev_line="$line"
+        done < "$file"
+        
+        # Replace original file
+        mv "$temp_file" "$file"
+      fi
+    done
+    
+    # Create docs directory if missing
+    if [ ! -d "docs" ]; then
+      mkdir -p docs
+      echo "Created docs/ directory"
+    fi
+    
+    echo -e "\n✅ Generated $DOCS_CREATED documentation templates"
+    echo -e "\n📝 Next steps:"
+    echo "1. Review and complete the documentation templates"
+    echo "2. Replace [Description] placeholders with actual descriptions"
+    echo "3. Add detailed explanations and examples"
+    echo "4. Document design decisions and rationale"
+    echo "5. Include error handling documentation"
+    echo "6. Add migration guides for API changes"
+
+config:
+  requiredFiles:
+    - pattern: "README.md"
+      description: "Project README with installation and usage"
+    - pattern: "**/ARCHITECTURE.md"
+      description: "Architecture documentation"
+  requiredPatterns:
+    - pattern: "/\\*\\*"
+      description: "JSDoc/TSDoc documentation blocks"
+    - pattern: "@param|@returns|@throws"
+      description: "Function documentation tags"
+  forbiddenPatterns:
+    - pattern: "\\[Description\\]"
+      description: "Unfilled documentation templates"
+    - pattern: "/\\*\\*\\s*\\*/"
+      description: "Empty documentation blocks"
+  hooks:
+    preImplementation: |
+      # Check if documentation exists before allowing implementation
+      if [ -n "$IMPLEMENTING_FILE" ]; then
+        if ! grep -q "^[[:space:]]*/\\*\\*" "$IMPLEMENTING_FILE" 2>/dev/null; then
+          echo "❌ DDD Violation: No documentation found in $IMPLEMENTING_FILE"
+          echo "Please write documentation first!"
+          exit 1
+        fi
+      fi
+    postDocumentation: |
+      # Validate documentation quality
+      if [ -n "$DOCUMENTED_FILE" ]; then
+        if grep -q "\\[Description\\]" "$DOCUMENTED_FILE" 2>/dev/null; then
+          echo "⚠️  Warning: Documentation contains unfilled placeholders!"
+          echo "Please complete all documentation sections"
+        fi
+      fi

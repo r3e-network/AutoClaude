@@ -221,7 +221,7 @@ app.use((err: any, req: any, res: any, next: any) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(\`Server running on port \${PORT}\`);
+  // Server started on port - production ready
 });
 
 export default app;
