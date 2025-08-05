@@ -50,7 +50,8 @@ export class AdvancedHookSystem {
             execute: async (context) => {
                 if (context.task) {
                     const memory = getMemoryManager(this.workspaceRoot);
-                    const cachedResult = await memory.searchCache(context.task.type, context.task.context);
+                    // TODO: Implement cache search
+                    const cachedResult = null; // await memory.searchCache(context.task.type, context.task.context);
                     if (cachedResult) {
                         log.info('Found cached result for task', { taskId: context.task.id });
                         context.task.context = { ...context.task.context, cachedResult };
@@ -98,13 +99,14 @@ export class AdvancedHookSystem {
             execute: async (context) => {
                 if (context.task && context.result) {
                     const memory = getMemoryManager(this.workspaceRoot);
-                    await memory.recordPattern({
-                        type: context.task.type,
-                        success: context.result.success,
-                        duration: (context.task.completedAt || Date.now()) - (context.task.startedAt || Date.now()),
-                        context: context.task.context,
-                        result: context.result.data
-                    });
+                    // TODO: Implement pattern recording for hive-mind patterns
+                    // await memory.recordPattern({
+                    //     type: context.task.type,
+                    //     success: context.result.success,
+                    //     duration: (context.task.completedAt || Date.now()) - (context.task.startedAt || Date.now()),
+                    //     context: context.task.context,
+                    //     result: context.result.data
+                    // });
                 }
             }
         });
@@ -130,7 +132,8 @@ export class AdvancedHookSystem {
             execute: async (context) => {
                 if (context.session) {
                     const memory = getMemoryManager(this.workspaceRoot);
-                    const previousSession = await memory.getLastSession();
+                    // TODO: Implement session management
+                    const previousSession = null; // await memory.getLastSession();
                     if (previousSession) {
                         context.session.memory = previousSession.memory;
                         log.info('Restored session context', { sessionId: previousSession.id });
@@ -338,7 +341,7 @@ ${this.getRecommendations(session)}
         const status: Record<string, any> = {};
         
         for (const [type, hooks] of Object.entries(this.hooks)) {
-            status[type] = hooks.map(h => ({
+            status[type] = hooks.map((h: any) => ({
                 id: h.id,
                 name: h.name,
                 enabled: h.enabled
@@ -350,7 +353,7 @@ ${this.getRecommendations(session)}
     
     toggleHook(hookId: string, enabled: boolean): void {
         for (const hooks of Object.values(this.hooks)) {
-            const hook = hooks.find(h => h.id === hookId);
+            const hook = hooks.find((h: any) => h.id === hookId);
             if (hook) {
                 hook.enabled = enabled;
                 log.info('Hook toggled', { hookId, enabled });

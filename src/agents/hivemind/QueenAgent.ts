@@ -26,7 +26,7 @@ export class QueenAgent implements HiveMindAgent {
     private memorySystem: any; // Will be enhanced with SQLite
     
     constructor(private workspaceRoot: string) {
-        this.agentCoordinator = new AgentCoordinator();
+        this.agentCoordinator = new AgentCoordinator(this.workspaceRoot);
         this.taskQueue = new TaskQueue();
     }
     

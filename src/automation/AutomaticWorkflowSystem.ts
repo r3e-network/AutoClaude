@@ -4,7 +4,7 @@ import { log } from '../utils/productionLogger';
 import { QueenAgent } from '../agents/hivemind/QueenAgent';
 import { AdvancedHookSystem } from '../hooks/AdvancedHookSystem';
 import { SQLiteMemorySystem } from '../memory/SQLiteMemorySystem';
-import { HiveMindTask, TaskPriority, SwarmConfiguration } from '../agents/hivemind/types';
+import { HiveMindTask, TaskPriority, TaskStatus, SwarmConfiguration } from '../agents/hivemind/types';
 
 /**
  * Automatic Workflow System - Orchestrates all AutoClaude components
@@ -128,7 +128,7 @@ export class AutomaticWorkflowSystem {
                     id: taskId(),
                     type: 'production-readiness',
                     priority: TaskPriority.HIGH,
-                    status: 'pending',
+                    status: TaskStatus.PENDING,
                     description: 'Make project production ready',
                     createdAt: Date.now()
                 }
@@ -140,7 +140,7 @@ export class AutomaticWorkflowSystem {
                 id: taskId(),
                 type: 'fix-tests',
                 priority: TaskPriority.HIGH,
-                status: 'pending',
+                status: TaskStatus.PENDING,
                 description: 'Fix all failing tests',
                 requiredCapabilities: ['testing', 'debugging'],
                 createdAt: Date.now()
@@ -152,7 +152,7 @@ export class AutomaticWorkflowSystem {
                 id: taskId(),
                 type: 'create-website',
                 priority: TaskPriority.MEDIUM,
-                status: 'pending',
+                status: TaskStatus.PENDING,
                 description: 'Create a new website',
                 requiredCapabilities: ['web-development', 'ui-design'],
                 estimatedTime: 3600000, // 1 hour
@@ -165,7 +165,7 @@ export class AutomaticWorkflowSystem {
                 id: taskId(),
                 type: 'add-documentation',
                 priority: TaskPriority.LOW,
-                status: 'pending',
+                status: TaskStatus.PENDING,
                 description: 'Add comprehensive documentation',
                 requiredCapabilities: ['documentation', 'technical-writing'],
                 createdAt: Date.now()
@@ -177,7 +177,7 @@ export class AutomaticWorkflowSystem {
                 id: taskId(),
                 type: 'optimize-performance',
                 priority: TaskPriority.MEDIUM,
-                status: 'pending',
+                status: TaskStatus.PENDING,
                 description: 'Optimize application performance',
                 requiredCapabilities: ['performance-analysis', 'optimization'],
                 createdAt: Date.now()
@@ -189,7 +189,7 @@ export class AutomaticWorkflowSystem {
                 id: taskId(),
                 type: 'security-audit',
                 priority: TaskPriority.HIGH,
-                status: 'pending',
+                status: TaskStatus.PENDING,
                 description: 'Perform security audit',
                 requiredCapabilities: ['security', 'vulnerability-analysis'],
                 createdAt: Date.now()
@@ -202,7 +202,7 @@ export class AutomaticWorkflowSystem {
                 id: taskId(),
                 type: 'generic',
                 priority: TaskPriority.MEDIUM,
-                status: 'pending',
+                status: TaskStatus.PENDING,
                 description: command,
                 createdAt: Date.now()
             });
@@ -223,7 +223,7 @@ export class AutomaticWorkflowSystem {
         if (cachedResult && this.config.mode === 'swarm') {
             log.info('Using cached result for task', { taskId: task.id });
             task.result = cachedResult;
-            task.status = 'completed';
+            task.status = TaskStatus.COMPLETED;
             task.completedAt = Date.now();
             return;
         }
@@ -250,7 +250,7 @@ export class AutomaticWorkflowSystem {
             
             try {
                 // Update task status
-                task.status = 'in_progress';
+                task.status = TaskStatus.IN_PROGRESS;
                 task.startedAt = Date.now();
                 
                 // Execute task through Queen Agent
@@ -258,7 +258,7 @@ export class AutomaticWorkflowSystem {
                 
                 // Update task with result
                 task.result = result;
-                task.status = result.success ? 'completed' : 'failed';
+                task.status = result.success ? TaskStatus.COMPLETED : TaskStatus.FAILED;
                 task.completedAt = Date.now();
                 task.duration = task.completedAt - task.startedAt;
                 
@@ -296,7 +296,7 @@ export class AutomaticWorkflowSystem {
                 
             } catch (error) {
                 log.error('Task processing failed', error as Error, { taskId: task.id });
-                task.status = 'failed';
+                task.status = TaskStatus.FAILED;
                 task.result = {
                     success: false,
                     error: (error as Error).message
@@ -381,7 +381,7 @@ export class AutomaticWorkflowSystem {
                     id: `fix_${Date.now()}`,
                     type: 'fix-errors',
                     priority: TaskPriority.HIGH,
-                    status: 'pending',
+                    status: TaskStatus.PENDING,
                     description: `Fix ${errors.length} errors in ${path.basename(uri.fsPath)}`,
                     context: {
                         file: uri.fsPath,

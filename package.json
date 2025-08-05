@@ -616,7 +616,10 @@
         "autoclaude.workflow.mode": {
           "type": "string",
           "default": "swarm",
-          "enum": ["swarm", "hive-mind"],
+          "enum": [
+            "swarm",
+            "hive-mind"
+          ],
           "description": "Workflow mode: 'swarm' for quick tasks, 'hive-mind' for complex projects"
         },
         "autoclaude.workflow.autoScale": {
@@ -653,7 +656,11 @@
         },
         "autoclaude.hooks.preOperation": {
           "type": "array",
-          "default": ["auto-agent-assignment", "cache-search", "context-enrichment"],
+          "default": [
+            "auto-agent-assignment",
+            "cache-search",
+            "context-enrichment"
+          ],
           "description": "Pre-operation hooks to enable",
           "items": {
             "type": "string"
@@ -661,7 +668,11 @@
         },
         "autoclaude.hooks.postOperation": {
           "type": "array",
-          "default": ["auto-format-code", "pattern-learning", "test-runner"],
+          "default": [
+            "auto-format-code",
+            "pattern-learning",
+            "test-runner"
+          ],
           "description": "Post-operation hooks to enable",
           "items": {
             "type": "string"
@@ -669,7 +680,10 @@
         },
         "autoclaude.hooks.sessionHooks": {
           "type": "array",
-          "default": ["session-restore", "session-summary"],
+          "default": [
+            "session-restore",
+            "session-summary"
+          ],
           "description": "Session hooks to enable",
           "items": {
             "type": "string"

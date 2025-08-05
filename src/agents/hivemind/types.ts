@@ -56,6 +56,7 @@ export interface HiveMindTask {
     createdAt: number;
     startedAt?: number;
     completedAt?: number;
+    duration?: number;
 }
 
 export interface HiveMindResult {

@@ -1,5 +1,5 @@
 import * as sqlite3 from 'sqlite3';
-import { open, Database } from 'sqlite';
+import { open, Database as SqliteDatabase } from 'sqlite';
 import * as path from 'path';
 import { log } from '../utils/productionLogger';
 import { Pattern } from '../agents/hivemind/types';
@@ -9,7 +9,7 @@ import { Pattern } from '../agents/hivemind/types';
  * Provides pattern recognition, learning, and cross-session memory
  */
 export class SQLiteMemorySystem {
-    private db: Database | null = null;
+    private db: SqliteDatabase<sqlite3.Database, sqlite3.Statement> | null = null;
     private readonly dbPath: string;
     
     constructor(private workspaceRoot: string) {
@@ -205,7 +205,7 @@ export class SQLiteMemorySystem {
             limit
         );
         
-        return rows.map(row => ({
+        return rows.map((row: any) => ({
             id: row.id,
             type: row.type,
             frequency: row.frequency,
@@ -401,7 +401,7 @@ export class SQLiteMemorySystem {
             category, limit
         );
         
-        return rows.map(row => ({
+        return rows.map((row: any) => ({
             id: row.id,
             input: JSON.parse(row.input),
             output: JSON.parse(row.output),
@@ -437,7 +437,7 @@ export class SQLiteMemorySystem {
         const params = since ? [type, since] : [type];
         const rows = await this.db.all(query, ...params);
         
-        return rows.map(row => ({
+        return rows.map((row: any) => ({
             id: row.id,
             type: row.metric_type,
             value: row.value,
