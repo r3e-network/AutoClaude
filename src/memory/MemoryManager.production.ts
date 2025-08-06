@@ -1789,19 +1789,47 @@ export function getMemoryManager(
   workspacePath: string,
   config?: MemoryConfig,
 ): MemoryManager {
-  try {
-    if (!memoryManagers.has(workspacePath)) {
-      memoryManagers.set(workspacePath, new MemoryManager(workspacePath, config));
-    }
+  // Check if we already have a manager (real or stub)
+  if (memoryManagers.has(workspacePath)) {
     return memoryManagers.get(workspacePath)!;
+  }
+  
+  try {
+    // Try to create a real memory manager
+    const manager = new MemoryManager(workspacePath, config);
+    memoryManagers.set(workspacePath, manager);
+    return manager;
   } catch (error) {
     console.warn("[AutoClaude] Failed to create MemoryManager, returning stub:", error);
-    // Return a stub that does nothing but doesn't crash
-    return {
+    // Return a complete stub that does nothing but doesn't crash
+    const stub = {
       initialize: async () => { console.warn("[AutoClaude] MemoryManager stub: initialize called"); },
       close: async () => { console.warn("[AutoClaude] MemoryManager stub: close called"); },
-      // Add other methods as needed that just log and return empty results
+      getLearnedPatterns: async () => [],
+      recordPattern: async () => {},
+      findSimilarPatterns: async () => [],
+      getOrCreateProject: async () => null,
+      storeAgentMemory: async () => {},
+      recallAgentMemory: async () => null,
+      getAgentMemories: async () => [],
+      getTypeMapping: async () => null,
+      getAllTypeMappings: async () => [],
+      recordConversion: async () => {},
+      getConversionHistory: async () => [],
+      getConversionStats: async () => ({ overall: {}, patterns: {}, topPatterns: [] }),
+      getPerformanceStats: async () => ({ queryCount: 0, averageQueryTime: 0, databaseSize: 0, tableStats: {} }),
+      pruneOldMemory: async () => {},
+      exportMemory: async () => {},
+      updatePatternSuccess: async () => {},
+      updateProjectProgress: async () => {},
+      recordTaskCompletion: async () => {},
+      recordValidation: async () => {},
+      getPatterns: async () => [],
     } as any;
+    
+    // Cache the stub so we return the same instance
+    memoryManagers.set(workspacePath, stub);
+    return stub;
   }
 }
 

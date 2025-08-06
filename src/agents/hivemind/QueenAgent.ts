@@ -128,15 +128,32 @@ export class QueenAgent implements HiveMindAgent {
   private async loadMemorySystem(): Promise<void> {
     // Enhanced memory system with pattern recognition
     try {
-      const { MemoryManager } = await import("../../memory");
-      this.memorySystem = new MemoryManager(this.workspaceRoot);
+      const { getMemoryManager } = await import("../../memory");
+      this.memorySystem = getMemoryManager(this.workspaceRoot);
       await this.memorySystem.initialize();
-
-      // Load learned patterns
-      const patterns = await this.memorySystem.getLearnedPatterns();
-      log.info("Loaded memory patterns", { patternCount: patterns.length });
+      
+      // Check if it's a stub (when sqlite3 is not available)
+      if (this.memorySystem && typeof this.memorySystem.getLearnedPatterns === 'function') {
+        try {
+          // Load learned patterns
+          const patterns = await this.memorySystem.getLearnedPatterns();
+          log.info("Loaded memory patterns", { patternCount: patterns.length });
+        } catch (err) {
+          log.warn("Memory patterns not available", err as Error);
+        }
+      } else {
+        log.info("Memory system running in stub mode (sqlite3 not available)");
+      }
     } catch (error) {
-      log.error("Failed to load memory system", error as Error);
+      log.warn("Memory system not available, using stub", error as Error);
+      // Create a stub memory system
+      this.memorySystem = {
+        initialize: async () => {},
+        getLearnedPatterns: async () => [],
+        savePattern: async () => {},
+        recallPattern: async () => null,
+        close: async () => {},
+      } as any;
     }
   }
 
