@@ -3,16 +3,10 @@
  * This ensures proper CommonJS exports for VS Code
  */
 
-import { activate as activateExtension, deactivate as deactivateExtension } from './extension';
+const extension = require('./extension');
 
-// Export for VS Code
-export const activate = activateExtension;
-export const deactivate = deactivateExtension;
-
-// Also export as CommonJS for compatibility
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    activate: activateExtension,
-    deactivate: deactivateExtension
-  };
-}
+// Export for VS Code using CommonJS
+module.exports = {
+  activate: extension.activate,
+  deactivate: extension.deactivate
+};
