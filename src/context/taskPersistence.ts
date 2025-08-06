@@ -458,11 +458,11 @@ ${this.getAllTasks()
       markdown += `- **ID**: ${task.id}\n`;
       markdown += `- **Status**: ${task.status}\n`;
       markdown += `- **Priority**: ${task.priority}\n`;
-      markdown += `- **Created**: ${task.createdAt.toISOString()}\n`;
-      markdown += `- **Updated**: ${task.updatedAt.toISOString()}\n`;
+      markdown += `- **Created**: ${task.createdAt instanceof Date ? task.createdAt.toISOString() : new Date(task.createdAt || Date.now()).toISOString()}\n`;
+      markdown += `- **Updated**: ${task.updatedAt instanceof Date ? task.updatedAt.toISOString() : new Date(task.updatedAt || Date.now()).toISOString()}\n`;
 
       if (task.completedAt) {
-        markdown += `- **Completed**: ${task.completedAt.toISOString()}\n`;
+        markdown += `- **Completed**: ${task.completedAt instanceof Date ? task.completedAt.toISOString() : new Date(task.completedAt).toISOString()}\n`;
       }
 
       markdown += `\n### Description\n${task.description}\n`;

@@ -222,7 +222,7 @@ ${recentCommits || "No commits found"}
       for (const task of tasks) {
         context.push(`#### ${task.title}`);
         context.push(`- **Status**: ${task.status}`);
-        context.push(`- **Created**: ${task.createdAt.toISOString()}`);
+        context.push(`- **Created**: ${task.createdAt instanceof Date ? task.createdAt.toISOString() : new Date(task.createdAt || Date.now()).toISOString()}`);
         context.push(
           `- **Description**: ${task.description.substring(0, 200)}...`,
         );

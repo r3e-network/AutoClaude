@@ -633,7 +633,7 @@ export class ProjectIndexer {
 ## Workspace
 - **Root**: ${this.index.workspaceRoot}
 - **Type**: ${this.index.structure.type}
-- **Last Updated**: ${this.index.lastUpdated.toISOString()}
+- **Last Updated**: ${this.index.lastUpdated instanceof Date ? this.index.lastUpdated.toISOString() : new Date(this.index.lastUpdated || Date.now()).toISOString()}
 
 ## Statistics
 - **Total Files**: ${this.index.codebaseStats.totalFiles}
