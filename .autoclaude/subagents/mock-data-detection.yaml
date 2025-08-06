@@ -1,0 +1,190 @@
+id: mock-data-detection
+name: Mock Data Detection Agent
+description: Detects and prevents mock, sample, and placeholder data in production code
+category: quality
+enabled: true
+icon: 🔍
+order: 2
+
+capabilities:
+  - id: detect-sample-data
+    name: Detect Sample Data
+    description: Find hardcoded sample and example data
+    action: analyze
+    
+  - id: detect-mock-implementations
+    name: Detect Mock Implementations
+    description: Find mock services and dummy implementations
+    action: analyze
+    
+  - id: detect-test-values
+    name: Detect Test Values
+    description: Find test IDs, emails, and placeholder names
+    action: analyze
+    
+  - id: detect-temporary-code
+    name: Detect Temporary Code
+    description: Find "for now" and temporary implementations
+    action: analyze
+    
+  - id: validate-production-ready
+    name: Validate Production Readiness
+    description: Ensure no mock data exists in production code
+    action: validate
+    
+  - id: suggest-fixes
+    name: Suggest Fixes
+    description: Provide recommendations for replacing mock data
+    action: suggest
+
+systemPrompt: |
+  You are a Mock Data Detection Agent specialized in identifying and preventing mock, sample, 
+  and placeholder data in production code. Your role is to:
+  
+  1. Scan code for hardcoded test data, sample values, and placeholder implementations
+  2. Detect temporary code marked with "for now" or "to be implemented" comments
+  3. Find mock services, dummy implementations, and fake data
+  4. Identify test emails, IDs, and example domains
+  5. Ensure all production code uses real data and complete implementations
+  
+  You enforce strict production standards:
+  - NO hardcoded sample data (abc123, John Doe, example.com)
+  - NO mock implementations or services
+  - NO placeholder or temporary code
+  - NO test values or dummy data
+  - NO lorem ipsum or filler text
+  
+  Exception: Test files (*.test.ts, *.spec.ts) are allowed to contain mock data.
+  
+  Provide clear, actionable suggestions for replacing any mock data found.
+
+checkScript: |
+  #!/bin/bash
+  # Check if project has mock data issues
+  
+  # Look for common mock data patterns
+  echo "Checking for mock data patterns..."
+  
+  # Count occurrences
+  SAMPLE_COUNT=$(grep -r "sample.*data\|example.*data" --include="*.ts" --include="*.js" src/ 2>/dev/null | wc -l)
+  MOCK_COUNT=$(grep -r "mock\|dummy\|fake" --include="*.ts" --include="*.js" src/ 2>/dev/null | wc -l)
+  TEST_ID_COUNT=$(grep -r "abc123\|def456\|test-id" --include="*.ts" --include="*.js" src/ 2>/dev/null | wc -l)
+  
+  TOTAL=$((SAMPLE_COUNT + MOCK_COUNT + TEST_ID_COUNT))
+  
+  if [ $TOTAL -gt 0 ]; then
+    echo "Found $TOTAL potential mock data instances"
+    echo "Sample data: $SAMPLE_COUNT"
+    echo "Mock implementations: $MOCK_COUNT"
+    echo "Test IDs: $TEST_ID_COUNT"
+    exit 1
+  else
+    echo "No mock data detected"
+    exit 0
+  fi
+
+configuration:
+  # Patterns to detect
+  patterns:
+    sampleData:
+      - "sample data"
+      - "example data"
+      - "test data"
+    mockImplementations:
+      - "MockService"
+      - "DummyClient"
+      - "FakeResponse"
+    testIds:
+      - "abc123"
+      - "def456"
+      - "test-id"
+      - "dummy-id"
+    placeholderNames:
+      - "John Doe"
+      - "Jane Doe"
+      - "Test User"
+    testEmails:
+      - "test@example.com"
+      - "user@test.com"
+      - "sample@example.com"
+    testDomains:
+      - "example.com"
+      - "test.com"
+      - "sample.org"
+    temporaryCode:
+      - "for now"
+      - "temporarily"
+      - "will be replaced"
+      - "to be implemented"
+  
+  # Files to exclude from checking
+  excludePatterns:
+    - "*.test.ts"
+    - "*.spec.ts"
+    - "*.mock.ts"
+    - "__tests__/**"
+    - "__mocks__/**"
+    - "test/**"
+    - "tests/**"
+    - "fixtures/**"
+  
+  # Severity levels
+  severity:
+    sampleData: error
+    mockImplementations: error
+    testIds: error
+    placeholderNames: error
+    testEmails: error
+    testDomains: error
+    temporaryCode: warning
+    debugStatements: warning
+    
+  # Actions to take
+  actions:
+    autoFix: false  # Don't automatically fix, just report
+    failBuild: true  # Fail build if mock data found
+    generateReport: true  # Generate detailed report
+
+examples:
+  - description: "Detect hardcoded sample data"
+    input: |
+      function getUsers() {
+        return [
+          { id: "abc123", name: "John Doe" },
+          { id: "def456", name: "Jane Doe" }
+        ];
+      }
+    expectedOutput: |
+      ❌ Mock data detected:
+      - Line 3: Hardcoded test ID "abc123"
+      - Line 3: Placeholder name "John Doe"
+      - Line 4: Hardcoded test ID "def456"
+      - Line 4: Placeholder name "Jane Doe"
+      
+      Suggestion: Replace with real data from database or API
+      
+  - description: "Detect mock implementation"
+    input: |
+      class MockUserService {
+        async getUser(id: string) {
+          return { id, name: "Test User" };
+        }
+      }
+    expectedOutput: |
+      ❌ Mock implementation detected:
+      - Line 1: Mock service "MockUserService"
+      - Line 3: Placeholder name "Test User"
+      
+      Suggestion: Implement real UserService with database connection
+      
+  - description: "Clean production code"
+    input: |
+      class UserService {
+        constructor(private db: Database) {}
+        
+        async getUser(id: string) {
+          return this.db.query('SELECT * FROM users WHERE id = ?', [id]);
+        }
+      }
+    expectedOutput: |
+      ✅ No mock data detected - code is production ready!

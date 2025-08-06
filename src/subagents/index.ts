@@ -18,3 +18,4 @@ export * from "./agents/CodeUnderstandingAgent";
 export * from "./agents/IntegrationTestingAgent";
 export * from "./agents/PerformanceOptimizationAgent";
 export * from "./agents/SecurityAuditAgent";
+export * from "./agents/MockDataDetectionAgent";

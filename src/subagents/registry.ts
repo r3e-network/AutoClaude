@@ -11,6 +11,7 @@ import { CodeUnderstandingAgent } from "./agents/CodeUnderstandingAgent";
 import { IntegrationTestingAgent } from "./agents/IntegrationTestingAgent";
 import { PerformanceOptimizationAgent } from "./agents/PerformanceOptimizationAgent";
 import { SecurityAuditAgent } from "./agents/SecurityAuditAgent";
+import { MockDataDetectionAgent } from "./agents/MockDataDetectionAgent";
 import { debugLog } from "../utils/logging";
 
 export class SubAgentRegistry {
@@ -38,6 +39,7 @@ export class SubAgentRegistry {
       new TaskPlanningAgent(this.workspacePath),
       new DependencyResolutionAgent(this.workspacePath),
       new CodeUnderstandingAgent(this.workspacePath),
+      new MockDataDetectionAgent(this.workspacePath),
       new IntegrationTestingAgent(this.workspacePath),
       new PerformanceOptimizationAgent(this.workspacePath),
       new SecurityAuditAgent(this.workspacePath),
