@@ -1,152 +1,213 @@
 # AutoClaude Release Process
 
-This document outlines the process for creating new releases of AutoClaude.
+## Overview
 
-## Automated Release Process
+AutoClaude uses an automated release process triggered by creating release branches. When a branch matching the pattern `release/v*` or `release-v*` is created, GitHub Actions automatically builds and publishes the release.
 
-### Using the Release Script (Recommended)
+## Release Workflow
 
-For easy releases, use the automated release script:
+### 1. Automatic Release (Recommended)
 
+#### Step 1: Prepare the Release
 ```bash
-./scripts/release.sh 2.4.1
+# Run the release preparation script
+./scripts/prepare-release.sh <version>
+
+# Example:
+./scripts/prepare-release.sh 3.15.0
 ```
 
 This script will:
+- Update package.json version
+- Create a release notes template
+- Create and push a release branch
+- Trigger the automated workflow
 
-1. ✅ Verify you're on the main branch with clean working directory
-2. ✅ Update package.json version
-3. ✅ Run production tests
-4. ✅ Compile TypeScript and package the extension
-5. ✅ Commit version changes
-6. ✅ Create and push git tag
-7. ✅ Upload VSIX file to GitHub release
+#### Step 2: Edit Release Notes
+Edit the generated release notes file (e.g., `GITHUB_RELEASE_v3.15.0.md`) with actual release information:
+```bash
+# Edit the release notes
+code GITHUB_RELEASE_v3.15.0.md
 
-### Manual Release Process
+# Commit changes
+git add GITHUB_RELEASE_v3.15.0.md
+git commit -m "docs: update release notes for v3.15.0"
+git push
+```
 
-If you prefer to release manually:
+#### Step 3: Monitor the Workflow
+The GitHub Actions workflow will automatically:
+1. Build the VS Code extension (.vsix)
+2. Build terminal binaries for all platforms:
+   - Windows (x64)
+   - macOS (x64, ARM64)
+   - Linux (x64)
+3. Create a GitHub release with all assets
+4. Use your release notes if provided
 
-1. **Prepare the release**:
+Monitor progress at: https://github.com/r3e-network/AutoClaude/actions
 
-   ```bash
-   # Ensure you're on main branch
-   git checkout main
-   git pull origin main
+#### Step 4: Post-Release
+After successful release:
+```bash
+# Merge release branch to main
+git checkout main
+git pull origin main
+git merge release/v3.15.0
+git push origin main
 
-   # Update version in package.json
-   npm version 2.4.1 --no-git-tag-version
-   ```
+# Delete release branch
+git push origin --delete release/v3.15.0
+git branch -d release/v3.15.0
+```
 
-2. **Run quality checks**:
+### 2. Manual Release
 
-   ```bash
-   npm run test:production
-   npm run compile
-   npm run package
-   ```
+If you need to create a release manually:
 
-3. **Commit and tag**:
+#### Using GitHub CLI
+```bash
+# Create tag
+git tag -a v3.15.0 -m "Release v3.15.0"
+git push origin v3.15.0
 
-   ```bash
-   git add package.json package-lock.json
-   git commit -m "chore: bump version to 2.4.1"
-   git tag v2.4.1
-   git push origin main
-   git push origin v2.4.1
-   ```
+# Build extension locally
+npm ci
+npm run compile
+vsce package --no-dependencies
 
-4. **Upload VSIX to release**:
-   ```bash
-   gh release upload v2.4.1 autoclaude-2.4.1.vsix --clobber
-   ```
+# Create release with assets
+gh release create v3.15.0 \
+  --title "AutoClaude v3.15.0" \
+  --notes-file GITHUB_RELEASE_v3.15.0.md \
+  autoclaude-3.15.0.vsix
+```
 
-## GitHub Actions Workflow
+#### Using GitHub Web UI
+1. Go to https://github.com/r3e-network/AutoClaude/releases
+2. Click "Draft a new release"
+3. Create a new tag (e.g., v3.15.0)
+4. Upload the .vsix file and binaries
+5. Paste release notes
+6. Publish release
 
-The release workflow (`.github/workflows/release.yml`) automatically:
+## Release Notes Format
 
-- ✅ Triggers on tag pushes (`v*`)
-- ✅ Validates version consistency
-- ✅ Builds and packages the extension
-- ✅ Creates GitHub release with VSIX file
-- ✅ Generates release notes
+Release notes should follow this structure:
+
+```markdown
+# AutoClaude v<VERSION>
+
+## 🎉 Release Highlights
+Brief summary of major changes
+
+## ✨ New Features
+- Feature 1
+- Feature 2
+
+## 🐛 Bug Fixes
+- Fixed issue with...
+
+## 💫 Improvements
+- Improved performance of...
+
+## 📦 Installation
+[Installation instructions]
+
+## 📝 What's Changed
+Full changelog link
+```
 
 ## Version Numbering
 
-AutoClaude follows semantic versioning (SemVer):
+AutoClaude follows Semantic Versioning (SemVer):
+- **Major** (X.0.0): Breaking changes
+- **Minor** (0.X.0): New features, backward compatible
+- **Patch** (0.0.X): Bug fixes, backward compatible
 
-- **Major** (X.0.0): Breaking changes or major new features
-- **Minor** (X.Y.0): New features, backwards compatible
-- **Patch** (X.Y.Z): Bug fixes, backwards compatible
+Examples:
+- `3.14.0` → `3.15.0` (new features)
+- `3.14.0` → `3.14.1` (bug fixes)
+- `3.14.0` → `4.0.0` (breaking changes)
 
-## Pre-Release Checklist
+## Supported Release Notes Locations
 
-Before creating a release:
+The workflow looks for release notes in these locations:
+- `RELEASE_v<VERSION>.md`
+- `RELEASE-v<VERSION>.md`
+- `GITHUB_RELEASE_v<VERSION>.md`
+- `release-notes-v<VERSION>.md`
+- `release-notes/<VERSION>.md`
+- `releases/v<VERSION>.md`
 
-- [ ] All tests passing in CI/CD
-- [ ] Documentation updated
-- [ ] CHANGELOG.md updated with new version
-- [ ] Version numbers consistent across files
-- [ ] No TODO comments or placeholder code
-- [ ] Extension packages successfully locally
+## Platform Binaries
 
-## Post-Release Tasks
-
-After successful release:
-
-1. **Verify release assets**: Check that VSIX file is attached
-2. **Test installation**: Download and install the extension
-3. **Update documentation**: Ensure README reflects new version
-4. **Announce release**: Update relevant channels/communities
+The workflow builds binaries for:
+- **Windows**: `autoclaude-win32-x64.zip`
+- **macOS Intel**: `autoclaude-darwin-x64.tar.gz`
+- **macOS Apple Silicon**: `autoclaude-darwin-arm64.tar.gz`
+- **Linux**: `autoclaude-linux-x64.tar.gz`
 
 ## Troubleshooting
 
-### VSIX File Not Uploaded
+### Workflow Not Triggering
+- Ensure branch name matches pattern: `release/v*` or `release-v*`
+- Check GitHub Actions is enabled for the repository
+- Verify you have push permissions
 
-If the VSIX file is missing from a release:
+### Build Failures
+- Check package.json version matches release version
+- Ensure all dependencies are properly declared
+- Review workflow logs for specific errors
 
-```bash
-# Build the extension
-npm run package
+### Asset Upload Issues
+- Verify GitHub token has appropriate permissions
+- Check file sizes (GitHub has limits)
+- Ensure unique filenames for assets
 
-# Upload manually
-gh release upload v2.4.1 autoclaude-2.4.1.vsix --clobber
-```
+## Best Practices
 
-### Release Workflow Failed
+1. **Always test locally first**
+   ```bash
+   npm ci
+   npm run compile
+   npm test
+   vsce package --no-dependencies
+   ```
 
-Check the GitHub Actions logs:
+2. **Update CHANGELOG.md**
+   Keep a running changelog of all changes
 
-```bash
-gh run list --workflow=release.yml
-gh run view <run-id> --log
-```
+3. **Create detailed release notes**
+   Users rely on release notes to understand changes
 
-Common issues:
+4. **Test the released assets**
+   Download and test the .vsix file after release
 
-- Version mismatch between tag and package.json
-- Build/compilation errors
-- Missing dependencies
+5. **Announce major releases**
+   Consider announcing major releases on relevant channels
 
-### Tag Already Exists
+## GitHub Actions Workflow
 
-If you need to recreate a tag:
+The automated workflow (`auto-release.yml`) handles:
+1. Version extraction from branch name
+2. Package.json version update
+3. VS Code extension build
+4. Terminal binary builds (multi-platform)
+5. GitHub release creation
+6. Asset uploads
+7. Release notes integration
 
-```bash
-# Delete local and remote tag
-git tag -d v2.4.1
-git push origin :refs/tags/v2.4.1
+## Security Notes
 
-# Recreate tag
-git tag v2.4.1
-git push origin v2.4.1
-```
+- Never commit sensitive information in release notes
+- Ensure binaries are built from clean sources
+- Use GitHub's built-in security scanning
+- Sign releases when possible
 
-## Security
+## Support
 
-- Never commit secrets to the repository
-- Release workflow uses `GITHUB_TOKEN` with minimal permissions
-- All releases are publicly visible
-
-## Contact
-
-For questions about the release process, please open an issue in the repository.
+For issues with the release process:
+1. Check workflow logs
+2. Review this documentation
+3. Open an issue at: https://github.com/r3e-network/AutoClaude/issues

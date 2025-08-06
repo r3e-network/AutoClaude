@@ -1,0 +1,201 @@
+name: Automated Release on Branch
+
+on:
+  push:
+    branches:
+      - 'release/v*'
+      - 'release-v*'
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract_version.outputs.version }}
+      release_notes_file: ${{ steps.find_release_notes.outputs.file }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Extract version from branch name
+      id: extract_version
+      run: |
+        BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+        # Extract version from branch name (release/v1.2.3 or release-v1.2.3)
+        VERSION=$(echo "$BRANCH_NAME" | sed -E 's/release[/-]v?([0-9]+\.[0-9]+\.[0-9]+)/\1/')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Detected version: $VERSION"
+        
+    - name: Find release notes file
+      id: find_release_notes
+      run: |
+        VERSION="${{ steps.extract_version.outputs.version }}"
+        # Look for release notes in various formats
+        POSSIBLE_FILES=(
+          "GITHUB_RELEASE_v${VERSION}.md"
+          "RELEASE_v${VERSION}.md"
+          "RELEASE-v${VERSION}.md"
+          "release-notes-v${VERSION}.md"
+          "release-notes/${VERSION}.md"
+          "releases/v${VERSION}.md"
+        )
+        
+        RELEASE_FILE=""
+        for file in "${POSSIBLE_FILES[@]}"; do
+          if [ -f "$file" ]; then
+            RELEASE_FILE="$file"
+            break
+          fi
+        done
+        
+        if [ -z "$RELEASE_FILE" ]; then
+          echo "Warning: No release notes file found for version $VERSION"
+          echo "file=" >> $GITHUB_OUTPUT
+        else
+          echo "Found release notes: $RELEASE_FILE"
+          echo "file=$RELEASE_FILE" >> $GITHUB_OUTPUT
+        fi
+
+  build-extension:
+    needs: prepare-release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Update package.json version
+      run: |
+        VERSION="${{ needs.prepare-release.outputs.version }}"
+        npm version $VERSION --no-git-tag-version --allow-same-version
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install vsce
+      run: npm install -g @vscode/vsce
+      
+    - name: Build extension
+      run: npm run compile:production
+      
+    - name: Package extension
+      run: vsce package --no-dependencies
+      
+    - name: Upload extension artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: vscode-extension
+        path: '*.vsix'
+        retention-days: 1
+
+  create-release:
+    needs: [prepare-release, build-extension]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: List artifacts
+      run: |
+        echo "Downloaded artifacts:"
+        ls -la
+        find . -type f -name "*.vsix"
+        
+    - name: Prepare release notes
+      id: prepare_notes
+      run: |
+        VERSION="${{ needs.prepare-release.outputs.version }}"
+        RELEASE_FILE="${{ needs.prepare-release.outputs.release_notes_file }}"
+        
+        if [ -n "$RELEASE_FILE" ] && [ -f "$RELEASE_FILE" ]; then
+          echo "Using release notes from: $RELEASE_FILE"
+          NOTES=$(cat "$RELEASE_FILE")
+        else
+          echo "Generating default release notes"
+          NOTES="# AutoClaude v${VERSION}
+
+## 🎉 New Release
+
+This release was automatically generated from branch ${GITHUB_REF#refs/heads/}.
+
+### 📦 Installation
+
+#### VS Code Extension
+1. Download the \`.vsix\` file from the assets below
+2. Open VS Code
+3. Go to Extensions view (Ctrl+Shift+X)
+4. Click on the \"...\" menu and select \"Install from VSIX...\"
+5. Select the downloaded file
+
+### 🚀 Features
+- 24/7 Automated Processing
+- Script Runner & Quality Checks
+- Message Loop for Individual Tasks
+- Rich User Interface
+
+### 📝 Changelog
+See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes.
+
+---
+*This release was automatically generated from the ${GITHUB_REF#refs/heads/} branch.*"
+        fi
+        
+        # Save notes to file for gh release
+        echo "$NOTES" > release-notes.md
+        
+    - name: Create GitHub Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        VERSION="${{ needs.prepare-release.outputs.version }}"
+        
+        # Check if tag exists
+        if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+          echo "Tag v$VERSION already exists"
+        else
+          echo "Creating tag v$VERSION"
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+        fi
+        
+        # Find all built assets
+        ASSETS=""
+        
+        # Add VS Code extension
+        for file in vscode-extension/*.vsix; do
+          if [ -f "$file" ]; then
+            ASSETS="$ASSETS $file"
+          fi
+        done
+        
+        echo "Assets to upload: $ASSETS"
+        
+        # Create or update release
+        if gh release view "v$VERSION" >/dev/null 2>&1; then
+          echo "Release v$VERSION already exists, updating..."
+          gh release upload "v$VERSION" $ASSETS --clobber
+        else
+          echo "Creating new release v$VERSION..."
+          gh release create "v$VERSION" \
+            --title "AutoClaude v$VERSION" \
+            --notes-file release-notes.md \
+            $ASSETS
+        fi
+        
+    - name: Output release URL
+      run: |
+        VERSION="${{ needs.prepare-release.outputs.version }}"
+        echo "🎉 Release created successfully!"
+        echo "📦 Release URL: https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
