@@ -279,11 +279,11 @@ export class UIManager extends EventEmitter {
     appendClaudeOutput(text: string): void {
         if (this.widgets.claudeOutput) {
             this.widgets.claudeOutput.log(text);
-            
+
             if (this.autoScroll) {
                 this.widgets.claudeOutput.setScrollPerc(100);
             }
-            
+
             this.screen?.render();
         }
     }
@@ -394,7 +394,7 @@ export class UIManager extends EventEmitter {
         // Update function
         const updateDashboard = () => {
             const agents = agentManager.getAgentStatuses();
-            
+
             // Update agent table
             const tableData = {
                 headers: ['Agent ID', 'Status', 'Messages', 'CPU %'],
@@ -412,12 +412,14 @@ export class UIManager extends EventEmitter {
                 x: agents.map((_, i) => String(i)),
                 y: agents.map(a => a.messagesProcessed)
             };
-            perfChart.setData([{
-                title: 'Messages Processed',
-                x: perfData.x,
-                y: perfData.y,
-                style: { line: 'cyan' }
-            }]);
+            perfChart.setData([
+                {
+                    title: 'Messages Processed',
+                    x: perfData.x,
+                    y: perfData.y,
+                    style: { line: 'cyan' }
+                }
+            ]);
 
             dashScreen.render();
         };
@@ -439,7 +441,7 @@ export class UIManager extends EventEmitter {
     }
 
     async run(): Promise<void> {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             this.once('quit', resolve);
         });
     }
@@ -470,7 +472,7 @@ export class UIManager extends EventEmitter {
 
         const currentIndex = focusableWidgets.findIndex(w => w === this.screen?.focused);
         const nextIndex = (currentIndex + 1) % focusableWidgets.length;
-        
+
         focusableWidgets[nextIndex]?.focus();
         this.screen?.render();
     }
@@ -484,7 +486,7 @@ export class UIManager extends EventEmitter {
 
         const currentIndex = focusableWidgets.findIndex(w => w === this.screen?.focused);
         const prevIndex = currentIndex <= 0 ? focusableWidgets.length - 1 : currentIndex - 1;
-        
+
         focusableWidgets[prevIndex]?.focus();
         this.screen?.render();
     }
@@ -515,7 +517,7 @@ export class UIManager extends EventEmitter {
         const timestamp = new Date().toLocaleTimeString();
         const status = customStatus || 'Ready';
         const autoScrollStatus = this.autoScroll ? 'ON' : 'OFF';
-        
+
         return ` ${timestamp} | Status: ${status} | Auto-scroll: ${autoScrollStatus} | Press Q to quit `;
     }
 }

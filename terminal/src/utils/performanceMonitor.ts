@@ -73,7 +73,7 @@ export class PerformanceMonitor extends EventEmitter {
         const currentCpuUsage = process.cpuUsage();
         const memoryUsage = process.memoryUsage();
         const eventLoopDelay = this.measureEventLoopDelay();
-        
+
         const metrics: PerformanceMetrics = {
             cpuUsage: currentCpuUsage,
             memoryUsage,
@@ -115,7 +115,8 @@ export class PerformanceMonitor extends EventEmitter {
      */
     private checkThresholds(metrics: PerformanceMetrics): void {
         const memoryUsageMB = metrics.memoryUsage.heapUsed / 1024 / 1024;
-        const heapUsagePercent = (metrics.memoryUsage.heapUsed / metrics.memoryUsage.heapTotal) * 100;
+        const heapUsagePercent =
+            (metrics.memoryUsage.heapUsed / metrics.memoryUsage.heapTotal) * 100;
         const cpuPercent = this.calculateCpuUsagePercent(metrics.cpuUsage);
 
         // Memory threshold
@@ -172,10 +173,10 @@ export class PerformanceMonitor extends EventEmitter {
         const userDiff = currentUsage.user - this.lastCpuUsage.user;
         const systemDiff = currentUsage.system - this.lastCpuUsage.system;
         const totalDiff = userDiff + systemDiff;
-        
+
         const elapsedTime = Date.now() - this.startTime;
         const cpuPercent = (totalDiff / 1000 / elapsedTime) * 100;
-        
+
         return Math.min(cpuPercent, 100); // Cap at 100%
     }
 
@@ -226,14 +227,19 @@ export class PerformanceMonitor extends EventEmitter {
     getAverageMetrics(periodMs: number = 60000): any {
         const now = Date.now();
         const relevantMetrics = this.metrics.filter(m => now - m.timestamp <= periodMs);
-        
+
         if (relevantMetrics.length === 0) {
             return null;
         }
 
-        const avgMemory = relevantMetrics.reduce((sum, m) => sum + m.memoryUsage.heapUsed, 0) / relevantMetrics.length;
-        const avgCpu = relevantMetrics.reduce((sum, m) => sum + this.calculateCpuUsagePercent(m.cpuUsage), 0) / relevantMetrics.length;
-        const avgEventLoop = relevantMetrics.reduce((sum, m) => sum + m.eventLoopDelay, 0) / relevantMetrics.length;
+        const avgMemory =
+            relevantMetrics.reduce((sum, m) => sum + m.memoryUsage.heapUsed, 0) /
+            relevantMetrics.length;
+        const avgCpu =
+            relevantMetrics.reduce((sum, m) => sum + this.calculateCpuUsagePercent(m.cpuUsage), 0) /
+            relevantMetrics.length;
+        const avgEventLoop =
+            relevantMetrics.reduce((sum, m) => sum + m.eventLoopDelay, 0) / relevantMetrics.length;
 
         return {
             period: `${periodMs / 1000} seconds`,
@@ -264,7 +270,8 @@ export class PerformanceMonitor extends EventEmitter {
 
         if (increasingCount >= 8) {
             const startMemory = recentMetrics[0].memoryUsage.heapUsed / 1024 / 1024;
-            const endMemory = recentMetrics[recentMetrics.length - 1].memoryUsage.heapUsed / 1024 / 1024;
+            const endMemory =
+                recentMetrics[recentMetrics.length - 1].memoryUsage.heapUsed / 1024 / 1024;
             const increase = endMemory - startMemory;
             const percentIncrease = (increase / startMemory) * 100;
 
@@ -294,7 +301,7 @@ export class PerformanceMonitor extends EventEmitter {
         const memoryLeak = this.detectMemoryLeak();
 
         let report = '=== Performance Report ===\n\n';
-        
+
         if (current) {
             report += 'Current Metrics:\n';
             report += JSON.stringify(current, null, 2) + '\n\n';

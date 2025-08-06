@@ -14,10 +14,10 @@ export interface HealthStatus {
 }
 
 export interface HealthCheckOptions {
-    checkInterval: number;       // How often to check health (ms)
-    responseTimeout: number;     // Max time to wait for response (ms)
+    checkInterval: number; // How often to check health (ms)
+    responseTimeout: number; // Max time to wait for response (ms)
     maxConsecutiveTimeouts: number; // Max timeouts before declaring unhealthy
-    stuckDetectionTime: number;  // Time without activity to consider stuck (ms)
+    stuckDetectionTime: number; // Time without activity to consider stuck (ms)
 }
 
 export class HealthMonitor extends EventEmitter {
@@ -39,10 +39,10 @@ export class HealthMonitor extends EventEmitter {
         this.session = session;
         this.logger = logger;
         this.options = {
-            checkInterval: 30000,        // Check every 30 seconds
-            responseTimeout: 10000,      // 10 second response timeout
-            maxConsecutiveTimeouts: 3,   // 3 strikes and you're out
-            stuckDetectionTime: 120000,  // 2 minutes without activity = stuck
+            checkInterval: 30000, // Check every 30 seconds
+            responseTimeout: 10000, // 10 second response timeout
+            maxConsecutiveTimeouts: 3, // 3 strikes and you're out
+            stuckDetectionTime: 120000, // 2 minutes without activity = stuck
             ...options
         };
 
@@ -72,9 +72,9 @@ export class HealthMonitor extends EventEmitter {
         this.sessionStartTime = Date.now();
         this.lastActivityTime = Date.now();
         this.lastResponseTime = Date.now();
-        
+
         this.logger.info('Health monitor started');
-        
+
         // Start periodic health checks
         this.checkInterval = setInterval(() => {
             this.performHealthCheck();
@@ -107,7 +107,9 @@ export class HealthMonitor extends EventEmitter {
 
             // Check if session appears stuck
             if (timeSinceLastActivity > this.options.stuckDetectionTime) {
-                this.logger.warn(`Session appears stuck (no activity for ${timeSinceLastActivity}ms)`);
+                this.logger.warn(
+                    `Session appears stuck (no activity for ${timeSinceLastActivity}ms)`
+                );
                 this.emit('sessionStuck', {
                     timeSinceLastActivity,
                     timeSinceLastResponse
@@ -123,8 +125,10 @@ export class HealthMonitor extends EventEmitter {
                 this.emit('healthCheckPassed');
             } else {
                 this.consecutiveTimeouts++;
-                this.logger.warn(`Health check failed (${this.consecutiveTimeouts}/${this.options.maxConsecutiveTimeouts})`);
-                
+                this.logger.warn(
+                    `Health check failed (${this.consecutiveTimeouts}/${this.options.maxConsecutiveTimeouts})`
+                );
+
                 if (this.consecutiveTimeouts >= this.options.maxConsecutiveTimeouts) {
                     this.emit('sessionUnhealthy', {
                         reason: 'Too many consecutive timeouts',
@@ -141,7 +145,7 @@ export class HealthMonitor extends EventEmitter {
     }
 
     private async sendHealthCheck(): Promise<boolean> {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             const timeout = setTimeout(() => {
                 this.session.removeListener('output', outputHandler);
                 resolve(false);

@@ -1,8 +1,8 @@
-import { 
-    isObject, 
-    isLogMetadata, 
-    toLogMetadata, 
-    isError, 
+import {
+    isObject,
+    isLogMetadata,
+    toLogMetadata,
+    isError,
     toError,
     isString,
     isNumber,
@@ -30,13 +30,15 @@ describe('typeGuards', () => {
         it('should return true for valid LogMetadata', () => {
             expect(isLogMetadata({})).toBe(true);
             expect(isLogMetadata({ component: 'test' })).toBe(true);
-            expect(isLogMetadata({ 
-                component: 'test',
-                action: 'create',
-                userId: '123',
-                sessionId: 'abc',
-                duration: 100
-            })).toBe(true);
+            expect(
+                isLogMetadata({
+                    component: 'test',
+                    action: 'create',
+                    userId: '123',
+                    sessionId: 'abc',
+                    duration: 100
+                })
+            ).toBe(true);
         });
 
         it('should return false for invalid LogMetadata', () => {

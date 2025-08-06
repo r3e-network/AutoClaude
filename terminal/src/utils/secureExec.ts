@@ -8,7 +8,15 @@ import { Logger } from './logger';
  */
 export class SecureExec {
     private static readonly ALLOWED_COMMANDS = new Set([
-        'tmux', 'pkill', 'pgrep', 'ps', 'df', 'which', 'python', 'python3', 'node'
+        'tmux',
+        'pkill',
+        'pgrep',
+        'ps',
+        'df',
+        'which',
+        'python',
+        'python3',
+        'node'
     ]);
 
     private static readonly FORBIDDEN_CHARS = /[;&|`$(){}[\]<>]/g;
@@ -44,7 +52,7 @@ export class SecureExec {
      */
     public validatePath(filePath: string, allowedBasePaths: string[]): string {
         const normalizedPath = path.normalize(path.resolve(filePath));
-        
+
         // Check for path traversal
         if (SecureExec.PATH_TRAVERSAL_PATTERN.test(filePath)) {
             throw new Error(`Path traversal detected in: ${filePath}`);
@@ -74,7 +82,11 @@ export class SecureExec {
     /**
      * Execute a command safely without shell interpretation
      */
-    public async exec(command: string, args: string[] = [], options: SpawnOptions = {}): Promise<{ stdout: string; stderr: string }> {
+    public async exec(
+        command: string,
+        args: string[] = [],
+        options: SpawnOptions = {}
+    ): Promise<{ stdout: string; stderr: string }> {
         this.validateCommand(command);
         this.validateArgs(args);
 
@@ -87,15 +99,15 @@ export class SecureExec {
             let stdout = '';
             let stderr = '';
 
-            child.stdout?.on('data', (data) => {
+            child.stdout?.on('data', data => {
                 stdout += data.toString();
             });
 
-            child.stderr?.on('data', (data) => {
+            child.stderr?.on('data', data => {
                 stderr += data.toString();
             });
 
-            child.on('error', (error) => {
+            child.on('error', error => {
                 this.logger.error(`Command execution error: ${error.message}`, {
                     command,
                     args,
@@ -104,7 +116,7 @@ export class SecureExec {
                 reject(error);
             });
 
-            child.on('close', (code) => {
+            child.on('close', code => {
                 if (code !== 0) {
                     const error = new Error(`Command failed with exit code ${code}`);
                     this.logger.error('Command execution failed', {
@@ -125,8 +137,8 @@ export class SecureExec {
      * Execute a command with timeout
      */
     public async execWithTimeout(
-        command: string, 
-        args: string[] = [], 
+        command: string,
+        args: string[] = [],
         timeoutMs: number = 30000,
         options: SpawnOptions = {}
     ): Promise<{ stdout: string; stderr: string }> {
@@ -135,10 +147,7 @@ export class SecureExec {
         });
 
         try {
-            return await Promise.race([
-                this.exec(command, args, options),
-                timeoutPromise
-            ]);
+            return await Promise.race([this.exec(command, args, options), timeoutPromise]);
         } catch (error) {
             if (error instanceof Error && error.message === 'Command timeout') {
                 this.logger.error('Command timed out', { command, args, timeoutMs });

@@ -35,36 +35,41 @@ describe('SecureExec', () => {
     describe('validatePath', () => {
         it('should accept valid paths within allowed directories', () => {
             const allowedDirs = ['/home/user/project', '/tmp'];
-            
-            expect(secureExec.validatePath('/home/user/project/file.txt', allowedDirs))
-                .toMatch(/\/home\/user\/project\/file\.txt$/);
-            
-            expect(secureExec.validatePath('/tmp/test.log', allowedDirs))
-                .toMatch(/\/tmp\/test\.log$/);
+
+            expect(secureExec.validatePath('/home/user/project/file.txt', allowedDirs)).toMatch(
+                /\/home\/user\/project\/file\.txt$/
+            );
+
+            expect(secureExec.validatePath('/tmp/test.log', allowedDirs)).toMatch(
+                /\/tmp\/test\.log$/
+            );
         });
 
         it('should reject paths with traversal attempts', () => {
             const allowedDirs = ['/home/user/project'];
-            
-            expect(() => secureExec.validatePath('../../../etc/passwd', allowedDirs))
-                .toThrow('Path traversal detected');
-            
-            expect(() => secureExec.validatePath('/home/user/project/../../../etc/passwd', allowedDirs))
-                .toThrow('Path traversal detected');
+
+            expect(() => secureExec.validatePath('../../../etc/passwd', allowedDirs)).toThrow(
+                'Path traversal detected'
+            );
+
+            expect(() =>
+                secureExec.validatePath('/home/user/project/../../../etc/passwd', allowedDirs)
+            ).toThrow('Path traversal detected');
         });
 
         it('should reject paths outside allowed directories', () => {
             const allowedDirs = ['/home/user/project'];
-            
-            expect(() => secureExec.validatePath('/etc/passwd', allowedDirs))
-                .toThrow('Path \'/etc/passwd\' is outside allowed directories');
+
+            expect(() => secureExec.validatePath('/etc/passwd', allowedDirs)).toThrow(
+                "Path '/etc/passwd' is outside allowed directories"
+            );
         });
     });
 
     describe('escapeShellArg', () => {
         it('should properly escape shell arguments', () => {
             expect(secureExec.escapeShellArg('simple')).toBe("'simple'");
-            expect(secureExec.escapeShellArg("with spaces")).toBe("'with spaces'");
+            expect(secureExec.escapeShellArg('with spaces')).toBe("'with spaces'");
             expect(secureExec.escapeShellArg("it's quoted")).toBe("'it'\\''s quoted'");
             expect(secureExec.escapeShellArg('$VAR')).toBe("'$VAR'");
             expect(secureExec.escapeShellArg('`command`')).toBe("'`command`'");
@@ -88,16 +93,18 @@ describe('SecureExec', () => {
         });
 
         it('should reject disallowed commands', async () => {
-            await expect(secureExec.exec('rm', ['-rf', '/']))
-                .rejects.toThrow("Command 'rm' is not in the allowed list");
-            
+            await expect(secureExec.exec('rm', ['-rf', '/'])).rejects.toThrow(
+                "Command 'rm' is not in the allowed list"
+            );
+
             expect(spawn).not.toHaveBeenCalled();
         });
 
         it('should reject arguments with forbidden characters', async () => {
-            await expect(secureExec.exec('tmux', ['test; rm -rf /']))
-                .rejects.toThrow('Argument contains forbidden characters');
-            
+            await expect(secureExec.exec('tmux', ['test; rm -rf /'])).rejects.toThrow(
+                'Argument contains forbidden characters'
+            );
+
             expect(spawn).not.toHaveBeenCalled();
         });
 
@@ -142,7 +149,7 @@ describe('SecureExec', () => {
         // The actual implementation works correctly in production
         it.skip('should timeout long-running commands', async () => {
             jest.useFakeTimers();
-            
+
             // Mock spawn to never complete
             (spawn as jest.Mock).mockImplementation(() => {
                 const proc = new EventEmitter() as any;
@@ -152,7 +159,7 @@ describe('SecureExec', () => {
                 // Don't emit 'close' or 'exit' events
                 return proc;
             });
-            
+
             const execPromise = secureExec.execWithTimeout('tmux', ['test'], 100);
 
             // Advance time past timeout
@@ -175,14 +182,14 @@ describe('SecureExec', () => {
                 const proc = new EventEmitter() as any;
                 proc.stdout = new EventEmitter();
                 proc.stderr = new EventEmitter();
-                
+
                 if (cmd === 'which' && args[0] === 'tmux') {
                     process.nextTick(() => {
                         proc.stdout.emit('data', '/usr/bin/tmux\n');
                         proc.emit('close', 0);
                     });
                 }
-                
+
                 return proc;
             });
 
@@ -190,19 +197,19 @@ describe('SecureExec', () => {
             expect(exists).toBe(true);
         }, 10000); // Increase test timeout
 
-        // Skip due to complex async mocking issues  
+        // Skip due to complex async mocking issues
         it.skip('should return false for non-existing commands', async () => {
-            (spawn as jest.Mock).mockImplementation((cmd) => {
+            (spawn as jest.Mock).mockImplementation(cmd => {
                 const proc = new EventEmitter() as any;
                 proc.stdout = new EventEmitter();
                 proc.stderr = new EventEmitter();
-                
+
                 if (cmd === 'which') {
                     process.nextTick(() => {
                         proc.emit('close', 1);
                     });
                 }
-                
+
                 return proc;
             });
 

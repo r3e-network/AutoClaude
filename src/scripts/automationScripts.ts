@@ -1,3 +1,5 @@
+import { debugLog } from "../utils/logging";
+
 /**
  * Additional automation scripts for AutoClaude
  * These are advanced scripts for enhanced automation
@@ -44,7 +46,7 @@ async function check() {
         warnings: warnings
     };
     
-    console.log(JSON.stringify(result, null, 2));
+    debugLog(JSON.stringify(result, null, 2));
 }
 
 check().catch(error => {
@@ -100,7 +102,7 @@ async function check() {
         warnings: warnings
     };
     
-    console.log(JSON.stringify(result, null, 2));
+    debugLog(JSON.stringify(result, null, 2));
 }
 
 function findCodeFiles(dir) {
@@ -197,7 +199,7 @@ async function check() {
         warnings: warnings
     };
     
-    console.log(JSON.stringify(result, null, 2));
+    debugLog(JSON.stringify(result, null, 2));
 }
 
 function findCodeFiles(dir) {

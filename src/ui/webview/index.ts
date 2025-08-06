@@ -1,68 +1,88 @@
-import * as vscode from 'vscode';
-import { claudePanel, messageQueue, debugMode, sessionReady, processingQueue } from '../../core/state';
-import { debugLog } from '../../utils/logging';
-import { getValidatedConfig } from '../../core/config';
+import * as vscode from "vscode";
+import {
+  claudePanel,
+  messageQueue,
+  debugMode,
+  sessionReady,
+  processingQueue,
+} from "../../core/state";
+import { debugLog } from "../../utils/logging";
+import { getValidatedConfig } from "../../core/config";
 
 export function updateWebviewContent(): void {
-    if (claudePanel) {
-        try {
-            claudePanel.webview.postMessage({
-                command: 'updateQueue',
-                queue: messageQueue
-            });
-        } catch (error) {
-            debugLog(`❌ Failed to update webview content: ${error}`);
-        }
+  if (claudePanel) {
+    try {
+      claudePanel.webview.postMessage({
+        command: "updateQueue",
+        queue: messageQueue,
+      });
+    } catch (error) {
+      debugLog(`❌ Failed to update webview content: ${error}`);
     }
+  }
 }
 
 export function updateSessionState(): void {
-    if (claudePanel) {
-        try {
-            claudePanel.webview.postMessage({
-                command: 'sessionStateChanged',
-                isSessionRunning: sessionReady,
-                isProcessing: processingQueue
-            });
-        } catch (error) {
-            debugLog(`❌ Failed to update session state: ${error}`);
-        }
+  if (claudePanel) {
+    try {
+      claudePanel.webview.postMessage({
+        command: "sessionStateChanged",
+        isSessionRunning: sessionReady,
+        isProcessing: processingQueue,
+      });
+    } catch (error) {
+      debugLog(`❌ Failed to update session state: ${error}`);
     }
+  }
 }
 
 export function getWebviewContent(context: vscode.ExtensionContext): string {
-    if (!claudePanel) {
-        return getErrorHtml('Panel not initialized');
-    }
+  if (!claudePanel) {
+    return getErrorHtml("Panel not initialized");
+  }
 
-    const webview = claudePanel.webview;
-    
-    // Get URIs for resources - this works in both desktop and web
-    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'out', 'webview', 'script.js'));
-    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'out', 'webview', 'styles.css'));
-    const iconUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'icon.png'));
-    
-    // Generate nonce for CSP
-    const nonce = getNonce();
-    
-    // Return the full HTML content inline - this works in both desktop and web environments
-    return getHtmlContent(webview, scriptUri, styleUri, iconUri, nonce);
+  const webview = claudePanel.webview;
+
+  // Get URIs for resources - this works in both desktop and web
+  const scriptUri = webview.asWebviewUri(
+    vscode.Uri.joinPath(context.extensionUri, "out", "webview", "script.js"),
+  );
+  const styleUri = webview.asWebviewUri(
+    vscode.Uri.joinPath(context.extensionUri, "out", "webview", "styles.css"),
+  );
+  const iconUri = webview.asWebviewUri(
+    vscode.Uri.joinPath(context.extensionUri, "icon.png"),
+  );
+
+  // Generate nonce for CSP
+  const nonce = getNonce();
+
+  // Return the full HTML content inline - this works in both desktop and web environments
+  return getHtmlContent(webview, scriptUri, styleUri, iconUri, nonce);
 }
 
 function getNonce(): string {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
+  let text = "";
+  const possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 32; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
 }
 
-function getHtmlContent(webview: vscode.Webview, scriptUri: vscode.Uri, styleUri: vscode.Uri, iconUri: vscode.Uri, nonce: string): string {
-    // Get the base64 icon data for inline display
-    const iconBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
-    
-    return `<!DOCTYPE html>
+function getHtmlContent(
+  webview: vscode.Webview,
+  scriptUri: vscode.Uri,
+  styleUri: vscode.Uri,
+  iconUri: vscode.Uri,
+  nonce: string,
+): string {
+  // Get the base64 icon data for inline display
+  const iconBase64 =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -286,7 +306,7 @@ function getHtmlContent(webview: vscode.Webview, scriptUri: vscode.Uri, styleUri
 }
 
 function getErrorHtml(error: string): string {
-    return `
+  return `
         <!DOCTYPE html>
         <html>
         <head>
@@ -314,29 +334,31 @@ function getErrorHtml(error: string): string {
 }
 
 export function sendHistoryVisibilitySettings(): void {
-    const config = getValidatedConfig();
-    
-    if (claudePanel) {
-        try {
-            claudePanel.webview.postMessage({
-                command: 'setHistoryVisibility',
-                showInUI: config.history.showInUI
-            });
-        } catch (error) {
-            debugLog(`❌ Failed to send history visibility settings to webview: ${error}`);
-        }
+  const config = getValidatedConfig();
+
+  if (claudePanel) {
+    try {
+      claudePanel.webview.postMessage({
+        command: "setHistoryVisibility",
+        showInUI: config.history.showInUI,
+      });
+    } catch (error) {
+      debugLog(
+        `❌ Failed to send history visibility settings to webview: ${error}`,
+      );
     }
+  }
 }
 
-export function sendSubAgentData(subAgentData: any): void {
-    if (claudePanel) {
-        try {
-            claudePanel.webview.postMessage({
-                command: 'updateSubAgents',
-                subAgents: subAgentData
-            });
-        } catch (error) {
-            debugLog(`❌ Failed to send sub-agent data to webview: ${error}`);
-        }
+export function sendSubAgentData(subAgentData: Array<{ id: string; name: string; status: string; capability?: string }>): void {
+  if (claudePanel) {
+    try {
+      claudePanel.webview.postMessage({
+        command: "updateSubAgents",
+        subAgents: subAgentData,
+      });
+    } catch (error) {
+      debugLog(`❌ Failed to send sub-agent data to webview: ${error}`);
     }
+  }
 }

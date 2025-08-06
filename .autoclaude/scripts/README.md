@@ -5,18 +5,23 @@ This directory contains quality check scripts that can be run automatically by A
 ## Built-in Scripts
 
 ### production-readiness.sh
+
 Checks for TODO comments, FIXME markers, placeholders, and other indicators of incomplete code.
 
 ### build-check.sh
+
 Ensures the project can build successfully using detected build tools.
 
 ### test-check.sh
+
 Runs the project's test suite and ensures all tests pass.
 
 ### format-check.sh
+
 Checks code formatting using detected linters and formatters.
 
 ### github-actions.sh
+
 Validates GitHub Actions workflow files for syntax and common issues.
 
 ## Creating Custom Scripts

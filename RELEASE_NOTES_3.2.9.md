@@ -13,6 +13,7 @@ We're excited to announce AutoClaude v3.2.9, a major release that brings paralle
 ## 🤖 Parallel Agent System (Now Default!)
 
 ### What's New:
+
 - **5 Built-in Specialized Agents** active by default:
   - 🔍 **Code Analyzer** - Deep code analysis and quality checks
   - 📝 **Documentation Writer** - Comprehensive documentation generation
@@ -21,16 +22,18 @@ We're excited to announce AutoClaude v3.2.9, a major release that brings paralle
   - 🔒 **Security Auditor** - Vulnerability detection and fixes
 
 ### Auto-Generation Features:
+
 - **Context-Aware Agent Creation** - Automatically spawns specialized agents based on your task
 - **Language-Specific Experts** - Detects and activates agents for:
   - Rust 🦀
-  - .NET/C# 
+  - .NET/C#
   - Java ☕
-  - Go 
-  - C/C++ 
+  - Go
+  - C/C++
   - And more!
 
 ### Smart Defaults:
+
 - Agents start automatically when you open a workspace
 - Complexity threshold reduced to 2 (from 3) for more intelligent assistance
 - Auto-scaling based on workload
@@ -38,17 +41,20 @@ We're excited to announce AutoClaude v3.2.9, a major release that brings paralle
 ## 🛡️ Robustness & Recovery Features
 
 ### Health Monitoring:
+
 - **Continuous Health Checks** - Every 30 seconds
 - **Stuck Session Detection** - Identifies unresponsive Claude sessions
 - **Performance Metrics** - Tracks success rates and response times
 
 ### Auto-Recovery System:
+
 - **Automatic Retry** - Up to 3 attempts with exponential backoff
 - **Context Preservation** - Maintains last 10 messages during recovery
 - **Graceful Degradation** - Clear guidance when recovery isn't possible
 - **Real-time Status** - See recovery progress in the UI
 
 ### Terminal Enhancements:
+
 - **Enhanced `/health` Command** - Shows detailed health metrics and recovery status
 - **Better Error Messages** - More helpful guidance when issues occur
 - **Progress Indicators** - Visual feedback during recovery attempts
@@ -56,11 +62,13 @@ We're excited to announce AutoClaude v3.2.9, a major release that brings paralle
 ## 📦 Installation
 
 ### VS Code Extension:
+
 1. Download `autoclaude-3.2.9.vsix` from the release
 2. In VS Code: `Extensions` → `...` → `Install from VSIX...`
 3. Select the downloaded file
 
 ### Terminal Tool:
+
 ```bash
 npm install -g @r3e/autoclaude@3.2.9
 ```
@@ -70,11 +78,13 @@ npm install -g @r3e/autoclaude@3.2.9
 All parallel agent features are now enabled by default. If you prefer the previous behavior, you can disable them in settings:
 
 ### VS Code Settings:
+
 - `autoclaude.parallelAgents.enabled`: Set to `false` to disable
 - `autoclaude.parallelAgents.autoStart`: Set to `false` to prevent auto-start
 - `autoclaude.subAgents.enabled`: Set to `false` to disable sub-agents
 
 ### Terminal Config:
+
 Run `autoclaude config set parallelAgents.enabled false` to disable
 
 ## 🎉 Benefits

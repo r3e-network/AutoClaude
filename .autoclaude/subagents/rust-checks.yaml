@@ -36,27 +36,27 @@ check:
   script: |
     #!/bin/bash
     echo "🦀 Rust Programming Quality Checks - Ensuring production-ready code"
-    
+
     ERRORS=()
     WARNINGS=()
     CHECK_FAILED=false
-    
+
     # Find Cargo.toml files
     CARGO_FILES=$(find . -name "Cargo.toml" -type f 2>/dev/null | grep -v "/target/" | grep -v "/.cargo/" | head -10)
-    
+
     if [ -z "$CARGO_FILES" ]; then
       echo "❌ No Rust Cargo.toml files found"
       exit 1
     fi
-    
+
     echo "✅ Rust project detected"
-    
+
     # Check if cargo is installed
     if ! command -v cargo &> /dev/null; then
       echo "❌ Cargo is not installed. Please install Rust toolchain."
       exit 1
     fi
-    
+
     # Function to run cargo command and capture result
     run_cargo_command() {
       local cmd="$1"
@@ -79,17 +79,17 @@ check:
         return 0
       fi
     }
-    
+
     # Get workspace root or use current directory
     WORKSPACE_ROOT=$(cargo metadata --no-deps --format-version 1 2>/dev/null | grep -oP '"workspace_root":"\K[^"]+' || pwd)
     cd "$WORKSPACE_ROOT" || exit 1
-    
+
     # Step 1: Check formatting
     echo -e "\n🎨 Checking code formatting..."
-    
+
     output=$(cargo fmt -- --check 2>&1)
     exit_code=$?
-    
+
     if [ $exit_code -ne 0 ]; then
       ERRORS+=("Code formatting issues found. Run 'cargo fmt' to fix.")
       CHECK_FAILED=true
@@ -104,10 +104,10 @@ check:
     else
       echo "✅ Format check passed"
     fi
-    
+
     # Step 2: Run clippy
     echo -e "\n📎 Running clippy linter..."
-    
+
     # Check if clippy is installed
     if ! cargo clippy --version &> /dev/null; then
       echo "Installing clippy..."
@@ -116,7 +116,7 @@ check:
         echo "⚠️ Skipping clippy check"
       }
     fi
-    
+
     if cargo clippy --version &> /dev/null; then
       output=$(cargo clippy --all-targets --all-features -- -W clippy::all 2>&1)
       exit_code=$?
@@ -139,17 +139,17 @@ check:
         echo "✅ Clippy check passed"
       fi
     fi
-    
+
     # Step 3: Build project
     echo -e "\n🔨 Building project..."
-    
+
     # Clean build to ensure fresh state
     cargo clean 2>/dev/null
-    
+
     # Build in release mode
     output=$(cargo build --release 2>&1)
     exit_code=$?
-    
+
     if [ $exit_code -ne 0 ]; then
       ERRORS+=("Build failed")
       CHECK_FAILED=true
@@ -165,13 +165,13 @@ check:
         echo "⚠️ Debug build has issues"
       fi
     fi
-    
+
     # Step 4: Run tests
     echo -e "\n🧪 Running tests..."
-    
+
     output=$(cargo test --all 2>&1)
     exit_code=$?
-    
+
     if [ $exit_code -ne 0 ]; then
       ERRORS+=("Tests failed")
       CHECK_FAILED=true
@@ -192,14 +192,14 @@ check:
         echo "✅ All tests passed"
       fi
     fi
-    
+
     # Step 5: Check documentation
     echo -e "\n📚 Checking documentation..."
-    
+
     # Build docs and check for warnings
     output=$(cargo doc --no-deps 2>&1)
     exit_code=$?
-    
+
     if [ $exit_code -ne 0 ]; then
       ERRORS+=("Documentation build failed")
       CHECK_FAILED=true
@@ -214,10 +214,10 @@ check:
         echo "✅ Documentation build passed"
       fi
     fi
-    
+
     # Step 6: Security audit
     echo -e "\n🔒 Running security audit..."
-    
+
     # Check if cargo-audit is installed
     if ! cargo audit --version &> /dev/null; then
       echo "Installing cargo-audit..."
@@ -226,7 +226,7 @@ check:
         echo "⚠️ Skipping security audit"
       }
     fi
-    
+
     if cargo audit --version &> /dev/null; then
       output=$(cargo audit 2>&1)
       exit_code=$?
@@ -246,10 +246,10 @@ check:
         echo "✅ Security audit passed"
       fi
     fi
-    
+
     # Step 7: Check examples (if any)
     echo -e "\n📝 Checking examples..."
-    
+
     if [ -d "examples" ]; then
       example_count=$(find examples -name "*.rs" | wc -l)
       if [ "$example_count" -gt 0 ]; then
@@ -263,11 +263,11 @@ check:
     else
       echo "ℹ️ No examples found"
     fi
-    
+
     # Output results
     echo -e "\n📊 Rust Quality Check Summary:"
     echo "=============================="
-    
+
     if [ $CHECK_FAILED = true ]; then
       echo "❌ Quality checks FAILED"
       
@@ -278,12 +278,12 @@ check:
     else
       echo "✅ All quality checks PASSED"
     fi
-    
+
     if [ ${#WARNINGS[@]} -gt 0 ]; then
       echo -e "\n⚠️ Warnings (should fix):"
       printf '%s\n' "${WARNINGS[@]}"
     fi
-    
+
     if [ $CHECK_FAILED = true ]; then
       exit 1
     else
@@ -294,29 +294,29 @@ analysis:
   script: |
     #!/bin/bash
     echo "🔍 Analyzing Rust project quality issues..."
-    
+
     echo -e "\n📋 Recommended Actions:"
     echo "======================="
-    
+
     # Format recommendations
     echo -e "\n🎨 Code Formatting:"
     echo "  - Auto-fix: cargo fmt"
     echo "  - Check only: cargo fmt -- --check"
     echo "  - Configure: create rustfmt.toml"
-    
+
     # Clippy recommendations
     echo -e "\n📎 Clippy Linting:"
     echo "  - Fix warnings: cargo clippy --fix"
     echo "  - Strict mode: cargo clippy -- -W clippy::all -W clippy::pedantic"
     echo "  - Allow specific: #[allow(clippy::lint_name)]"
-    
+
     # Build recommendations
     echo -e "\n🔨 Build Optimization:"
     echo "  - Release build: cargo build --release"
     echo "  - Check only: cargo check"
     echo "  - Clean build: cargo clean && cargo build"
     echo "  - Profile-guided: cargo build --profile=release-lto"
-    
+
     # Test recommendations
     echo -e "\n🧪 Testing:"
     echo "  - Run all: cargo test"
@@ -324,21 +324,21 @@ analysis:
     echo "  - Specific test: cargo test test_name"
     echo "  - Coverage: cargo tarpaulin"
     echo "  - Benchmarks: cargo bench"
-    
+
     # Performance recommendations
     echo -e "\n⚡ Performance:"
     echo "  - Enable LTO: lto = true in Cargo.toml"
     echo "  - Optimize size: opt-level = 'z'"
     echo "  - CPU specific: target-cpu=native"
     echo "  - Profile: cargo flamegraph"
-    
+
     # Security recommendations
     echo -e "\n🔒 Security:"
     echo "  - Audit: cargo audit fix"
     echo "  - Update deps: cargo update"
     echo "  - Check outdated: cargo outdated"
     echo "  - Deny lists: cargo deny check"
-    
+
     # Documentation
     echo -e "\n📚 Documentation:"
     echo "  - Generate: cargo doc --open"
@@ -350,41 +350,41 @@ fix:
   script: |
     #!/bin/bash
     echo "🔧 Fixing Rust code quality issues..."
-    
+
     # Fix formatting
     echo -e "\n🎨 Fixing code formatting..."
     cargo fmt
     echo "✅ Code formatting fixed"
-    
+
     # Fix clippy warnings
     echo -e "\n📎 Fixing clippy warnings..."
     if cargo clippy --version &> /dev/null; then
       cargo clippy --fix --allow-dirty --allow-staged 2>/dev/null || echo "⚠️ Some clippy fixes require manual intervention"
       echo "✅ Applied automatic clippy fixes"
     fi
-    
+
     # Update dependencies
     echo -e "\n📦 Updating dependencies..."
     cargo update
     echo "✅ Dependencies updated"
-    
+
     # Fix security vulnerabilities
     echo -e "\n🔒 Fixing security issues..."
     if cargo audit --version &> /dev/null; then
       cargo audit fix 2>/dev/null || echo "⚠️ Some vulnerabilities require manual updates"
     fi
-    
+
     # Clean and rebuild
     echo -e "\n🔨 Cleaning and rebuilding..."
     cargo clean
     cargo build
     echo "✅ Project rebuilt"
-    
+
     # Generate documentation
     echo -e "\n📚 Generating documentation..."
     cargo doc --no-deps
     echo "✅ Documentation generated"
-    
+
     echo -e "\n✅ Rust quality fixes applied!"
     echo "Please run 'cargo test' to ensure all tests still pass."
 

@@ -29,7 +29,10 @@ try {
     require('child_process').execSync('which claude', { stdio: 'ignore' });
     console.log(chalk.green('✓'), 'Claude CLI found');
 } catch (error) {
-    console.log(chalk.yellow('⚠'), 'Claude CLI not found. Please install it from: https://claude.ai/cli');
+    console.log(
+        chalk.yellow('⚠'),
+        'Claude CLI not found. Please install it from: https://claude.ai/cli'
+    );
 }
 
 // Check for tmux
@@ -45,7 +48,7 @@ try {
     const srcWrapper = path.join(__dirname, '..', 'src', 'claude_pty_wrapper.py');
     const distDir = path.join(__dirname, '..', 'dist');
     const distWrapper = path.join(distDir, 'claude_pty_wrapper.py');
-    
+
     if (fs.existsSync(srcWrapper) && fs.existsSync(distDir)) {
         fs.copyFileSync(srcWrapper, distWrapper);
         fs.chmodSync(distWrapper, 0o755);

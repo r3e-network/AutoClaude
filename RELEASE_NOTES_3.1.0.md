@@ -7,23 +7,27 @@ AutoClaude v3.1.0 brings powerful productivity features to enhance your Claude-p
 ## ✨ New Features
 
 ### 📤 Import/Export System
+
 - **Export Queue**: Save your message queue to JSON for backup or sharing
 - **Import Queue**: Load previously exported queues with flexible merge options
 - **Export Settings**: Backup all extension settings to a file
 
 ### 📋 Message Templates
+
 - **6 Built-in Templates**: Production ready, testing, refactoring, security, features, performance
 - **Variable Support**: Dynamic templates with user prompts
 - **Category Organization**: Templates organized by type
 - **Custom Templates**: Create and save your own templates
 
 ### 📊 Queue Statistics Dashboard
+
 - **Real-time Metrics**: Live dashboard showing queue performance
 - **Visual Charts**: Time distribution and status pie charts
 - **Performance Tracking**: Success rate, average processing time
 - **Peak Usage Analysis**: Identify busiest hours for optimization
 
 ### ⌨️ Keyboard Shortcuts
+
 - `Ctrl/Cmd + Shift + M`: Add new message
 - `Ctrl/Cmd + Shift + S`: Start processing
 - `Ctrl/Cmd + Shift + X`: Stop processing
@@ -31,12 +35,14 @@ AutoClaude v3.1.0 brings powerful productivity features to enhance your Claude-p
 - `Ctrl/Cmd + Shift + D`: Show statistics
 
 ## 🔧 Improvements
+
 - Better error recovery and messaging
 - Enhanced queue persistence
 - Improved memory management
 - More intuitive UI interactions
 
 ## 📚 Documentation
+
 - Added comprehensive feature guide
 - Template usage documentation
 - Import/export instructions
@@ -45,11 +51,13 @@ AutoClaude v3.1.0 brings powerful productivity features to enhance your Claude-p
 ## 🔄 Upgrade Instructions
 
 ### From VS Code:
+
 1. Open Extensions view (`Ctrl/Cmd + Shift + X`)
 2. Search for "AutoClaude"
 3. Click Update
 
 ### Manual Installation:
+
 ```bash
 code --install-extension autoclaude-3.1.0.vsix
 ```

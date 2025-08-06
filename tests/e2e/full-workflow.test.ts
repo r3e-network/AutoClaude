@@ -1,85 +1,95 @@
-import { describe, it, expect, jest, beforeAll, afterAll } from '@jest/globals';
-import * as fs from 'fs';
-import * as path from 'path';
-import { tmpdir } from 'os';
+import { describe, it, expect, jest, beforeAll, afterAll } from "@jest/globals";
+import * as fs from "fs";
+import * as path from "path";
+import { tmpdir } from "os";
 
 // Create a temporary directory for E2E testing
-const testWorkspace = path.join(tmpdir(), 'autoclaude-e2e-test-' + Date.now());
+const testWorkspace = path.join(tmpdir(), "autoclaude-e2e-test-" + Date.now());
 
 // Mock VS Code environment for E2E testing
 const mockVscode = {
   window: {
-    showInformationMessage: jest.fn(() => Promise.resolve('Yes')),
-    showWarningMessage: jest.fn(() => Promise.resolve('OK')),
-    showErrorMessage: jest.fn(() => Promise.resolve('OK')),
+    showInformationMessage: jest.fn(() => Promise.resolve("Yes")),
+    showWarningMessage: jest.fn(() => Promise.resolve("OK")),
+    showErrorMessage: jest.fn(() => Promise.resolve("OK")),
     createWebviewPanel: jest.fn(() => ({
       webview: {
         postMessage: jest.fn(),
-        html: ''
+        html: "",
       },
       onDidDispose: jest.fn(),
       reveal: jest.fn(),
-      dispose: jest.fn()
+      dispose: jest.fn(),
     })),
     withProgress: jest.fn((options, callback) => {
       return (callback as any)({
-        report: jest.fn()
+        report: jest.fn(),
       });
-    })
+    }),
   },
   workspace: {
     getConfiguration: jest.fn(() => ({
       get: jest.fn((key: string, defaultValue: any) => {
         const config: any = {
-          'developmentMode': false,
-          'queue.maxSize': 1000,
-          'session.autoStart': false,
-          'session.skipPermissions': true,
-          'security.allowDangerousXssbypass': false,
-          'scriptRunner.enabled': true,
-          'subAgents.enabled': true
+          developmentMode: false,
+          "queue.maxSize": 1000,
+          "session.autoStart": false,
+          "session.skipPermissions": true,
+          "security.allowDangerousXssbypass": false,
+          "scriptRunner.enabled": true,
+          "subAgents.enabled": true,
         };
         return config[key] ?? defaultValue;
       }),
-      update: jest.fn()
+      update: jest.fn(),
     })),
-    workspaceFolders: [{
-      uri: { fsPath: testWorkspace },
-      name: 'e2e-test-workspace',
-      index: 0
-    }],
-    findFiles: jest.fn(() => Promise.resolve([]))
+    workspaceFolders: [
+      {
+        uri: { fsPath: testWorkspace },
+        name: "e2e-test-workspace",
+        index: 0,
+      },
+    ],
+    findFiles: jest.fn(() => Promise.resolve([])),
   },
   ConfigurationTarget: {
     Global: 1,
     Workspace: 2,
-    WorkspaceFolder: 3
+    WorkspaceFolder: 3,
   },
   ViewColumn: {
     One: 1,
     Two: 2,
-    Three: 3
+    Three: 3,
   },
   ProgressLocation: {
     Notification: 1,
-    Window: 2
-  }
+    Window: 2,
+  },
 };
 
 (global as any).vscode = mockVscode;
 
 // Mock other dependencies
-jest.mock('../../../src/utils/logging', () => ({
+jest.mock("../../src/utils/logging", () => ({
   debugLog: jest.fn(),
   getDebugMode: jest.fn(() => false),
-  setDebugMode: jest.fn()
+  setDebugMode: jest.fn(),
+  Logger: {
+    getInstance: jest.fn(() => ({
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+    })),
+  },
 }));
 
 // Import components after mocking
-import { ScriptRunner } from '../../src/scripts';
-import { SubAgentRunner } from '../../src/subagents';
+import { ScriptRunner } from "../../src/scripts";
+import { SubAgentRunner } from "../../src/subagents";
 
-describe('End-to-End Workflow Tests', () => {
+describe("End-to-End Workflow Tests", () => {
   beforeAll(async () => {
     // Create comprehensive test workspace
     await createComprehensiveTestProject();
@@ -97,98 +107,125 @@ describe('End-to-End Workflow Tests', () => {
     fs.mkdirSync(testWorkspace, { recursive: true });
 
     // Create package.json with comprehensive configuration
-    fs.writeFileSync(path.join(testWorkspace, 'package.json'), JSON.stringify({
-      name: 'e2e-test-project',
-      version: '1.0.0',
-      description: 'Comprehensive test project for E2E testing',
-      main: 'dist/index.js',
-      scripts: {
-        build: 'tsc',
-        test: 'jest',
-        lint: 'eslint src/**/*.ts --fix',
-        format: 'prettier --write src/**/*.ts',
-        start: 'node dist/index.js',
-        dev: 'ts-node src/index.ts'
-      },
-      dependencies: {
-        express: '^4.18.0',
-        cors: '^2.8.5',
-        helmet: '^7.0.0',
-        dotenv: '^16.0.0'
-      },
-      devDependencies: {
-        typescript: '^4.9.0',
-        'ts-node': '^10.9.0',
-        '@types/node': '^18.0.0',
-        '@types/express': '^4.17.0',
-        jest: '^29.0.0',
-        '@types/jest': '^29.0.0',
-        eslint: '^8.0.0',
-        '@typescript-eslint/parser': '^5.0.0',
-        '@typescript-eslint/eslint-plugin': '^5.0.0',
-        prettier: '^2.8.0'
-      }
-    }, null, 2));
+    fs.writeFileSync(
+      path.join(testWorkspace, "package.json"),
+      JSON.stringify(
+        {
+          name: "e2e-test-project",
+          version: "1.0.0",
+          description: "Comprehensive test project for E2E testing",
+          main: "dist/index.js",
+          scripts: {
+            build: "tsc",
+            test: "jest",
+            lint: "eslint src/**/*.ts --fix",
+            format: "prettier --write src/**/*.ts",
+            start: "node dist/index.js",
+            dev: "ts-node src/index.ts",
+          },
+          dependencies: {
+            express: "^4.18.0",
+            cors: "^2.8.5",
+            helmet: "^7.0.0",
+            dotenv: "^16.0.0",
+          },
+          devDependencies: {
+            typescript: "^4.9.0",
+            "ts-node": "^10.9.0",
+            "@types/node": "^18.0.0",
+            "@types/express": "^4.17.0",
+            jest: "^29.0.0",
+            "@types/jest": "^29.0.0",
+            eslint: "^8.0.0",
+            "@typescript-eslint/parser": "^5.0.0",
+            "@typescript-eslint/eslint-plugin": "^5.0.0",
+            prettier: "^2.8.0",
+          },
+        },
+        null,
+        2,
+      ),
+    );
 
     // Create TypeScript configuration
-    fs.writeFileSync(path.join(testWorkspace, 'tsconfig.json'), JSON.stringify({
-      compilerOptions: {
-        target: 'ES2020',
-        lib: ['ES2020'],
-        module: 'commonjs',
-        declaration: true,
-        outDir: './dist',
-        rootDir: './src',
-        strict: true,
-        noUnusedLocals: true,
-        noUnusedParameters: true,
-        noImplicitReturns: true,
-        noFallthroughCasesInSwitch: true,
-        moduleResolution: 'node',
-        baseUrl: './',
-        esModuleInterop: true,
-        experimentalDecorators: true,
-        emitDecoratorMetadata: true,
-        skipLibCheck: true,
-        forceConsistentCasingInFileNames: true
-      },
-      include: ['src/**/*'],
-      exclude: ['node_modules', 'dist', 'tests']
-    }, null, 2));
+    fs.writeFileSync(
+      path.join(testWorkspace, "tsconfig.json"),
+      JSON.stringify(
+        {
+          compilerOptions: {
+            target: "ES2020",
+            lib: ["ES2020"],
+            module: "commonjs",
+            declaration: true,
+            outDir: "./dist",
+            rootDir: "./src",
+            strict: true,
+            noUnusedLocals: true,
+            noUnusedParameters: true,
+            noImplicitReturns: true,
+            noFallthroughCasesInSwitch: true,
+            moduleResolution: "node",
+            baseUrl: "./",
+            esModuleInterop: true,
+            experimentalDecorators: true,
+            emitDecoratorMetadata: true,
+            skipLibCheck: true,
+            forceConsistentCasingInFileNames: true,
+          },
+          include: ["src/**/*"],
+          exclude: ["node_modules", "dist", "tests"],
+        },
+        null,
+        2,
+      ),
+    );
 
     // Create ESLint configuration
-    fs.writeFileSync(path.join(testWorkspace, '.eslintrc.json'), JSON.stringify({
-      parser: '@typescript-eslint/parser',
-      extends: [
-        'eslint:recommended',
-        '@typescript-eslint/recommended'
-      ],
-      parserOptions: {
-        ecmaVersion: 2020,
-        sourceType: 'module'
-      },
-      rules: {
-        'no-unused-vars': 'error',
-        'no-console': 'warn',
-        '@typescript-eslint/no-explicit-any': 'warn'
-      }
-    }, null, 2));
+    fs.writeFileSync(
+      path.join(testWorkspace, ".eslintrc.json"),
+      JSON.stringify(
+        {
+          parser: "@typescript-eslint/parser",
+          extends: ["eslint:recommended", "@typescript-eslint/recommended"],
+          parserOptions: {
+            ecmaVersion: 2020,
+            sourceType: "module",
+          },
+          rules: {
+            "no-unused-vars": "error",
+            "no-console": "warn",
+            "@typescript-eslint/no-explicit-any": "warn",
+          },
+        },
+        null,
+        2,
+      ),
+    );
 
     // Create Prettier configuration
-    fs.writeFileSync(path.join(testWorkspace, '.prettierrc'), JSON.stringify({
-      semi: true,
-      trailingComma: 'es5',
-      singleQuote: true,
-      printWidth: 80,
-      tabWidth: 2
-    }, null, 2));
+    fs.writeFileSync(
+      path.join(testWorkspace, ".prettierrc"),
+      JSON.stringify(
+        {
+          semi: true,
+          trailingComma: "es5",
+          singleQuote: true,
+          printWidth: 80,
+          tabWidth: 2,
+        },
+        null,
+        2,
+      ),
+    );
 
     // Create comprehensive source code
-    const srcDir = path.join(testWorkspace, 'src');
+    const srcDir = path.join(testWorkspace, "src");
     fs.mkdirSync(srcDir, { recursive: true });
 
     // Main application file
-    fs.writeFileSync(path.join(srcDir, 'index.ts'), `
+    fs.writeFileSync(
+      path.join(srcDir, "index.ts"),
+      `
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -231,13 +268,16 @@ process.on('SIGTERM', () => {
 });
 
 export default app;
-`);
+`,
+    );
 
     // Create routes directory
-    const routesDir = path.join(srcDir, 'routes');
+    const routesDir = path.join(srcDir, "routes");
     fs.mkdirSync(routesDir, { recursive: true });
 
-    fs.writeFileSync(path.join(routesDir, 'users.ts'), `
+    fs.writeFileSync(
+      path.join(routesDir, "users.ts"),
+      `
 import { Router, Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/UserService';
 import { validateUser } from '../validation/userValidation';
@@ -278,13 +318,16 @@ userRouter.post('/', validateUser, async (req: Request, res: Response, next: Nex
     next(error);
   }
 });
-`);
+`,
+    );
 
     // Create services directory
-    const servicesDir = path.join(srcDir, 'services');
+    const servicesDir = path.join(srcDir, "services");
     fs.mkdirSync(servicesDir, { recursive: true });
 
-    fs.writeFileSync(path.join(servicesDir, 'UserService.ts'), `
+    fs.writeFileSync(
+      path.join(servicesDir, "UserService.ts"),
+      `
 import { User, CreateUserData } from '../types/User';
 import { Database } from '../utils/database';
 import { logger } from '../utils/logger';
@@ -347,7 +390,8 @@ export class UserService {
     }
   }
 }
-`);
+`,
+    );
 
     // Create additional supporting files for comprehensive testing...
     await createSupportingFiles(srcDir);
@@ -358,10 +402,12 @@ export class UserService {
 
   async function createSupportingFiles(srcDir: string) {
     // Types
-    const typesDir = path.join(srcDir, 'types');
+    const typesDir = path.join(srcDir, "types");
     fs.mkdirSync(typesDir, { recursive: true });
 
-    fs.writeFileSync(path.join(typesDir, 'User.ts'), `
+    fs.writeFileSync(
+      path.join(typesDir, "User.ts"),
+      `
 export interface User {
   id: string;
   email: string;
@@ -375,13 +421,16 @@ export interface CreateUserData {
   name: string;
   password: string;
 }
-`);
+`,
+    );
 
     // Middleware
-    const middlewareDir = path.join(srcDir, 'middleware');
+    const middlewareDir = path.join(srcDir, "middleware");
     fs.mkdirSync(middlewareDir, { recursive: true });
 
-    fs.writeFileSync(path.join(middlewareDir, 'auth.ts'), `
+    fs.writeFileSync(
+      path.join(middlewareDir, "auth.ts"),
+      `
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 
@@ -409,13 +458,16 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
     res.status(401).json({ error: 'Invalid token' });
   }
 };
-`);
+`,
+    );
 
     // Utils
-    const utilsDir = path.join(srcDir, 'utils');
+    const utilsDir = path.join(srcDir, "utils");
     fs.mkdirSync(utilsDir, { recursive: true });
 
-    fs.writeFileSync(path.join(utilsDir, 'logger.ts'), `
+    fs.writeFileSync(
+      path.join(utilsDir, "logger.ts"),
+      `
 export const logger = {
   info: (message: string, ...args: any[]) => {
     console.log(\`[INFO] \${new Date().toISOString()}: \${message}\`, ...args);
@@ -427,14 +479,17 @@ export const logger = {
     console.warn(\`[WARN] \${new Date().toISOString()}: \${message}\`, ...args);
   }
 };
-`);
+`,
+    );
   }
 
   async function createTestFiles() {
-    const testsDir = path.join(testWorkspace, 'tests');
+    const testsDir = path.join(testWorkspace, "tests");
     fs.mkdirSync(testsDir, { recursive: true });
 
-    fs.writeFileSync(path.join(testsDir, 'UserService.test.ts'), `
+    fs.writeFileSync(
+      path.join(testsDir, "UserService.test.ts"),
+      `
 import { UserService } from '../src/services/UserService';
 
 describe('UserService', () => {
@@ -453,14 +508,17 @@ describe('UserService', () => {
     expect(true).toBe(true);
   });
 });
-`);
+`,
+    );
   }
 
   async function createGitHubActions() {
-    const workflowsDir = path.join(testWorkspace, '.github', 'workflows');
+    const workflowsDir = path.join(testWorkspace, ".github", "workflows");
     fs.mkdirSync(workflowsDir, { recursive: true });
 
-    fs.writeFileSync(path.join(workflowsDir, 'ci.yml'), `
+    fs.writeFileSync(
+      path.join(workflowsDir, "ci.yml"),
+      `
 name: CI/CD Pipeline
 
 on:
@@ -498,11 +556,14 @@ jobs:
       
     - name: Build project
       run: npm run build
-`);
+`,
+    );
   }
 
   async function createDocumentation() {
-    fs.writeFileSync(path.join(testWorkspace, 'README.md'), `
+    fs.writeFileSync(
+      path.join(testWorkspace, "README.md"),
+      `
 # E2E Test Project
 
 This is a comprehensive test project for AutoClaude E2E testing.
@@ -539,9 +600,12 @@ This is a comprehensive test project for AutoClaude E2E testing.
 - \`GET /api/users\` - Get all users
 - \`GET /api/users/:id\` - Get user by ID
 - \`POST /api/users\` - Create new user
-`);
+`,
+    );
 
-    fs.writeFileSync(path.join(testWorkspace, '.gitignore'), `
+    fs.writeFileSync(
+      path.join(testWorkspace, ".gitignore"),
+      `
 node_modules/
 dist/
 coverage/
@@ -554,11 +618,12 @@ coverage/
 .DS_Store
 .vscode/
 .idea/
-`);
+`,
+    );
   }
 
-  describe('Complete Development Workflow', () => {
-    it('should run complete script analysis workflow', async () => {
+  describe("Complete Development Workflow", () => {
+    it("should run complete script analysis workflow", async () => {
       const scriptRunner = new ScriptRunner(testWorkspace);
       await scriptRunner.initialize();
 
@@ -569,23 +634,23 @@ coverage/
       expect(scriptResults.results.size).toBeGreaterThan(0);
 
       // Verify each script type ran
-      expect(scriptResults.results.has('production-readiness')).toBe(true);
-      expect(scriptResults.results.has('build-check')).toBe(true);
-      expect(scriptResults.results.has('test-check')).toBe(true);
-      expect(scriptResults.results.has('format-check')).toBe(true);
-      expect(scriptResults.results.has('github-actions')).toBe(true);
+      expect(scriptResults.results.has("production-readiness")).toBe(true);
+      expect(scriptResults.results.has("build-check")).toBe(true);
+      expect(scriptResults.results.has("test-check")).toBe(true);
+      expect(scriptResults.results.has("format-check")).toBe(true);
+      expect(scriptResults.results.has("github-actions")).toBe(true);
 
       // Log results for debugging
-      console.log('Script Results Summary:');
+      console.log("Script Results Summary:");
       for (const [scriptId, result] of scriptResults.results) {
-        console.log(`- ${scriptId}: ${result.passed ? 'PASSED' : 'FAILED'}`);
+        console.log(`- ${scriptId}: ${result.passed ? "PASSED" : "FAILED"}`);
         if (!result.passed) {
-          console.log(`  Errors: ${result.errors.slice(0, 3).join(', ')}`);
+          console.log(`  Errors: ${result.errors.slice(0, 3).join(", ")}`);
         }
       }
     }, 60000);
 
-    it('should run complete sub-agent workflow', async () => {
+    it("should run complete sub-agent workflow", async () => {
       const subAgentRunner = new SubAgentRunner(testWorkspace);
       await subAgentRunner.initialize();
 
@@ -597,33 +662,35 @@ coverage/
 
       // Verify core sub-agents ran
       const expectedAgents = [
-        'production-readiness',
-        'build-check',
-        'context-awareness',
-        'dependency-resolution',
-        'code-understanding',
-        'security-audit',
-        'performance-optimization',
-        'integration-testing'
+        "production-readiness",
+        "build-check",
+        "context-awareness",
+        "dependency-resolution",
+        "code-understanding",
+        "security-audit",
+        "performance-optimization",
+        "integration-testing",
       ];
 
-      expectedAgents.forEach(agentId => {
+      expectedAgents.forEach((agentId) => {
         expect(agentResults.results.has(agentId)).toBe(true);
       });
 
       // Log results for debugging
-      console.log('Sub-Agent Results Summary:');
+      console.log("Sub-Agent Results Summary:");
       for (const [agentId, result] of agentResults.results) {
-        console.log(`- ${agentId}: ${result.passed ? 'PASSED' : 'FAILED'}`);
+        console.log(`- ${agentId}: ${result.passed ? "PASSED" : "FAILED"}`);
         if (!result.passed) {
-          console.log(`  Errors: ${result.errors.slice(0, 2).join(', ')}`);
+          console.log(`  Errors: ${result.errors.slice(0, 2).join(", ")}`);
         }
       }
     }, 90000);
 
-    it('should handle realistic development scenarios', async () => {
+    it("should handle realistic development scenarios", async () => {
       // Scenario 1: Developer introduces issues
-      fs.writeFileSync(path.join(testWorkspace, 'src', 'buggy-code.ts'), `
+      fs.writeFileSync(
+        path.join(testWorkspace, "src", "buggy-code.ts"),
+        `
 // TODO: This code needs review
 const hardcodedApiKey = "sk-1234567890abcdef";
 
@@ -640,7 +707,8 @@ export function unsafeFunction(userInput: string) {
   // Missing error handling
   return JSON.parse(data);
 }
-`);
+`,
+      );
 
       const scriptRunner = new ScriptRunner(testWorkspace);
       await scriptRunner.initialize();
@@ -648,33 +716,37 @@ export function unsafeFunction(userInput: string) {
       const results = await scriptRunner.runChecks();
 
       // Should detect issues
-      const productionReadiness = results.results.get('production-readiness');
+      const productionReadiness = results.results.get("production-readiness");
       expect(productionReadiness?.passed).toBe(false);
-      expect(productionReadiness?.errors.some((e: string) => e.includes('TODO'))).toBe(true);
+      expect(
+        productionReadiness?.errors.some((e: string) => e.includes("TODO")),
+      ).toBe(true);
 
       // Now fix the issues
-      fs.unlinkSync(path.join(testWorkspace, 'src', 'buggy-code.ts'));
+      fs.unlinkSync(path.join(testWorkspace, "src", "buggy-code.ts"));
 
       // Run again - should pass
       const fixedResults = await scriptRunner.runChecks();
-      const fixedProductionReadiness = fixedResults.results.get('production-readiness');
+      const fixedProductionReadiness = fixedResults.results.get(
+        "production-readiness",
+      );
       expect(fixedProductionReadiness?.passed).toBe(true);
     }, 60000);
 
-    it('should integrate scripts and sub-agents effectively', async () => {
+    it("should integrate scripts and sub-agents effectively", async () => {
       // Create a comprehensive workflow that uses both systems
       const scriptRunner = new ScriptRunner(testWorkspace);
       const subAgentRunner = new SubAgentRunner(testWorkspace);
 
       await Promise.all([
         scriptRunner.initialize(),
-        subAgentRunner.initialize()
+        subAgentRunner.initialize(),
       ]);
 
       // Run both systems
       const [scriptResults, agentResults] = await Promise.all([
         scriptRunner.runChecks(),
-        subAgentRunner.runAllAgents()
+        subAgentRunner.runAllAgents(),
       ]);
 
       // Both should provide complementary analysis
@@ -682,25 +754,28 @@ export function unsafeFunction(userInput: string) {
       expect(agentResults.results.size).toBeGreaterThan(0);
 
       // Some checks should be common between both systems
-      const commonChecks = ['production-readiness', 'build-check'];
-      
-      commonChecks.forEach(checkId => {
+      const commonChecks = ["production-readiness", "build-check"];
+
+      commonChecks.forEach((checkId) => {
         const scriptResult = scriptResults.results.get(checkId);
         const agentResult = agentResults.results.get(checkId);
-        
+
         expect(scriptResult).toBeDefined();
         expect(agentResult).toBeDefined();
-        
+
         // Results should be consistent (both systems checking the same things)
         expect(scriptResult?.passed).toBe(agentResult?.passed);
       });
     }, 120000);
   });
 
-  describe('Error Recovery and Edge Cases', () => {
-    it('should handle corrupted project files gracefully', async () => {
+  describe("Error Recovery and Edge Cases", () => {
+    it("should handle corrupted project files gracefully", async () => {
       // Corrupt package.json
-      fs.writeFileSync(path.join(testWorkspace, 'package.json'), 'invalid json {');
+      fs.writeFileSync(
+        path.join(testWorkspace, "package.json"),
+        "invalid json {",
+      );
 
       const scriptRunner = new ScriptRunner(testWorkspace);
       await scriptRunner.initialize();
@@ -708,14 +783,14 @@ export function unsafeFunction(userInput: string) {
       // Should not crash, but should report errors
       const results = await scriptRunner.runChecks();
       expect(results).toBeDefined();
-      
+
       // Some checks should fail due to corrupted config
       expect(results.allPassed).toBe(false);
     });
 
-    it('should handle missing dependencies gracefully', async () => {
+    it("should handle missing dependencies gracefully", async () => {
       // Remove node_modules if it exists
-      const nodeModulesPath = path.join(testWorkspace, 'node_modules');
+      const nodeModulesPath = path.join(testWorkspace, "node_modules");
       if (fs.existsSync(nodeModulesPath)) {
         fs.rmSync(nodeModulesPath, { recursive: true, force: true });
       }
@@ -726,31 +801,34 @@ export function unsafeFunction(userInput: string) {
       // Should handle missing dependencies without crashing
       const results = await subAgentRunner.runAllAgents();
       expect(results).toBeDefined();
-      
+
       // Dependency resolution agent should detect the issue
-      const depResult = results.results.get('dependency-resolution');
+      const depResult = results.results.get("dependency-resolution");
       expect(depResult?.passed).toBe(false);
     });
 
-    it('should handle very large projects within reasonable time', async () => {
+    it("should handle very large projects within reasonable time", async () => {
       // Create many files to test performance
-      const largeSrcDir = path.join(testWorkspace, 'src', 'large');
+      const largeSrcDir = path.join(testWorkspace, "src", "large");
       fs.mkdirSync(largeSrcDir, { recursive: true });
 
       for (let i = 0; i < 50; i++) {
-        fs.writeFileSync(path.join(largeSrcDir, `file${i}.ts`), `
+        fs.writeFileSync(
+          path.join(largeSrcDir, `file${i}.ts`),
+          `
 export function function${i}() {
   return ${i};
 }
-`);
+`,
+        );
       }
 
       const startTime = Date.now();
-      
+
       const scriptRunner = new ScriptRunner(testWorkspace);
       await scriptRunner.initialize();
       const results = await scriptRunner.runChecks();
-      
+
       const endTime = Date.now();
       const executionTime = endTime - startTime;
 

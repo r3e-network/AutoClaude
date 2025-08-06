@@ -63,7 +63,7 @@ The hook system will provide automated pre and post-operation triggers to enhanc
 ```typescript
 interface Hook {
   name: string;
-  type: 'pre' | 'post';
+  type: "pre" | "post";
   operation: string;
   priority: number;
   enabled: boolean;
@@ -89,6 +89,7 @@ interface HookResult {
 ## Priority System
 
 Hooks execute in priority order (lower number = higher priority):
+
 - 0-99: Critical system hooks
 - 100-199: Validation hooks
 - 200-299: Enhancement hooks
@@ -124,6 +125,7 @@ Hooks can be configured in `.autoclaude/hooks.json`:
 ## Neo-rs Specific Hooks
 
 ### Conversion Pipeline Hooks
+
 1. **pre-analyze-csharp** - Prepares C# code for analysis
 2. **post-parse-csharp** - Processes parsed C# AST
 3. **pre-generate-rust** - Prepares Rust code generation
@@ -131,6 +133,7 @@ Hooks can be configured in `.autoclaude/hooks.json`:
 5. **post-test-conversion** - Compares test results
 
 ### Validation Hooks
+
 1. **validate-type-mapping** - Ensures C# types map correctly to Rust
 2. **validate-api-compatibility** - Checks API surface equivalence
 3. **validate-memory-safety** - Ensures Rust memory safety rules

@@ -7,6 +7,7 @@ AutoClaude now includes powerful enterprise-grade features specifically designed
 ## 🧠 Enhanced Memory System
 
 ### **Persistent Learning & Pattern Recognition**
+
 - **SQLite-Based Storage**: Persistent database with 7 specialized tables
 - **Pattern Learning**: Automatically learns from successful C# to Rust conversions
 - **Type Mapping System**: Built-in mappings for 25+ common types and Neo-specific types
@@ -14,21 +15,23 @@ AutoClaude now includes powerful enterprise-grade features specifically designed
 - **Agent Memory**: Persistent memory for agent coordination and learning
 
 ### **Key Features:**
+
 ```typescript
 // Automatic pattern learning
 await memoryManager.recordPattern(
-    'public class User { }',
-    'pub struct User { }', 
-    'syntax',
-    0.95
+  "public class User { }",
+  "pub struct User { }",
+  "syntax",
+  0.95,
 );
 
 // Neo-specific type mappings
-await memoryManager.getTypeMapping('UInt256', 'Neo'); 
+await memoryManager.getTypeMapping("UInt256", "Neo");
 // Returns: { rust_type: 'U256', confidence: 0.95 }
 ```
 
 ### **Performance Optimizations:**
+
 - Database indexing for fast pattern retrieval
 - Transaction support with rollback capabilities
 - Automatic maintenance and pruning
@@ -38,19 +41,21 @@ await memoryManager.getTypeMapping('UInt256', 'Neo');
 ## 🤖 Advanced Agent Coordination System
 
 ### **Multi-Agent Architecture**
+
 - **Converter Agent**: Specialized C# to Rust conversion with pattern learning
 - **Validator Agent**: Code validation with Neo-rs compatibility checking
 - **Task Coordination**: Intelligent task distribution and priority management
 - **Failure Recovery**: Automatic retry logic and error escalation
 
 ### **Agent Capabilities:**
+
 ```typescript
 // Submit tasks to agent system
 const taskId = await agentCoordinator.submitTask({
-    type: 'convert-file',
-    priority: 5,
-    description: 'Convert Neo.VM module to Rust',
-    input: { filePath: 'VM.cs', content: '...' }
+  type: "convert-file",
+  priority: 5,
+  description: "Convert Neo.VM module to Rust",
+  input: { filePath: "VM.cs", content: "..." },
 });
 
 // Monitor agent status
@@ -59,6 +64,7 @@ const status = await agentCoordinator.getAgentStatus();
 ```
 
 ### **Coordination Features:**
+
 - **Parallel Processing**: Multiple agents working simultaneously
 - **Load Balancing**: Automatic task distribution based on agent capacity
 - **Real-time Monitoring**: Live status updates and performance tracking
@@ -67,12 +73,14 @@ const status = await agentCoordinator.getAgentStatus();
 ## 🔗 Production Hook System
 
 ### **Automated Workflow Hooks**
+
 - **Pre/Post Processing**: Hooks execute before and after operations
 - **Built-in Hooks**: Syntax validation, auto-formatting, pattern learning
 - **Custom Hooks**: Support for user-defined automation hooks
 - **Priority System**: Configurable execution order with blocking/non-blocking options
 
 ### **Available Hooks:**
+
 1. **Syntax Validation Hook**
    - Validates C# and Rust syntax
    - Detects common issues and provides warnings
@@ -94,33 +102,37 @@ const status = await agentCoordinator.getAgentStatus();
    - Generates compatibility reports
 
 ### **Hook Configuration:**
+
 ```typescript
 // Enable specific hooks
 const config = {
-    hooks: {
-        enabled: true,
-        validateSyntax: true,
-        autoFormat: true,
-        learnPatterns: true
-    }
+  hooks: {
+    enabled: true,
+    validateSyntax: true,
+    autoFormat: true,
+    learnPatterns: true,
+  },
 };
 ```
 
 ## 📊 System Monitoring & Analytics
 
 ### **Real-Time Metrics**
+
 - **System Performance**: CPU, memory, disk usage monitoring
 - **AutoClaude Metrics**: Agent activity, queue status, error rates
 - **Conversion Statistics**: Success rates, performance tracking
 - **Memory Usage**: Database size, pattern counts, learning statistics
 
 ### **Alert System**
+
 - **Configurable Thresholds**: CPU, memory, disk, error rate alerts
 - **VS Code Notifications**: Real-time alerts for critical issues
 - **Performance Dashboard**: Comprehensive system health overview
 - **Export Capabilities**: Metrics export for external analysis
 
 ### **Monitoring Commands:**
+
 ```bash
 # View system dashboard
 AutoClaude: Show System Monitor
@@ -135,12 +147,14 @@ AutoClaude: Show Agent Status
 ## ⚙️ Enhanced Configuration System
 
 ### **Environment Auto-Detection**
+
 - **Neo-rs Detection**: Automatically detects neo-rs projects
 - **Toolchain Validation**: Verifies Rust and .NET SDK availability
 - **Branch-Aware**: Different settings for neo-rs vs main branches
 - **Workspace Isolation**: Per-workspace configuration management
 
 ### **Configuration Features:**
+
 ```json
 {
   "neoRs": {
@@ -166,20 +180,23 @@ AutoClaude: Show Agent Status
 ## 🛠️ Neo-rs Specific Features
 
 ### **C# to Rust Conversion Excellence**
+
 - **100% Neo N3 Compatibility**: Ensures perfect compatibility with C# implementation
 - **Type System Mapping**: Comprehensive type mappings for Neo-specific types
 - **Pattern Recognition**: Learns conversion patterns specific to Neo codebase
 - **Validation Pipeline**: Multi-stage validation for conversion accuracy
 
 ### **Neo-Specific Type Mappings:**
+
 - `UInt160` → `U160`
-- `UInt256` → `U256` 
+- `UInt256` → `U256`
 - `ECPoint` → `PublicKey`
 - `BigInteger` → `num_bigint::BigInt`
 - `StackItem` → `StackItem`
 - And 20+ more built-in mappings
 
 ### **Conversion Features:**
+
 - **Parallel Processing**: Convert multiple files simultaneously
 - **Incremental Learning**: Improves accuracy with each conversion
 - **Compatibility Reports**: Detailed analysis of conversion accuracy
@@ -188,6 +205,7 @@ AutoClaude: Show Agent Status
 ## 📈 Performance & Reliability
 
 ### **Enterprise-Grade Features:**
+
 - **Transaction Support**: Database transactions with rollback
 - **Error Recovery**: Comprehensive error handling and recovery
 - **Resource Management**: Automatic cleanup and memory management
@@ -195,6 +213,7 @@ AutoClaude: Show Agent Status
 - **Performance Optimization**: Indexing, caching, and query optimization
 
 ### **Reliability Metrics:**
+
 - **Zero Downtime**: System continues operating during errors
 - **Fault Tolerance**: Graceful degradation when components fail
 - **Data Integrity**: ACID compliance for all database operations
@@ -203,6 +222,7 @@ AutoClaude: Show Agent Status
 ## 🚀 Getting Started with Enhanced Features
 
 ### **1. Enable Enhanced Systems**
+
 ```typescript
 // In VS Code settings
 {
@@ -214,12 +234,14 @@ AutoClaude: Show Agent Status
 ```
 
 ### **2. Neo-rs Project Setup**
+
 1. Open a workspace containing neo-rs code
 2. AutoClaude automatically detects neo-rs environment
 3. Enhanced features activate automatically
 4. Monitor progress via status commands
 
 ### **3. Available Commands**
+
 - `AutoClaude: Submit Agent Task` - Submit tasks to agent system
 - `AutoClaude: Show Agent Status` - View real-time agent activity
 - `AutoClaude: Show Memory Stats` - View learning and pattern statistics
@@ -229,11 +251,13 @@ AutoClaude: Show Agent Status
 ## 📋 System Requirements
 
 ### **Required:**
+
 - VS Code 1.60+
 - Node.js 16+
 - SQLite3 (for memory system)
 
 ### **Optional (for Neo-rs features):**
+
 - Rust toolchain (rustc, cargo)
 - .NET SDK 6.0+
 - Git (for branch detection)
@@ -241,6 +265,7 @@ AutoClaude: Show Agent Status
 ## 🔧 Configuration Options
 
 ### **Memory System:**
+
 ```json
 {
   "memory": {
@@ -254,6 +279,7 @@ AutoClaude: Show Agent Status
 ```
 
 ### **Agent System:**
+
 ```json
 {
   "agents": {
@@ -267,6 +293,7 @@ AutoClaude: Show Agent Status
 ```
 
 ### **Hook System:**
+
 ```json
 {
   "hooks": {
@@ -282,12 +309,14 @@ AutoClaude: Show Agent Status
 ## 📊 Performance Benchmarks
 
 ### **Conversion Performance:**
+
 - **Speed**: 10x faster pattern matching with indexed database
 - **Accuracy**: 95%+ accuracy with learned patterns
 - **Memory**: <100MB memory usage for large projects
 - **Scalability**: Handles 1000+ file projects efficiently
 
 ### **System Performance:**
+
 - **Startup**: <2 seconds initialization time
 - **Response**: <100ms average query response time
 - **Throughput**: 50+ conversions per minute
@@ -296,12 +325,14 @@ AutoClaude: Show Agent Status
 ## 🔍 Troubleshooting
 
 ### **Common Issues:**
+
 1. **Memory system not initializing**: Check SQLite3 installation
 2. **Agents not starting**: Verify workspace permissions
 3. **Hooks not executing**: Check hook configuration and timeouts
 4. **Neo-rs detection failing**: Ensure project structure is correct
 
 ### **Debug Commands:**
+
 - `AutoClaude: Show Service Health` - System health check
 - `AutoClaude: Export Logs` - Detailed logging information
 - `AutoClaude: Validate Configuration` - Configuration validation
@@ -310,6 +341,7 @@ AutoClaude: Show Agent Status
 ## 🎯 Use Cases
 
 ### **Perfect for:**
+
 - **Neo-rs Development**: C# to Rust conversion with 100% compatibility
 - **Large Scale Projects**: Enterprise projects with hundreds of files
 - **Team Development**: Shared learning and pattern recognition
@@ -317,6 +349,7 @@ AutoClaude: Show Agent Status
 - **Code Migration**: Legacy code modernization projects
 
 ### **Enterprise Benefits:**
+
 - **Reduced Development Time**: 70% faster conversion cycles
 - **Improved Accuracy**: Learning system reduces manual corrections
 - **Team Collaboration**: Shared knowledge base and patterns
@@ -325,4 +358,4 @@ AutoClaude: Show Agent Status
 
 ---
 
-*AutoClaude Enhanced Features - Bringing enterprise-grade automation to Neo-rs development*
+_AutoClaude Enhanced Features - Bringing enterprise-grade automation to Neo-rs development_

@@ -16,21 +16,21 @@ The Universal Language Conversion System extends AutoClaude's capabilities far b
 
 ### Currently Supported
 
-| Source Language | Target Language | Maturity | Special Features |
-|----------------|-----------------|----------|------------------|
-| **C#** | **Rust** | 🟢 Production | Neo-rs ecosystem, 25+ type mappings |
-| **JavaScript** | **TypeScript** | 🟢 Production | Type annotation, modern syntax |
-| **Python** | **Rust** | 🟡 Beta | Performance optimization focus |
-| **Java** | **Kotlin** | 🟡 Beta | JVM ecosystem, null safety |
+| Source Language | Target Language | Maturity      | Special Features                    |
+| --------------- | --------------- | ------------- | ----------------------------------- |
+| **C#**          | **Rust**        | 🟢 Production | Neo-rs ecosystem, 25+ type mappings |
+| **JavaScript**  | **TypeScript**  | 🟢 Production | Type annotation, modern syntax      |
+| **Python**      | **Rust**        | 🟡 Beta       | Performance optimization focus      |
+| **Java**        | **Kotlin**      | 🟡 Beta       | JVM ecosystem, null safety          |
 
 ### Planned Language Pairs
 
-| Source Language | Target Language | Status | Expected Release |
-|----------------|-----------------|--------|------------------|
-| **Go** | **Rust** | 🔵 Planned | Q2 2024 |
-| **C++** | **Rust** | 🔵 Planned | Q2 2024 |
-| **Swift** | **Kotlin** | 🔵 Planned | Q3 2024 |
-| **PHP** | **TypeScript** | 🔵 Planned | Q3 2024 |
+| Source Language | Target Language | Status     | Expected Release |
+| --------------- | --------------- | ---------- | ---------------- |
+| **Go**          | **Rust**        | 🔵 Planned | Q2 2024          |
+| **C++**         | **Rust**        | 🔵 Planned | Q2 2024          |
+| **Swift**       | **Kotlin**      | 🔵 Planned | Q3 2024          |
+| **PHP**         | **TypeScript**  | 🔵 Planned | Q3 2024          |
 
 ## 🧠 Architecture
 
@@ -40,20 +40,24 @@ The `UniversalConverterAgent` is the core component responsible for multi-langua
 
 ```typescript
 // Automatic language detection and conversion
-const converter = new UniversalConverterAgent('universal-converter', workspacePath);
+const converter = new UniversalConverterAgent(
+  "universal-converter",
+  workspacePath,
+);
 await converter.initialize();
 
 const result = await converter.processTask({
-    type: 'convert-file',
-    input: {
-        filePath: 'example.cs',
-        content: csharpCode,
-        targetLanguage: 'rust'
-    }
+  type: "convert-file",
+  input: {
+    filePath: "example.cs",
+    content: csharpCode,
+    targetLanguage: "rust",
+  },
 });
 ```
 
 **Key Features:**
+
 - Automatic source language detection
 - Target language inference from context
 - Pattern-based conversion with learning
@@ -65,21 +69,25 @@ const result = await converter.processTask({
 The `UniversalValidatorAgent` provides comprehensive validation for all conversions:
 
 ```typescript
-const validator = new UniversalValidatorAgent('universal-validator', workspacePath);
+const validator = new UniversalValidatorAgent(
+  "universal-validator",
+  workspacePath,
+);
 await validator.initialize();
 
 const validationResult = await validator.processTask({
-    type: 'validate-conversion',
-    input: {
-        originalCode: sourceCode,
-        originalLanguage: 'csharp',
-        convertedCode: rustCode,
-        convertedLanguage: 'rust'
-    }
+  type: "validate-conversion",
+  input: {
+    originalCode: sourceCode,
+    originalLanguage: "csharp",
+    convertedCode: rustCode,
+    convertedLanguage: "rust",
+  },
 });
 ```
 
 **Validation Features:**
+
 - Syntax validation for all supported languages
 - Structural integrity verification
 - Type mapping validation
@@ -96,12 +104,12 @@ const hook = new UniversalValidationHook();
 
 // Automatically validates conversions
 const result = await hook.execute({
-    operation: 'post-conversion',
-    input: {
-        originalCode: sourceCode,
-        convertedCode: targetCode,
-        metadata: { sourceLanguage: 'python', targetLanguage: 'rust' }
-    }
+  operation: "post-conversion",
+  input: {
+    originalCode: sourceCode,
+    convertedCode: targetCode,
+    metadata: { sourceLanguage: "python", targetLanguage: "rust" },
+  },
 });
 ```
 
@@ -146,14 +154,20 @@ The system automatically detects project environments and enables relevant featu
 
 ```typescript
 // Automatically detects C# + Rust project
-if (detectedLanguages.includes('csharp') && detectedLanguages.includes('rust')) {
-    this.config.neoRs.enabled = true;
-    debugLog('C# and Rust detected - enabling Neo-rs features');
+if (
+  detectedLanguages.includes("csharp") &&
+  detectedLanguages.includes("rust")
+) {
+  this.config.neoRs.enabled = true;
+  debugLog("C# and Rust detected - enabling Neo-rs features");
 }
 
 // Enables JavaScript to TypeScript conversion
-if (detectedLanguages.includes('javascript') && !detectedLanguages.includes('typescript')) {
-    debugLog('JavaScript project detected - TypeScript conversion available');
+if (
+  detectedLanguages.includes("javascript") &&
+  !detectedLanguages.includes("typescript")
+) {
+  debugLog("JavaScript project detected - TypeScript conversion available");
 }
 ```
 
@@ -162,6 +176,7 @@ if (detectedLanguages.includes('javascript') && !detectedLanguages.includes('typ
 ### C# to Rust (Neo-rs Optimized)
 
 **Special Features:**
+
 - Neo blockchain type mappings (UInt160, UInt256, ECPoint)
 - ApplicationEngine integration patterns
 - Storage operation conversions
@@ -169,6 +184,7 @@ if (detectedLanguages.includes('javascript') && !detectedLanguages.includes('typ
 - Smart contract compatibility validation
 
 **Example Conversion:**
+
 ```csharp
 // C# Input
 public class NeoContract {
@@ -196,49 +212,52 @@ impl NeoContract {
 ### JavaScript to TypeScript
 
 **Special Features:**
+
 - Automatic type inference and annotation
 - Modern syntax conversion (ES6+)
 - Null safety improvements
 - Interface generation from usage patterns
 
 **Example Conversion:**
+
 ```javascript
 // JavaScript Input
 function processUser(user) {
-    return {
-        id: user.id,
-        name: user.name.toUpperCase(),
-        isActive: user.lastLogin > Date.now() - 86400000
-    };
+  return {
+    id: user.id,
+    name: user.name.toUpperCase(),
+    isActive: user.lastLogin > Date.now() - 86400000,
+  };
 }
 ```
 
 ```typescript
 // TypeScript Output
 interface User {
-    id: number;
-    name: string;
-    lastLogin: number;
+  id: number;
+  name: string;
+  lastLogin: number;
 }
 
 interface ProcessedUser {
-    id: number;
-    name: string;
-    isActive: boolean;
+  id: number;
+  name: string;
+  isActive: boolean;
 }
 
 function processUser(user: User): ProcessedUser {
-    return {
-        id: user.id,
-        name: user.name.toUpperCase(),
-        isActive: user.lastLogin > Date.now() - 86400000
-    };
+  return {
+    id: user.id,
+    name: user.name.toUpperCase(),
+    isActive: user.lastLogin > Date.now() - 86400000,
+  };
 }
 ```
 
 ### Python to Rust
 
 **Special Features:**
+
 - Performance-focused conversions
 - Memory safety improvements
 - Async/await pattern translation
@@ -247,6 +266,7 @@ function processUser(user: User): ProcessedUser {
 ### Java to Kotlin
 
 **Special Features:**
+
 - Null safety conversion
 - Data class generation
 - Extension function patterns
@@ -266,6 +286,7 @@ function processUser(user: User): ProcessedUser {
 ### Confidence Scoring
 
 Each conversion receives a confidence score based on:
+
 - Pattern match accuracy
 - Type mapping completeness
 - Structural similarity
@@ -290,10 +311,10 @@ The system learns from successful conversions to improve future results:
 ```typescript
 // Pattern learning example
 await memoryManager.recordPattern(
-    'public class {className}',
-    'pub struct {className}',
-    'csharp_to_rust_class_conversion',
-    0.95 // confidence
+  "public class {className}",
+  "pub struct {className}",
+  "csharp_to_rust_class_conversion",
+  0.95, // confidence
 );
 ```
 
@@ -309,74 +330,74 @@ await memoryManager.recordPattern(
 ### Basic File Conversion
 
 ```typescript
-import { UniversalConverterAgent } from './agents/UniversalConverterAgent';
+import { UniversalConverterAgent } from "./agents/UniversalConverterAgent";
 
-const converter = new UniversalConverterAgent('converter-1', workspacePath);
+const converter = new UniversalConverterAgent("converter-1", workspacePath);
 await converter.initialize();
 
 const result = await converter.processTask({
-    type: 'convert-file',
-    input: {
-        filePath: 'MyClass.cs',
-        content: csharpCode
-        // sourceLanguage and targetLanguage auto-detected
-    }
+  type: "convert-file",
+  input: {
+    filePath: "MyClass.cs",
+    content: csharpCode,
+    // sourceLanguage and targetLanguage auto-detected
+  },
 });
 
-console.log('Converted code:', result.output.convertedContent);
-console.log('Confidence:', result.output.confidence);
+console.log("Converted code:", result.output.convertedContent);
+console.log("Confidence:", result.output.confidence);
 ```
 
 ### Batch Conversion
 
 ```typescript
-import { AgentCoordinator } from './agents/AgentCoordinator';
+import { AgentCoordinator } from "./agents/AgentCoordinator";
 
 const coordinator = new AgentCoordinator(workspacePath);
 await coordinator.initialize();
 
 // Convert multiple files
-const tasks = files.map(file => ({
-    type: 'convert-file',
-    priority: 5,
-    description: `Convert ${file.name}`,
-    input: {
-        filePath: file.path,
-        content: file.content,
-        sourceLanguage: 'javascript',
-        targetLanguage: 'typescript'
-    }
+const tasks = files.map((file) => ({
+  type: "convert-file",
+  priority: 5,
+  description: `Convert ${file.name}`,
+  input: {
+    filePath: file.path,
+    content: file.content,
+    sourceLanguage: "javascript",
+    targetLanguage: "typescript",
+  },
 }));
 
 for (const task of tasks) {
-    const taskId = await coordinator.submitTask(task);
-    console.log(`Submitted task: ${taskId}`);
+  const taskId = await coordinator.submitTask(task);
+  console.log(`Submitted task: ${taskId}`);
 }
 ```
 
 ### Custom Validation
 
 ```typescript
-import { UniversalValidatorAgent } from './agents/UniversalValidatorAgent';
+import { UniversalValidatorAgent } from "./agents/UniversalValidatorAgent";
 
-const validator = new UniversalValidatorAgent('validator-1', workspacePath);
+const validator = new UniversalValidatorAgent("validator-1", workspacePath);
 await validator.initialize();
 
 const validationResult = await validator.processTask({
-    type: 'validate-conversion',
-    input: {
-        originalCode: pythonCode,
-        originalLanguage: 'python',
-        convertedCode: rustCode,
-        convertedLanguage: 'rust',
-        validationLevel: 'strict'
-    }
+  type: "validate-conversion",
+  input: {
+    originalCode: pythonCode,
+    originalLanguage: "python",
+    convertedCode: rustCode,
+    convertedLanguage: "rust",
+    validationLevel: "strict",
+  },
 });
 
 if (validationResult.output.isValid) {
-    console.log('Conversion validated successfully!');
+  console.log("Conversion validated successfully!");
 } else {
-    console.log('Issues found:', validationResult.output.issues);
+  console.log("Issues found:", validationResult.output.issues);
 }
 ```
 
@@ -387,21 +408,23 @@ if (validationResult.output.isValid) {
 To add support for a new language pair:
 
 1. **Update Configuration**:
+
 ```typescript
 const newPair = {
-    from: 'go',
-    to: 'rust',
-    name: 'Go to Rust',
-    typeMappings: {
-        'string': 'String',
-        'int': 'i32',
-        // ... additional mappings
-    },
-    specialValidation: true
+  from: "go",
+  to: "rust",
+  name: "Go to Rust",
+  typeMappings: {
+    string: "String",
+    int: "i32",
+    // ... additional mappings
+  },
+  specialValidation: true,
 };
 ```
 
 2. **Implement Converter**:
+
 ```typescript
 private getGoToRustConverter(conversionPair: any) {
     return {
@@ -414,15 +437,16 @@ private getGoToRustConverter(conversionPair: any) {
 ```
 
 3. **Add Validation Rules**:
+
 ```typescript
-this.validationRules.set('go', {
-    syntaxPatterns: {
-        functionDeclaration: /func\s+\w+\s*\([^)]*\)/,
-        // ... additional patterns
-    },
-    commonErrors: [
-        { pattern: /\bnil\b/, message: 'Use Option<T> instead of nil in Rust' }
-    ]
+this.validationRules.set("go", {
+  syntaxPatterns: {
+    functionDeclaration: /func\s+\w+\s*\([^)]*\)/,
+    // ... additional patterns
+  },
+  commonErrors: [
+    { pattern: /\bnil\b/, message: "Use Option<T> instead of nil in Rust" },
+  ],
 });
 ```
 
@@ -432,21 +456,21 @@ Create custom validation hooks for specific requirements:
 
 ```typescript
 export class CustomValidationHook extends UniversalValidationHook {
-    async execute(context: HookContext): Promise<HookResult> {
-        // Custom validation logic
-        const baseResult = await super.execute(context);
-        
-        // Add custom checks
-        const customValidation = await this.performCustomValidation(context.input);
-        
-        return {
-            ...baseResult,
-            metadata: {
-                ...baseResult.metadata,
-                customValidation
-            }
-        };
-    }
+  async execute(context: HookContext): Promise<HookResult> {
+    // Custom validation logic
+    const baseResult = await super.execute(context);
+
+    // Add custom checks
+    const customValidation = await this.performCustomValidation(context.input);
+
+    return {
+      ...baseResult,
+      metadata: {
+        ...baseResult.metadata,
+        customValidation,
+      },
+    };
+  }
 }
 ```
 
@@ -469,9 +493,9 @@ Monitor system performance through the built-in dashboard:
 ```typescript
 // View system statistics
 const stats = await coordinator.getSystemStats();
-console.log('Total conversions:', stats.totalConversions);
-console.log('Average confidence:', stats.averageConfidence);
-console.log('Top language pairs:', stats.topLanguagePairs);
+console.log("Total conversions:", stats.totalConversions);
+console.log("Average confidence:", stats.averageConfidence);
+console.log("Top language pairs:", stats.topLanguagePairs);
 ```
 
 ## 🛡️ Security
@@ -503,11 +527,13 @@ All conversions include security analysis:
 ### Basic Setup
 
 1. **Enable Universal Conversion**:
+
    ```json
    "autoclaude.enhanced.languageConversion.enabled": true
    ```
 
 2. **Configure Language Pairs**:
+
    ```json
    "autoclaude.enhanced.languageConversion.supportedPairs": [
      {
@@ -579,6 +605,7 @@ For enterprise deployments:
 ### Community Contributions
 
 We welcome contributions for:
+
 - New language pair implementations
 - Validation rule improvements
 - Pattern optimization

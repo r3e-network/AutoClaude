@@ -13,6 +13,7 @@ AutoClaude's Parallel Agent Farm now includes **fully automatic orchestration** 
 ## 🤖 How Automatic Orchestration Works
 
 ### 1. **Automatic Work Detection**
+
 - Scans your codebase for issues on startup
 - Runs type checking, linting, and tests
 - Detects TODOs, FIXMEs, and incomplete implementations
@@ -20,6 +21,7 @@ AutoClaude's Parallel Agent Farm now includes **fully automatic orchestration** 
 - Calculates optimal agent count based on workload
 
 ### 2. **Automatic Agent Management**
+
 - Starts the right number of agents for your workload
 - Scales up when work queue grows
 - Scales down when agents are idle
@@ -27,6 +29,7 @@ AutoClaude's Parallel Agent Farm now includes **fully automatic orchestration** 
 - Manages context usage proactively
 
 ### 3. **Automatic Work Distribution**
+
 - Assigns tasks to idle agents intelligently
 - Prevents conflicts between agents
 - Redistributes stale work automatically
@@ -34,6 +37,7 @@ AutoClaude's Parallel Agent Farm now includes **fully automatic orchestration** 
 - Balances workload across all agents
 
 ### 4. **Automatic Progress Monitoring**
+
 - Real-time dashboard updates
 - Progress notifications
 - Completion detection
@@ -41,6 +45,7 @@ AutoClaude's Parallel Agent Farm now includes **fully automatic orchestration** 
 - Automatic report generation
 
 ### 5. **Automatic Completion & Shutdown**
+
 - Detects when all work is complete
 - Generates final report
 - Gracefully shuts down agents
@@ -56,15 +61,15 @@ All automation features can be configured in VS Code settings:
   // Master switches
   "autoclaude.parallelAgents.enabled": true,
   "autoclaude.parallelAgents.autoStart": true,
-  
+
   // Automation features
   "autoclaude.parallelAgents.autoDetectWork": true,
   "autoclaude.parallelAgents.autoScale": true,
   "autoclaude.parallelAgents.autoShutdown": true,
-  
+
   // Timing
   "autoclaude.parallelAgents.workDetectionInterval": 60,
-  
+
   // Limits
   "autoclaude.parallelAgents.maxAgents": 50,
   "autoclaude.parallelAgents.defaultAgents": 5
@@ -74,12 +79,14 @@ All automation features can be configured in VS Code settings:
 ## 📊 Automatic Features in Detail
 
 ### Work Detection
+
 - **Type Checking**: `tsc`, `mypy`, `cargo check`, etc.
 - **Linting**: `eslint`, `ruff`, `golangci-lint`, etc.
 - **Testing**: `jest`, `pytest`, `cargo test`, etc.
 - **Custom Checks**: Your `.autopilot/scripts/` checks
 
 ### Agent Scaling Algorithm
+
 ```
 Work Items | Suggested Agents
 -----------|----------------
@@ -93,6 +100,7 @@ Work Items | Suggested Agents
 ### Automatic Workflows
 
 #### Scenario 1: New Project Setup
+
 ```
 1. Open project in VS Code
 2. Enable auto-orchestration
@@ -106,6 +114,7 @@ Work Items | Suggested Agents
 ```
 
 #### Scenario 2: Pre-Deployment Cleanup
+
 ```
 1. Toggle auto-orchestration ON
 2. System runs all quality checks
@@ -119,6 +128,7 @@ Work Items | Suggested Agents
 ```
 
 #### Scenario 3: Continuous Improvement
+
 ```
 1. Enable with autoStart in settings
 2. Every time VS Code opens:
@@ -134,6 +144,7 @@ Work Items | Suggested Agents
 ### For Maximum Automation
 
 1. **Enable All Auto Features**
+
    ```json
    {
      "autoclaude.parallelAgents.autoStart": true,
@@ -161,6 +172,7 @@ Work Items | Suggested Agents
 ### Monitoring Automation
 
 Even though everything is automatic, you can:
+
 - View real-time progress in the dashboard
 - Check agent status anytime
 - Review generated reports
@@ -169,18 +181,21 @@ Even though everything is automatic, you can:
 ## 🔧 Troubleshooting
 
 ### Agents Not Starting Automatically
+
 - Check if workspace folder is open
 - Verify tmux is installed
 - Ensure Claude Code is accessible
 - Check VS Code output panel for errors
 
 ### Work Not Being Detected
+
 - Verify tech stack is detected correctly
 - Check if problem commands are configured
 - Ensure project has package.json/requirements.txt/etc.
 - Look for compilation/lint command errors
 
 ### Agents Not Scaling
+
 - Check autoScale setting is enabled
 - Verify maxAgents limit not reached
 - Ensure enough system resources
@@ -189,7 +204,9 @@ Even though everything is automatic, you can:
 ## 💡 Advanced Automation
 
 ### Custom Work Detection
+
 Create `.autopilot/detect_work.sh`:
+
 ```bash
 #!/bin/bash
 # Custom work detection script
@@ -198,7 +215,9 @@ echo "src/api.ts:50:10: TODO: Add error handling"
 ```
 
 ### Coordination Protocol
+
 Enable for complex multi-file changes:
+
 ```json
 {
   "autoclaude.parallelAgents.coordinationEnabled": true
@@ -206,24 +225,29 @@ Enable for complex multi-file changes:
 ```
 
 ### Scheduled Automation
+
 Combine with VS Code tasks:
+
 ```json
 {
   "version": "2.0.0",
-  "tasks": [{
-    "label": "Daily Code Cleanup",
-    "type": "shell",
-    "command": "code --command autoclaude.toggleAutoOrchestration",
-    "problemMatcher": []
-  }]
+  "tasks": [
+    {
+      "label": "Daily Code Cleanup",
+      "type": "shell",
+      "command": "code --command autoclaude.toggleAutoOrchestration",
+      "problemMatcher": []
+    }
+  ]
 }
 ```
 
 ## 🎉 The Magic of Full Automation
 
 With automatic orchestration enabled, AutoClaude becomes your:
+
 - **24/7 Code Quality Guardian**
-- **Automatic Technical Debt Eliminator**  
+- **Automatic Technical Debt Eliminator**
 - **Continuous Improvement Engine**
 - **Zero-Touch Deployment Preparer**
 
@@ -239,6 +263,7 @@ Just toggle it on, and let the AI army handle the rest!
 ## 🚦 Status Indicators
 
 The system provides clear status updates:
+
 - 🟢 **Running**: Agents actively working
 - 🟡 **Detecting**: Scanning for work
 - 🔵 **Scaling**: Adjusting agent count

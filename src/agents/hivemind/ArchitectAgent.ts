@@ -1,289 +1,371 @@
-import { HiveMindAgent, AgentRole, HiveMindTask, HiveMindResult } from './types';
-import { log } from '../../utils/productionLogger';
-import * as vscode from 'vscode';
-import * as path from 'path';
+import {
+  HiveMindAgent,
+  AgentRole,
+  HiveMindTask,
+  HiveMindResult,
+} from "./types";
+import { log } from "../../utils/productionLogger";
+import * as vscode from "vscode";
+import * as path from "path";
+import {
+  ArchitectureAnalysis,
+  ProjectStructure,
+  OpenAPISpec,
+  ServerInfo,
+  DatabaseSchema,
+  TableDefinition,
+  Migration,
+  ResponseObject,
+} from "../../types/architect";
+import { ArchitectTask, ArchitectResult } from "../../types/hivemind-architect";
 
 /**
  * Architect Agent - Specializes in system design and architecture
  */
 export default class ArchitectAgent implements HiveMindAgent {
-    id = 'architect-agent';
-    name = 'Architect Agent';
-    role = AgentRole.ARCHITECT;
-    capabilities = [
-        'system-design',
-        'architecture-planning',
-        'api-design',
-        'database-schema',
-        'component-design',
-        'dependency-analysis',
-        'performance-planning'
-    ];
-    
-    constructor(private workspaceRoot: string) {}
-    
-    async initialize(): Promise<void> {
-        log.info('Architect Agent initialized');
+  id = "architect-agent";
+  name = "Architect Agent";
+  role = AgentRole.ARCHITECT;
+  capabilities = [
+    "system-design",
+    "architecture-planning",
+    "api-design",
+    "database-schema",
+    "component-design",
+    "dependency-analysis",
+    "performance-planning",
+  ];
+
+  constructor(private workspaceRoot: string) {}
+
+  async initialize(): Promise<void> {
+    log.info("Architect Agent initialized");
+  }
+
+  async execute(task: HiveMindTask): Promise<HiveMindResult> {
+    log.info("Architect Agent executing task", {
+      taskId: task.id,
+      type: task.type,
+    });
+
+    try {
+      switch (task.type) {
+        case "architecture-design":
+          return await this.designArchitecture(task);
+        case "api-design":
+          return await this.designAPI(task);
+        case "database-schema":
+          return await this.designDatabaseSchema(task);
+        case "component-design":
+          return await this.designComponent(task);
+        default:
+          return await this.genericDesign(task);
+      }
+    } catch (error) {
+      log.error("Architect Agent execution failed", error as Error);
+      return {
+        success: false,
+        error: (error as Error).message,
+      };
     }
-    
-    async execute(task: HiveMindTask): Promise<HiveMindResult> {
-        log.info('Architect Agent executing task', { taskId: task.id, type: task.type });
-        
-        try {
-            switch (task.type) {
-                case 'architecture-design':
-                    return await this.designArchitecture(task);
-                case 'api-design':
-                    return await this.designAPI(task);
-                case 'database-schema':
-                    return await this.designDatabaseSchema(task);
-                case 'component-design':
-                    return await this.designComponent(task);
-                default:
-                    return await this.genericDesign(task);
-            }
-        } catch (error) {
-            log.error('Architect Agent execution failed', error as Error);
-            return {
-                success: false,
-                error: (error as Error).message
-            };
-        }
+  }
+
+  private async designArchitecture(
+    task: HiveMindTask,
+  ): Promise<HiveMindResult> {
+    const artifacts = [];
+
+    // Analyze project structure
+    const projectStructure = await this.analyzeProjectStructure();
+    const analysis = this.convertToArchitectureAnalysis(projectStructure);
+
+    // Create architecture document
+    const architectureDoc = this.generateArchitectureDocument(task, analysis);
+    artifacts.push({
+      type: "documentation" as const,
+      content: architectureDoc,
+      path: path.join(this.workspaceRoot, "docs", "architecture.md"),
+    });
+
+    // Create component diagram
+    const componentDiagram = this.generateComponentDiagram(task, analysis);
+    artifacts.push({
+      type: "documentation" as const,
+      content: componentDiagram,
+      path: path.join(this.workspaceRoot, "docs", "diagrams", "components.md"),
+    });
+
+    // Create folder structure
+    const folderStructure = this.generateFolderStructure(task);
+    artifacts.push({
+      type: "code" as const,
+      content: folderStructure,
+      metadata: { type: "folder-structure" },
+    });
+
+    return {
+      success: true,
+      data: {
+        architecture: analysis,
+        recommendations: this.generateRecommendations(analysis),
+      },
+      artifacts,
+      metrics: {
+        duration: Date.now() - (task.startedAt || Date.now()),
+        filesModified: artifacts.length,
+      },
+    };
+  }
+
+  private async designAPI(task: HiveMindTask): Promise<HiveMindResult> {
+    const artifacts = [];
+
+    // Generate OpenAPI specification
+    const openApiSpec = this.generateOpenAPISpec(task);
+    artifacts.push({
+      type: "documentation" as const,
+      content: JSON.stringify(openApiSpec, null, 2),
+      path: path.join(this.workspaceRoot, "api", "openapi.json"),
+    });
+
+    // Generate API documentation
+    const apiDocs = this.generateAPIDocumentation(openApiSpec);
+    artifacts.push({
+      type: "documentation" as const,
+      content: apiDocs,
+      path: path.join(this.workspaceRoot, "docs", "api.md"),
+    });
+
+    // Generate API client interfaces
+    const clientInterfaces = this.generateClientInterfaces(openApiSpec);
+    artifacts.push({
+      type: "code" as const,
+      content: clientInterfaces,
+      path: path.join(this.workspaceRoot, "src", "api", "interfaces.ts"),
+    });
+
+    return {
+      success: true,
+      data: { openApiSpec },
+      artifacts,
+      metrics: {
+        duration: Date.now() - (task.startedAt || Date.now()),
+        filesModified: artifacts.length,
+      },
+    };
+  }
+
+  private async designDatabaseSchema(
+    task: HiveMindTask,
+  ): Promise<HiveMindResult> {
+    const artifacts = [];
+
+    // Generate schema definition
+    const schema = this.generateDatabaseSchema(task);
+    artifacts.push({
+      type: "code" as const,
+      content: schema.sql,
+      path: path.join(this.workspaceRoot, "database", "schema.sql"),
+    });
+
+    // Generate migration files
+    const migrations = this.generateMigrations(schema);
+    migrations.forEach((migration, index) => {
+      artifacts.push({
+        type: "code" as const,
+        content: migration,
+        path: path.join(
+          this.workspaceRoot,
+          "database",
+          "migrations",
+          `${index + 1}_${migration.name}.sql`,
+        ),
+      });
+    });
+
+    // Generate ORM models
+    const models = this.generateORMModels(schema);
+    artifacts.push({
+      type: "code" as const,
+      content: models,
+      path: path.join(this.workspaceRoot, "src", "models", "index.ts"),
+    });
+
+    return {
+      success: true,
+      data: { schema },
+      artifacts,
+      metrics: {
+        duration: Date.now() - (task.startedAt || Date.now()),
+        filesModified: artifacts.length,
+      },
+    };
+  }
+
+  private async designComponent(task: HiveMindTask): Promise<HiveMindResult> {
+    const componentName = task.context?.componentName || "Component";
+    const artifacts = [];
+
+    // Generate component structure
+    const componentStructure = this.generateComponentStructure(
+      componentName,
+      task,
+    );
+
+    // Create component files
+    for (const [filename, content] of Object.entries(componentStructure)) {
+      artifacts.push({
+        type: "code" as const,
+        content: content as string,
+        path: path.join(
+          this.workspaceRoot,
+          "src",
+          "components",
+          componentName,
+          filename,
+        ),
+      });
     }
-    
-    private async designArchitecture(task: HiveMindTask): Promise<HiveMindResult> {
-        const artifacts = [];
-        
-        // Analyze project structure
-        const analysis = await this.analyzeProjectStructure();
-        
-        // Create architecture document
-        const architectureDoc = this.generateArchitectureDocument(task, analysis);
-        artifacts.push({
-            type: 'documentation' as const,
-            content: architectureDoc,
-            path: path.join(this.workspaceRoot, 'docs', 'architecture.md')
-        });
-        
-        // Create component diagram
-        const componentDiagram = this.generateComponentDiagram(task, analysis);
-        artifacts.push({
-            type: 'documentation' as const,
-            content: componentDiagram,
-            path: path.join(this.workspaceRoot, 'docs', 'diagrams', 'components.md')
-        });
-        
-        // Create folder structure
-        const folderStructure = this.generateFolderStructure(task);
-        artifacts.push({
-            type: 'code' as const,
-            content: folderStructure,
-            metadata: { type: 'folder-structure' }
-        });
-        
-        return {
-            success: true,
-            data: {
-                architecture: analysis,
-                recommendations: this.generateRecommendations(analysis)
-            },
-            artifacts,
-            metrics: {
-                duration: Date.now() - (task.startedAt || Date.now()),
-                filesModified: artifacts.length
-            }
-        };
+
+    // Generate component tests
+    const tests = this.generateComponentTests(componentName);
+    artifacts.push({
+      type: "test" as const,
+      content: tests,
+      path: path.join(
+        this.workspaceRoot,
+        "src",
+        "components",
+        componentName,
+        `${componentName}.test.ts`,
+      ),
+    });
+
+    return {
+      success: true,
+      data: { componentName, structure: componentStructure },
+      artifacts,
+      metrics: {
+        duration: Date.now() - (task.startedAt || Date.now()),
+        filesModified: artifacts.length,
+      },
+    };
+  }
+
+  private async genericDesign(task: HiveMindTask): Promise<HiveMindResult> {
+    // Handle generic design tasks
+    const design = await this.createGenericDesign(task);
+
+    return {
+      success: true,
+      data: { design },
+      artifacts: [
+        {
+          type: "documentation" as const,
+          content: JSON.stringify(design, null, 2),
+          metadata: { designType: task.type },
+        },
+      ],
+      metrics: {
+        duration: Date.now() - (task.startedAt || Date.now()),
+      },
+    };
+  }
+
+  private async analyzeProjectStructure(): Promise<ProjectStructure> {
+    const structure: ProjectStructure = {
+      type: "unknown",
+      hasTests: false,
+      hasDocs: false,
+      hasCI: false,
+      dependencies: [],
+      architecture: "monolithic",
+      layers: [],
+      patterns: [],
+      technologies: {},
+    };
+
+    // Check for common project files
+    const files = await vscode.workspace.findFiles(
+      "**/{package.json,pom.xml,build.gradle,Cargo.toml,go.mod}",
+      "**/node_modules/**",
+      5,
+    );
+
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.path.endsWith("package.json")) {
+        structure.type = "node";
+        const content = await vscode.workspace.fs.readFile(file);
+        const pkg = JSON.parse(content.toString());
+        structure.dependencies = Object.keys(pkg.dependencies || {});
+      } else if (file.path.endsWith("pom.xml")) {
+        structure.type = "java-maven";
+      } else if (file.path.endsWith("build.gradle")) {
+        structure.type = "java-gradle";
+      } else if (file.path.endsWith("Cargo.toml")) {
+        structure.type = "rust";
+      } else if (file.path.endsWith("go.mod")) {
+        structure.type = "go";
+      }
     }
-    
-    private async designAPI(task: HiveMindTask): Promise<HiveMindResult> {
-        const artifacts = [];
-        
-        // Generate OpenAPI specification
-        const openApiSpec = this.generateOpenAPISpec(task);
-        artifacts.push({
-            type: 'documentation' as const,
-            content: JSON.stringify(openApiSpec, null, 2),
-            path: path.join(this.workspaceRoot, 'api', 'openapi.json')
-        });
-        
-        // Generate API documentation
-        const apiDocs = this.generateAPIDocumentation(openApiSpec);
-        artifacts.push({
-            type: 'documentation' as const,
-            content: apiDocs,
-            path: path.join(this.workspaceRoot, 'docs', 'api.md')
-        });
-        
-        // Generate API client interfaces
-        const clientInterfaces = this.generateClientInterfaces(openApiSpec);
-        artifacts.push({
-            type: 'code' as const,
-            content: clientInterfaces,
-            path: path.join(this.workspaceRoot, 'src', 'api', 'interfaces.ts')
-        });
-        
-        return {
-            success: true,
-            data: { openApiSpec },
-            artifacts,
-            metrics: {
-                duration: Date.now() - (task.startedAt || Date.now()),
-                filesModified: artifacts.length
-            }
-        };
-    }
-    
-    private async designDatabaseSchema(task: HiveMindTask): Promise<HiveMindResult> {
-        const artifacts = [];
-        
-        // Generate schema definition
-        const schema = this.generateDatabaseSchema(task);
-        artifacts.push({
-            type: 'code' as const,
-            content: schema.sql,
-            path: path.join(this.workspaceRoot, 'database', 'schema.sql')
-        });
-        
-        // Generate migration files
-        const migrations = this.generateMigrations(schema);
-        migrations.forEach((migration, index) => {
-            artifacts.push({
-                type: 'code' as const,
-                content: migration,
-                path: path.join(this.workspaceRoot, 'database', 'migrations', `${index + 1}_${migration.name}.sql`)
-            });
-        });
-        
-        // Generate ORM models
-        const models = this.generateORMModels(schema);
-        artifacts.push({
-            type: 'code' as const,
-            content: models,
-            path: path.join(this.workspaceRoot, 'src', 'models', 'index.ts')
-        });
-        
-        return {
-            success: true,
-            data: { schema },
-            artifacts,
-            metrics: {
-                duration: Date.now() - (task.startedAt || Date.now()),
-                filesModified: artifacts.length
-            }
-        };
-    }
-    
-    private async designComponent(task: HiveMindTask): Promise<HiveMindResult> {
-        const componentName = task.context?.componentName || 'Component';
-        const artifacts = [];
-        
-        // Generate component structure
-        const componentStructure = this.generateComponentStructure(componentName, task);
-        
-        // Create component files
-        for (const [filename, content] of Object.entries(componentStructure)) {
-            artifacts.push({
-                type: 'code' as const,
-                content: content as string,
-                path: path.join(this.workspaceRoot, 'src', 'components', componentName, filename)
-            });
-        }
-        
-        // Generate component tests
-        const tests = this.generateComponentTests(componentName);
-        artifacts.push({
-            type: 'test' as const,
-            content: tests,
-            path: path.join(this.workspaceRoot, 'src', 'components', componentName, `${componentName}.test.ts`)
-        });
-        
-        return {
-            success: true,
-            data: { componentName, structure: componentStructure },
-            artifacts,
-            metrics: {
-                duration: Date.now() - (task.startedAt || Date.now()),
-                filesModified: artifacts.length
-            }
-        };
-    }
-    
-    private async genericDesign(task: HiveMindTask): Promise<HiveMindResult> {
-        // Handle generic design tasks
-        const design = await this.createGenericDesign(task);
-        
-        return {
-            success: true,
-            data: { design },
-            artifacts: [{
-                type: 'documentation' as const,
-                content: JSON.stringify(design, null, 2),
-                metadata: { designType: task.type }
-            }],
-            metrics: {
-                duration: Date.now() - (task.startedAt || Date.now())
-            }
-        };
-    }
-    
-    private async analyzeProjectStructure(): Promise<any> {
-        const structure: any = {
-            type: 'unknown',
-            hasTests: false,
-            hasDocs: false,
-            hasCI: false,
-            dependencies: [],
-            architecture: 'monolithic'
-        };
-        
-        // Check for common project files
-        const files = await vscode.workspace.findFiles('**/{package.json,pom.xml,build.gradle,Cargo.toml,go.mod}', '**/node_modules/**', 5);
-        
-        if (files.length > 0) {
-            const file = files[0];
-            if (file.path.endsWith('package.json')) {
-                structure.type = 'node';
-                const content = await vscode.workspace.fs.readFile(file);
-                const pkg = JSON.parse(content.toString());
-                structure.dependencies = Object.keys(pkg.dependencies || {});
-            } else if (file.path.endsWith('pom.xml')) {
-                structure.type = 'java-maven';
-            } else if (file.path.endsWith('build.gradle')) {
-                structure.type = 'java-gradle';
-            } else if (file.path.endsWith('Cargo.toml')) {
-                structure.type = 'rust';
-            } else if (file.path.endsWith('go.mod')) {
-                structure.type = 'go';
-            }
-        }
-        
-        // Check for tests
-        const testFiles = await vscode.workspace.findFiles('**/*{test,spec}.{js,ts,java,go,rs}', '**/node_modules/**', 1);
-        structure.hasTests = testFiles.length > 0;
-        
-        // Check for documentation
-        const docFiles = await vscode.workspace.findFiles('**/README.md', null, 1);
-        structure.hasDocs = docFiles.length > 0;
-        
-        // Check for CI
-        const ciFiles = await vscode.workspace.findFiles('**/.{github,gitlab,circleci}/**/*', null, 1);
-        structure.hasCI = ciFiles.length > 0;
-        
-        return structure;
-    }
-    
-    private generateArchitectureDocument(task: HiveMindTask, analysis: any): string {
-        return `# System Architecture
+
+    // Check for tests
+    const testFiles = await vscode.workspace.findFiles(
+      "**/*{test,spec}.{js,ts,java,go,rs}",
+      "**/node_modules/**",
+      1,
+    );
+    structure.hasTests = testFiles.length > 0;
+
+    // Check for documentation
+    const docFiles = await vscode.workspace.findFiles("**/README.md", null, 1);
+    structure.hasDocs = docFiles.length > 0;
+
+    // Check for CI
+    const ciFiles = await vscode.workspace.findFiles(
+      "**/.{github,gitlab,circleci}/**/*",
+      null,
+      1,
+    );
+    structure.hasCI = ciFiles.length > 0;
+
+    return structure;
+  }
+
+  private convertToArchitectureAnalysis(structure: ProjectStructure): ArchitectureAnalysis {
+    return {
+      projectType: structure.type || 'unknown',
+      type: structure.type,
+      architecture: structure.architecture,
+      hasTests: structure.hasTests,
+      hasDocs: structure.hasDocs,
+      hasCI: structure.hasCI,
+      dependencies: structure.dependencies,
+      scalabilityRequirements: [],
+      performanceRequirements: [],
+      securityRequirements: [],
+      components: [],
+      integrations: [],
+      dataFlow: [],
+    };
+  }
+
+  private generateArchitectureDocument(
+    task: HiveMindTask,
+    analysis: ArchitectureAnalysis,
+  ): string {
+    return `# System Architecture
 
 ## Overview
-${task.description || 'System architecture design document'}
+${task.description || "System architecture design document"}
 
 ## Project Type
 - **Type**: ${analysis.type}
 - **Architecture Style**: ${analysis.architecture}
-- **Has Tests**: ${analysis.hasTests ? 'Yes' : 'No'}
-- **Has Documentation**: ${analysis.hasDocs ? 'Yes' : 'No'}
-- **Has CI/CD**: ${analysis.hasCI ? 'Yes' : 'No'}
+- **Has Tests**: ${analysis.hasTests ? "Yes" : "No"}
+- **Has Documentation**: ${analysis.hasDocs ? "Yes" : "No"}
+- **Has CI/CD**: ${analysis.hasCI ? "Yes" : "No"}
 
 ## High-Level Architecture
 
@@ -329,10 +411,10 @@ ${this.generateTechStack(analysis)}
 - Database Sharding
 - Microservices Migration Path
 `;
-    }
-    
-    private generateComponentDiagram(task: HiveMindTask, analysis: any): string {
-        return `# Component Diagram
+  }
+
+  private generateComponentDiagram(task: HiveMindTask, analysis: ArchitectureAnalysis): string {
+    return `# Component Diagram
 
 \`\`\`mermaid
 graph TB
@@ -385,10 +467,10 @@ graph TB
 - Scheduled jobs
 - Event processing
 `;
-    }
-    
-    private generateFolderStructure(task: HiveMindTask): string {
-        return `
+  }
+
+  private generateFolderStructure(task: HiveMindTask): string {
+    return `
 src/
 ├── api/
 │   ├── controllers/
@@ -417,137 +499,148 @@ src/
 │   └── e2e/
 └── index.ts
 `;
+  }
+
+  private generateRecommendations(analysis: ArchitectureAnalysis): string[] {
+    const recommendations = [];
+
+    if (!analysis.hasTests) {
+      recommendations.push(
+        "Add comprehensive test coverage (unit, integration, e2e)",
+      );
     }
-    
-    private generateRecommendations(analysis: any): string[] {
-        const recommendations = [];
-        
-        if (!analysis.hasTests) {
-            recommendations.push('Add comprehensive test coverage (unit, integration, e2e)');
-        }
-        
-        if (!analysis.hasDocs) {
-            recommendations.push('Create comprehensive documentation (README, API docs, architecture docs)');
-        }
-        
-        if (!analysis.hasCI) {
-            recommendations.push('Set up CI/CD pipeline for automated testing and deployment');
-        }
-        
-        if (analysis.dependencies.length > 50) {
-            recommendations.push('Review and optimize dependencies - consider reducing dependency count');
-        }
-        
-        recommendations.push('Implement proper error handling and logging');
-        recommendations.push('Add monitoring and alerting');
-        recommendations.push('Create development environment setup guide');
-        
-        return recommendations;
+
+    if (!analysis.hasDocs) {
+      recommendations.push(
+        "Create comprehensive documentation (README, API docs, architecture docs)",
+      );
     }
-    
-    private generateTechStack(analysis: any): string {
-        const stacks: Record<string, string> = {
-            'node': `
+
+    if (!analysis.hasCI) {
+      recommendations.push(
+        "Set up CI/CD pipeline for automated testing and deployment",
+      );
+    }
+
+    if (analysis.dependencies && analysis.dependencies.length > 50) {
+      recommendations.push(
+        "Review and optimize dependencies - consider reducing dependency count",
+      );
+    }
+
+    recommendations.push("Implement proper error handling and logging");
+    recommendations.push("Add monitoring and alerting");
+    recommendations.push("Create development environment setup guide");
+
+    return recommendations;
+  }
+
+  private generateTechStack(analysis: ArchitectureAnalysis): string {
+    const stacks: Record<string, string> = {
+      node: `
 - **Runtime**: Node.js
 - **Framework**: Express/Fastify/NestJS
 - **Database**: PostgreSQL/MongoDB
 - **Cache**: Redis
 - **Queue**: RabbitMQ/Bull
 - **Testing**: Jest/Mocha`,
-            'java-maven': `
+      "java-maven": `
 - **Language**: Java
 - **Framework**: Spring Boot
 - **Database**: PostgreSQL/MySQL
 - **Cache**: Redis/Hazelcast
 - **Queue**: RabbitMQ/Kafka
 - **Testing**: JUnit/Mockito`,
-            'rust': `
+      rust: `
 - **Language**: Rust
 - **Framework**: Actix/Rocket
 - **Database**: PostgreSQL/SQLite
 - **Cache**: Redis
 - **Queue**: RabbitMQ
 - **Testing**: Built-in testing framework`,
-            'go': `
+      go: `
 - **Language**: Go
 - **Framework**: Gin/Echo/Fiber
 - **Database**: PostgreSQL/MongoDB
 - **Cache**: Redis
 - **Queue**: RabbitMQ/NATS
-- **Testing**: Built-in testing + Testify`
-        };
-        
-        return stacks[analysis.type] || `
+- **Testing**: Built-in testing + Testify`,
+    };
+
+    return (
+      (analysis.type && stacks[analysis.type]) ||
+      `
 - **Language**: [To be determined]
 - **Framework**: [To be determined]
 - **Database**: [To be determined]
 - **Cache**: [To be determined]
 - **Queue**: [To be determined]
-- **Testing**: [To be determined]`;
-    }
-    
-    private generateOpenAPISpec(task: HiveMindTask): any {
-        return {
-            openapi: '3.0.0',
-            info: {
-                title: task.context?.apiName || 'API',
-                version: '1.0.0',
-                description: task.description || 'API specification'
-            },
-            servers: [
-                {
-                    url: 'http://localhost:3000',
-                    description: 'Development server'
+- **Testing**: [To be determined]`
+    );
+  }
+
+  private generateOpenAPISpec(task: HiveMindTask): OpenAPISpec {
+    return {
+      openapi: "3.0.0",
+      info: {
+        title: task.context?.apiName || "API",
+        version: "1.0.0",
+        description: task.description || "API specification",
+      },
+      servers: [
+        {
+          url: process.env.API_URL || "http://localhost:3000",
+          description: "Development server",
+        },
+        {
+          url: "https://api.example.com",
+          description: "Production server",
+        },
+      ],
+      paths: {
+        "/health": {
+          get: {
+            summary: "Health check",
+            responses: {
+              "200": {
+                description: "Service is healthy",
+                content: {
+                  "application/json": {
+                    schema: {
+                      type: "object",
+                      properties: {
+                        status: { type: "string" },
+                        timestamp: { type: "string" },
+                      },
+                    },
+                  },
                 },
-                {
-                    url: 'https://api.example.com',
-                    description: 'Production server'
-                }
-            ],
-            paths: {
-                '/health': {
-                    get: {
-                        summary: 'Health check',
-                        responses: {
-                            '200': {
-                                description: 'Service is healthy',
-                                content: {
-                                    'application/json': {
-                                        schema: {
-                                            type: 'object',
-                                            properties: {
-                                                status: { type: 'string' },
-                                                timestamp: { type: 'string' }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+              },
             },
-            components: {
-                schemas: {},
-                securitySchemes: {
-                    bearerAuth: {
-                        type: 'http',
-                        scheme: 'bearer',
-                        bearerFormat: 'JWT'
-                    }
-                }
-            }
-        };
-    }
-    
-    private generateAPIDocumentation(spec: any): string {
-        return `# API Documentation
+          },
+        },
+      },
+      components: {
+        schemas: {},
+        securitySchemes: {
+          bearerAuth: {
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+          },
+        },
+      },
+    };
+  }
+
+  private generateAPIDocumentation(spec: OpenAPISpec): string {
+    return `# API Documentation
 
 ## Overview
 ${spec.info.description}
 
 ## Base URLs
-${spec.servers.map((s: any) => `- ${s.description}: ${s.url}`).join('\n')}
+${spec.servers.map((s: ServerInfo) => `- ${s.description}: ${s.url}`).join("\n")}
 
 ## Authentication
 This API uses Bearer token authentication. Include the token in the Authorization header:
@@ -557,29 +650,45 @@ Authorization: Bearer <token>
 
 ## Endpoints
 
-${Object.entries(spec.paths).map(([path, methods]: [string, any]) => `
+${Object.entries(spec.paths)
+  .map(
+    ([path, methods]) => `
 ### ${path}
-${Object.entries(methods).map(([method, details]: [string, any]) => `
+${Object.entries(methods)
+  .map(
+    ([method, details]) => `
 **${method.toUpperCase()}** - ${details.summary}
 
 Responses:
-${Object.entries(details.responses).map(([code, response]: [string, any]) => 
-`- ${code}: ${response.description}`).join('\n')}
-`).join('\n')}
-`).join('\n')}
+${Object.entries(details.responses)
+  .map(
+    ([code, response]) => `- ${code}: ${(response as ResponseObject).description}`,
+  )
+  .join("\n")}
+`,
+  )
+  .join("\n")}
+`,
+  )
+  .join("\n")}
 `;
-    }
-    
-    private generateClientInterfaces(spec: any): string {
-        return `// Auto-generated API client interfaces
+  }
+
+  private generateClientInterfaces(spec: OpenAPISpec): string {
+    return `// Auto-generated API client interfaces
 
 export interface APIClient {
-    ${Object.entries(spec.paths).map(([path, methods]: [string, any]) => 
-        Object.entries(methods).map(([method, details]: [string, any]) => {
-            const operationId = details.operationId || `${method}${path.replace(/\//g, '_')}`;
+    ${Object.entries(spec.paths)
+      .map(([path, methods]) =>
+        Object.entries(methods)
+          .map(([method, details]) => {
+            const operationId =
+              details.operationId || `${method}${path.replace(/\//g, "_")}`;
             return `${operationId}: () => Promise<any>;`;
-        }).join('\n    ')
-    ).join('\n    ')}
+          })
+          .join("\n    "),
+      )
+      .join("\n    ")}
 }
 
 export interface APIConfig {
@@ -588,19 +697,26 @@ export interface APIConfig {
     timeout?: number;
 }
 
-export interface APIResponse<T = any> {
+export interface APIResponse<T = unknown> {
     data: T;
     status: number;
     headers: Record<string, string>;
 }
 `;
-    }
-    
-    private generateDatabaseSchema(task: HiveMindTask): any {
-        const tables = task.context?.tables || ['users', 'posts'];
-        
-        return {
-            sql: tables.map((table: string) => `
+  }
+
+  private generateDatabaseSchema(task: HiveMindTask): DatabaseSchema {
+    const tables = task.context?.tables || ["users", "posts"];
+
+    return {
+      database: 'app_database',
+      tables: tables.map((tableName: string) => ({
+        name: tableName,
+        columns: []
+      })),
+      sql: tables
+        .map(
+          (table: string) => `
 CREATE TABLE ${table} (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -609,72 +725,89 @@ CREATE TABLE ${table} (
 );
 
 CREATE INDEX idx_${table}_created_at ON ${table}(created_at);
-`).join('\n'),
-            tables
-        };
-    }
-    
-    private generateTableColumns(tableName: string): string {
-        const columns: Record<string, string> = {
-            users: `
+`,
+        )
+        .join("\n"),
+    };
+  }
+
+  private generateTableColumns(tableName: string): string {
+    const columns: Record<string, string> = {
+      users: `
     email VARCHAR(255) UNIQUE NOT NULL,
     username VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     is_active BOOLEAN DEFAULT true,
     last_login TIMESTAMP`,
-            posts: `
+      posts: `
     user_id UUID NOT NULL REFERENCES users(id),
     title VARCHAR(255) NOT NULL,
     content TEXT,
     status VARCHAR(50) DEFAULT 'draft',
-    published_at TIMESTAMP`
-        };
-        
-        return columns[tableName] || 'data JSONB';
-    }
-    
-    private generateMigrations(schema: any): any[] {
-        return schema.tables.map((table: string, index: number) => ({
-            name: `create_${table}_table`,
-            content: `-- Migration: Create ${table} table
+    published_at TIMESTAMP`,
+    };
+
+    return columns[tableName] || "data JSONB";
+  }
+
+  private generateMigrations(schema: DatabaseSchema): Migration[] {
+    return schema.tables.map((table: TableDefinition, index: number) => ({
+      version: `${Date.now()}_${index}`,
+      name: `create_${table.name}_table`,
+      up: `-- Migration: Create ${table.name} table
 
 BEGIN;
 
-${schema.sql.split('\n').filter((line: string) => 
-    line.includes(`CREATE TABLE ${table}`) || 
-    line.includes(`CREATE INDEX idx_${table}`)
-).join('\n')}
+${(schema.sql || '')
+  .split("\n")
+  .filter(
+    (line: string) =>
+      line.includes(`CREATE TABLE ${table.name}`) ||
+      line.includes(`CREATE INDEX idx_${table.name}`),
+  )
+  .join("\n")}
 
 COMMIT;
-`
-        }));
-    }
-    
-    private generateORMModels(schema: any): string {
-        return `// Auto-generated ORM models
+`,
+      down: `-- Rollback: Drop ${table.name} table
 
-${schema.tables.map((table: string) => `
-export interface ${this.capitalize(this.singularize(table))} {
+BEGIN;
+
+DROP TABLE IF EXISTS ${table.name} CASCADE;
+
+COMMIT;
+`,
+      timestamp: Date.now() + index,
+    }));
+  }
+
+  private generateORMModels(schema: DatabaseSchema): string {
+    return `// Auto-generated ORM models
+
+${schema.tables
+  .map(
+    (table: TableDefinition) => `
+export interface ${this.capitalize(this.singularize(table.name))} {
     id: string;
     createdAt: Date;
     updatedAt: Date;
-    ${this.generateModelProperties(table)}
+    ${this.generateModelProperties(table.name)}
 }
 
-export class ${this.capitalize(this.singularize(table))}Model {
-    static tableName = '${table}';
+export class ${this.capitalize(this.singularize(table.name))}Model {
+    static tableName = '${table.name}';
     
-    static async findById(id: string): Promise<${this.capitalize(this.singularize(table))} | null> {
+    static async findById(id: string): Promise<${this.capitalize(this.singularize(table.name))} | null> {
         // Implementation here
         return null;
     }
     
-    static async create(data: Partial<${this.capitalize(this.singularize(table))}>): Promise<${this.capitalize(this.singularize(table))}> {
+    static async create(data: Partial<${this.capitalize(this.singularize(table.name))}>): Promise<${this.capitalize(this.singularize(table.name))}> {
         // Implementation here
         throw new Error('Not implemented');
     }
     
-    static async update(id: string, data: Partial<${this.capitalize(this.singularize(table))}>): Promise<${this.capitalize(this.singularize(table))}> {
+    static async update(id: string, data: Partial<${this.capitalize(this.singularize(table.name))}>): Promise<${this.capitalize(this.singularize(table.name))}> {
         // Implementation here
         throw new Error('Not implemented');
     }
@@ -684,53 +817,58 @@ export class ${this.capitalize(this.singularize(table))}Model {
         return false;
     }
 }
-`).join('\n')}
+`,
+  )
+  .join("\n")}
 `;
-    }
-    
-    private generateModelProperties(tableName: string): string {
-        const properties: Record<string, string> = {
-            users: `email: string;
+  }
+
+  private generateModelProperties(tableName: string): string {
+    const properties: Record<string, string> = {
+      users: `email: string;
     username: string;
     passwordHash: string;
     isActive: boolean;
     lastLogin?: Date;`,
-            posts: `userId: string;
+      posts: `userId: string;
     title: string;
     content?: string;
     status: 'draft' | 'published' | 'archived';
-    publishedAt?: Date;`
-        };
-        
-        return properties[tableName] || 'data: any;';
+    publishedAt?: Date;`,
+    };
+
+    return properties[tableName] || "data: Record<string, unknown>;";
+  }
+
+  private generateComponentStructure(
+    componentName: string,
+    task: HiveMindTask,
+  ): Record<string, string> {
+    const isReact = task.context?.framework === "react";
+    const isVue = task.context?.framework === "vue";
+
+    if (isReact) {
+      return {
+        "index.tsx": this.generateReactComponent(componentName),
+        "styles.module.css": this.generateComponentStyles(componentName),
+        "types.ts": this.generateComponentTypes(componentName),
+      };
+    } else if (isVue) {
+      return {
+        "index.vue": this.generateVueComponent(componentName),
+        "types.ts": this.generateComponentTypes(componentName),
+      };
+    } else {
+      return {
+        "index.ts": this.generateGenericComponent(componentName),
+        "styles.css": this.generateComponentStyles(componentName),
+        "types.ts": this.generateComponentTypes(componentName),
+      };
     }
-    
-    private generateComponentStructure(componentName: string, task: HiveMindTask): Record<string, string> {
-        const isReact = task.context?.framework === 'react';
-        const isVue = task.context?.framework === 'vue';
-        
-        if (isReact) {
-            return {
-                'index.tsx': this.generateReactComponent(componentName),
-                'styles.module.css': this.generateComponentStyles(componentName),
-                'types.ts': this.generateComponentTypes(componentName)
-            };
-        } else if (isVue) {
-            return {
-                'index.vue': this.generateVueComponent(componentName),
-                'types.ts': this.generateComponentTypes(componentName)
-            };
-        } else {
-            return {
-                'index.ts': this.generateGenericComponent(componentName),
-                'styles.css': this.generateComponentStyles(componentName),
-                'types.ts': this.generateComponentTypes(componentName)
-            };
-        }
-    }
-    
-    private generateReactComponent(name: string): string {
-        return `import React from 'react';
+  }
+
+  private generateReactComponent(name: string): string {
+    return `import React from 'react';
 import styles from './styles.module.css';
 import { ${name}Props } from './types';
 
@@ -744,10 +882,10 @@ export const ${name}: React.FC<${name}Props> = ({ children, ...props }) => {
 
 export default ${name};
 `;
-    }
-    
-    private generateVueComponent(name: string): string {
-        return `<template>
+  }
+
+  private generateVueComponent(name: string): string {
+    return `<template>
     <div :class="$style.container">
         <slot></slot>
     </div>
@@ -774,10 +912,10 @@ export default defineComponent({
 }
 </style>
 `;
-    }
-    
-    private generateGenericComponent(name: string): string {
-        return `import { ${name}Props } from './types';
+  }
+
+  private generateGenericComponent(name: string): string {
+    return `import { ${name}Props } from './types';
 
 export class ${name} {
     private props: ${name}Props;
@@ -795,10 +933,10 @@ export class ${name} {
 
 export default ${name};
 `;
-    }
-    
-    private generateComponentStyles(name: string): string {
-        return `.container {
+  }
+
+  private generateComponentStyles(name: string): string {
+    return `.container {
     /* ${name} component styles */
     display: flex;
     flex-direction: column;
@@ -817,10 +955,10 @@ export default ${name};
     flex: 1;
 }
 `;
-    }
-    
-    private generateComponentTypes(name: string): string {
-        return `export interface ${name}Props {
+  }
+
+  private generateComponentTypes(name: string): string {
+    return `export interface ${name}Props {
     children?: React.ReactNode;
     className?: string;
     id?: string;
@@ -833,10 +971,10 @@ export interface ${name}State {
 
 export type ${name}Ref = HTMLDivElement;
 `;
-    }
-    
-    private generateComponentTests(name: string): string {
-        return `import { render, screen } from '@testing-library/react';
+  }
+
+  private generateComponentTests(name: string): string {
+    return `import { render, screen } from '@testing-library/react';
 import { ${name} } from './${name}';
 
 describe('${name}', () => {
@@ -853,31 +991,31 @@ describe('${name}', () => {
     // Add more tests as needed
 });
 `;
+  }
+
+  private async createGenericDesign(task: HiveMindTask): Promise<any> {
+    return {
+      type: task.type,
+      description: task.description,
+      components: ["component1", "component2"],
+      dependencies: [],
+      estimatedEffort: "1-2 weeks",
+      risks: ["Technical complexity", "Integration challenges"],
+      recommendations: ["Start with MVP", "Iterate based on feedback"],
+    };
+  }
+
+  private capitalize(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  private singularize(str: string): string {
+    // Simple singularization
+    if (str.endsWith("ies")) {
+      return str.slice(0, -3) + "y";
+    } else if (str.endsWith("s")) {
+      return str.slice(0, -1);
     }
-    
-    private async createGenericDesign(task: HiveMindTask): Promise<any> {
-        return {
-            type: task.type,
-            description: task.description,
-            components: ['component1', 'component2'],
-            dependencies: [],
-            estimatedEffort: '1-2 weeks',
-            risks: ['Technical complexity', 'Integration challenges'],
-            recommendations: ['Start with MVP', 'Iterate based on feedback']
-        };
-    }
-    
-    private capitalize(str: string): string {
-        return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-    
-    private singularize(str: string): string {
-        // Simple singularization
-        if (str.endsWith('ies')) {
-            return str.slice(0, -3) + 'y';
-        } else if (str.endsWith('s')) {
-            return str.slice(0, -1);
-        }
-        return str;
-    }
+    return str;
+  }
 }

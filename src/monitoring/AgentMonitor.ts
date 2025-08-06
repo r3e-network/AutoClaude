@@ -1,147 +1,162 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
-import * as fs from 'fs';
-import { ParallelAgentOrchestrator, AgentConfig } from '../agents/ParallelAgentOrchestrator';
-import { debugLog } from '../utils/logging';
+import * as vscode from "vscode";
+import * as path from "path";
+import * as fs from "fs";
+import {
+  ParallelAgentOrchestrator,
+  AgentConfig,
+} from "../agents/ParallelAgentOrchestrator";
+import { debugLog } from "../utils/logging";
 
 const fsAsync = fs.promises;
 
 export interface MonitoringStats {
-    totalAgents: number;
-    activeAgents: number;
-    idleAgents: number;
-    errorAgents: number;
-    totalRestarts: number;
-    totalWorkCycles: number;
-    averageContextUsage: number;
-    uptime: number;
-    startTime: Date;
+  totalAgents: number;
+  activeAgents: number;
+  idleAgents: number;
+  errorAgents: number;
+  totalRestarts: number;
+  totalWorkCycles: number;
+  averageContextUsage: number;
+  uptime: number;
+  startTime: Date;
 }
 
 export class AgentMonitor {
-    private orchestrator: ParallelAgentOrchestrator;
-    private panel: vscode.WebviewPanel | null = null;
-    private updateInterval: NodeJS.Timeout | null = null;
-    private startTime: Date = new Date();
-    private workspacePath: string;
-    private reportPath: string;
+  private orchestrator: ParallelAgentOrchestrator;
+  private panel: vscode.WebviewPanel | null = null;
+  private updateInterval: NodeJS.Timeout | null = null;
+  private startTime: Date = new Date();
+  private workspacePath: string;
+  private reportPath: string;
 
-    constructor(orchestrator: ParallelAgentOrchestrator, workspacePath: string) {
-        this.orchestrator = orchestrator;
-        this.workspacePath = workspacePath;
-        this.reportPath = path.join(workspacePath, 'agent_farm_reports');
+  constructor(orchestrator: ParallelAgentOrchestrator, workspacePath: string) {
+    this.orchestrator = orchestrator;
+    this.workspacePath = workspacePath;
+    this.reportPath = path.join(workspacePath, "agent_farm_reports");
+  }
+
+  async initialize(): Promise<void> {
+    // Create reports directory
+    await fsAsync.mkdir(this.reportPath, { recursive: true });
+  }
+
+  async showDashboard(): Promise<void> {
+    if (this.panel) {
+      this.panel.reveal();
+      return;
     }
 
-    async initialize(): Promise<void> {
-        // Create reports directory
-        await fsAsync.mkdir(this.reportPath, { recursive: true });
-    }
+    this.panel = vscode.window.createWebviewPanel(
+      "claudeAgentMonitor",
+      "Claude Agent Monitor",
+      vscode.ViewColumn.Two,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+      },
+    );
 
-    async showDashboard(): Promise<void> {
-        if (this.panel) {
-            this.panel.reveal();
-            return;
-        }
+    this.panel.onDidDispose(() => {
+      this.panel = null;
+      this.stopMonitoring();
+    });
 
-        this.panel = vscode.window.createWebviewPanel(
-            'claudeAgentMonitor',
-            'Claude Agent Monitor',
-            vscode.ViewColumn.Two,
-            {
-                enableScripts: true,
-                retainContextWhenHidden: true
-            }
-        );
-
-        this.panel.onDidDispose(() => {
-            this.panel = null;
-            this.stopMonitoring();
-        });
-
-        // Handle messages from webview
-        this.panel.webview.onDidReceiveMessage(async (message) => {
-            try {
-                switch (message.type) {
-                    case 'sendCommand':
-                        await this.orchestrator.sendCommandToAllAgents(message.command);
-                        vscode.window.showInformationMessage(`Sent command to all agents: ${message.command}`);
-                        break;
-                    case 'attachToSession':
-                        await this.orchestrator.attachToSession();
-                        break;
-                    case 'generateReport':
-                        const reportPath = await this.generateHtmlReport();
-                        vscode.window.showInformationMessage(`Report generated: ${path.basename(reportPath)}`);
-                        break;
-                    case 'refresh':
-                        await this.updateDashboard();
-                        break;
-                    default:
-                        debugLog(`Unknown message type: ${message.type}`);
-                }
-            } catch (error) {
-                vscode.window.showErrorMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
-                debugLog(`Error handling webview message: ${error}`);
-            }
-        });
-
-        // Start monitoring
-        this.startMonitoring();
-        
-        // Initial update
-        await this.updateDashboard();
-    }
-
-    private startMonitoring(): void {
-        this.updateInterval = setInterval(async () => {
+    // Handle messages from webview
+    this.panel.webview.onDidReceiveMessage(async (message) => {
+      try {
+        switch (message.type) {
+          case "sendCommand":
+            await this.orchestrator.sendCommandToAllAgents(message.command);
+            vscode.window.showInformationMessage(
+              `Sent command to all agents: ${message.command}`,
+            );
+            break;
+          case "attachToSession":
+            await this.orchestrator.attachToSession();
+            break;
+          case "generateReport":
+            const reportPath = await this.generateHtmlReport();
+            vscode.window.showInformationMessage(
+              `Report generated: ${path.basename(reportPath)}`,
+            );
+            break;
+          case "refresh":
             await this.updateDashboard();
-        }, 5000); // Update every 5 seconds
-    }
-
-    private stopMonitoring(): void {
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-            this.updateInterval = null;
+            break;
+          default:
+            debugLog(`Unknown message type: ${message.type}`);
         }
+      } catch (error) {
+        vscode.window.showErrorMessage(
+          `Error: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        debugLog(`Error handling webview message: ${error}`);
+      }
+    });
+
+    // Start monitoring
+    this.startMonitoring();
+
+    // Initial update
+    await this.updateDashboard();
+  }
+
+  private startMonitoring(): void {
+    this.updateInterval = setInterval(async () => {
+      await this.updateDashboard();
+    }, 5000); // Update every 5 seconds
+  }
+
+  private stopMonitoring(): void {
+    if (this.updateInterval) {
+      clearInterval(this.updateInterval);
+      this.updateInterval = null;
     }
+  }
 
-    private async updateDashboard(): Promise<void> {
-        if (!this.panel) return;
+  private async updateDashboard(): Promise<void> {
+    if (!this.panel) return;
 
-        const agents = this.orchestrator.getAgentStatuses();
-        const stats = this.calculateStats(agents);
-        
-        this.panel.webview.html = this.getDashboardHtml(agents, stats);
-    }
+    const agents = this.orchestrator.getAgentStatuses();
+    const stats = this.calculateStats(agents);
 
-    private calculateStats(agents: AgentConfig[]): MonitoringStats {
-        const activeAgents = agents.filter(a => a.status === 'working').length;
-        const idleAgents = agents.filter(a => a.status === 'idle').length;
-        const errorAgents = agents.filter(a => a.status === 'error' || a.status === 'disabled').length;
-        const totalRestarts = agents.reduce((sum, a) => sum + a.restartCount, 0);
-        const totalWorkCycles = agents.reduce((sum, a) => sum + a.workCycles, 0);
-        const averageContextUsage = agents.length > 0 
-            ? agents.reduce((sum, a) => sum + a.contextUsage, 0) / agents.length 
-            : 0;
-        const uptime = Date.now() - this.startTime.getTime();
+    this.panel.webview.html = this.getDashboardHtml(agents, stats);
+  }
 
-        return {
-            totalAgents: agents.length,
-            activeAgents,
-            idleAgents,
-            errorAgents,
-            totalRestarts,
-            totalWorkCycles,
-            averageContextUsage,
-            uptime,
-            startTime: this.startTime
-        };
-    }
+  private calculateStats(agents: AgentConfig[]): MonitoringStats {
+    const activeAgents = agents.filter((a) => a.status === "working").length;
+    const idleAgents = agents.filter((a) => a.status === "idle").length;
+    const errorAgents = agents.filter(
+      (a) => a.status === "error" || a.status === "disabled",
+    ).length;
+    const totalRestarts = agents.reduce((sum, a) => sum + a.restartCount, 0);
+    const totalWorkCycles = agents.reduce((sum, a) => sum + a.workCycles, 0);
+    const averageContextUsage =
+      agents.length > 0
+        ? agents.reduce((sum, a) => sum + a.contextUsage, 0) / agents.length
+        : 0;
+    const uptime = Date.now() - this.startTime.getTime();
 
-    private getDashboardHtml(agents: AgentConfig[], stats: MonitoringStats): string {
-        const uptimeFormatted = this.formatDuration(stats.uptime);
-        
-        return `
+    return {
+      totalAgents: agents.length,
+      activeAgents,
+      idleAgents,
+      errorAgents,
+      totalRestarts,
+      totalWorkCycles,
+      averageContextUsage,
+      uptime,
+      startTime: this.startTime,
+    };
+  }
+
+  private getDashboardHtml(
+    agents: AgentConfig[],
+    stats: MonitoringStats,
+  ): string {
+    const uptimeFormatted = this.formatDuration(stats.uptime);
+
+    return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -370,7 +385,7 @@ export class AgentMonitor {
             </tr>
         </thead>
         <tbody>
-            ${agents.map(agent => this.getAgentRow(agent)).join('')}
+            ${agents.map((agent) => this.getAgentRow(agent)).join("")}
         </tbody>
     </table>
     
@@ -411,18 +426,26 @@ export class AgentMonitor {
     </script>
 </body>
 </html>`;
-    }
+  }
 
-    private getAgentRow(agent: AgentConfig): string {
-        const heartbeatAge = Date.now() - agent.lastHeartbeat.getTime();
-        const heartbeatClass = heartbeatAge < 30000 ? 'heartbeat-fresh' : 
-                              heartbeatAge < 120000 ? 'heartbeat-stale' : 'heartbeat-dead';
-        const heartbeatText = this.formatDuration(heartbeatAge);
-        
-        const contextClass = agent.contextUsage > 50 ? 'context-high' :
-                           agent.contextUsage > 20 ? 'context-medium' : 'context-low';
-        
-        return `
+  private getAgentRow(agent: AgentConfig): string {
+    const heartbeatAge = Date.now() - agent.lastHeartbeat.getTime();
+    const heartbeatClass =
+      heartbeatAge < 30000
+        ? "heartbeat-fresh"
+        : heartbeatAge < 120000
+          ? "heartbeat-stale"
+          : "heartbeat-dead";
+    const heartbeatText = this.formatDuration(heartbeatAge);
+
+    const contextClass =
+      agent.contextUsage > 50
+        ? "context-high"
+        : agent.contextUsage > 20
+          ? "context-medium"
+          : "context-low";
+
+    return `
             <tr>
                 <td><strong>${agent.name}</strong></td>
                 <td><span class="status-badge status-${agent.status}">${agent.status}</span></td>
@@ -441,29 +464,32 @@ export class AgentMonitor {
                 <td>${agent.restartCount}</td>
             </tr>
         `;
-    }
+  }
 
-    private formatDuration(ms: number): string {
-        const seconds = Math.floor(ms / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-        
-        if (hours > 0) {
-            return `${hours}h ${minutes % 60}m`;
-        } else if (minutes > 0) {
-            return `${minutes}m ${seconds % 60}s`;
-        } else {
-            return `${seconds}s`;
-        }
-    }
+  private formatDuration(ms: number): string {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
 
-    async generateHtmlReport(): Promise<string> {
-        const agents = this.orchestrator.getAgentStatuses();
-        const stats = this.calculateStats(agents);
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const reportFile = path.join(this.reportPath, `agent_farm_report_${timestamp}.html`);
-        
-        const htmlContent = `
+    if (hours > 0) {
+      return `${hours}h ${minutes % 60}m`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds % 60}s`;
+    } else {
+      return `${seconds}s`;
+    }
+  }
+
+  async generateHtmlReport(): Promise<string> {
+    const agents = this.orchestrator.getAgentStatuses();
+    const stats = this.calculateStats(agents);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const reportFile = path.join(
+      this.reportPath,
+      `agent_farm_report_${timestamp}.html`,
+    );
+
+    const htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -594,7 +620,9 @@ export class AgentMonitor {
             </tr>
         </thead>
         <tbody>
-            ${agents.map(agent => `
+            ${agents
+              .map(
+                (agent) => `
                 <tr>
                     <td>${agent.name}</td>
                     <td class="status-${agent.status}">${agent.status}</td>
@@ -604,7 +632,9 @@ export class AgentMonitor {
                     <td>${agent.restartCount}</td>
                     <td>${new Date(agent.lastActivity).toLocaleTimeString()}</td>
                 </tr>
-            `).join('')}
+            `,
+              )
+              .join("")}
         </tbody>
     </table>
     
@@ -613,17 +643,17 @@ export class AgentMonitor {
     </div>
 </body>
 </html>`;
-        
-        await fsAsync.writeFile(reportFile, htmlContent);
-        debugLog(`Generated report: ${reportFile}`);
-        
-        return reportFile;
-    }
 
-    dispose(): void {
-        this.stopMonitoring();
-        if (this.panel) {
-            this.panel.dispose();
-        }
+    await fsAsync.writeFile(reportFile, htmlContent);
+    debugLog(`Generated report: ${reportFile}`);
+
+    return reportFile;
+  }
+
+  dispose(): void {
+    this.stopMonitoring();
+    if (this.panel) {
+      this.panel.dispose();
     }
+  }
 }

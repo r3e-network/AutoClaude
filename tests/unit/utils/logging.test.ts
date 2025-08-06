@@ -1,5 +1,9 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { debugLog, setDebugMode, getDebugMode } from '../../../src/utils/logging';
+import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import {
+  debugLog,
+  setDebugMode,
+  getDebugMode,
+} from "../../../src/utils/logging";
 
 const originalConsole = console;
 
@@ -9,89 +13,91 @@ beforeEach(() => {
   setDebugMode(false);
 });
 
-describe('Logging Utilities', () => {
-  describe('setDebugMode and getDebugMode', () => {
-    it('should set and get debug mode correctly', () => {
+describe("Logging Utilities", () => {
+  describe("setDebugMode and getDebugMode", () => {
+    it("should set and get debug mode correctly", () => {
       expect(getDebugMode()).toBe(false);
-      
+
       setDebugMode(true);
       expect(getDebugMode()).toBe(true);
-      
+
       setDebugMode(false);
       expect(getDebugMode()).toBe(false);
     });
   });
 
-  describe('debugLog', () => {
-    it('should not log when debug mode is disabled', () => {
-      const consoleSpy = jest.spyOn(console, 'log');
+  describe("debugLog", () => {
+    it("should not log when debug mode is disabled", () => {
+      const consoleSpy = jest.spyOn(console, "log");
       setDebugMode(false);
-      
-      debugLog('Test message');
-      
+
+      debugLog("Test message");
+
       expect(consoleSpy).not.toHaveBeenCalled();
       consoleSpy.mockRestore();
     });
 
-    it('should log when debug mode is enabled', () => {
-      const consoleSpy = jest.spyOn(console, 'log');
+    it("should log when debug mode is enabled", () => {
+      const consoleSpy = jest.spyOn(console, "log");
       setDebugMode(true);
-      
-      debugLog('Test message');
-      
+
+      debugLog("Test message");
+
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[AutoClaude]'),
-        'Test message'
+        expect.stringContaining("[AutoClaude]"),
+        "Test message",
       );
       consoleSpy.mockRestore();
     });
 
-    it('should include timestamp in log output', () => {
-      const consoleSpy = jest.spyOn(console, 'log');
+    it("should include timestamp in log output", () => {
+      const consoleSpy = jest.spyOn(console, "log");
       setDebugMode(true);
-      
-      debugLog('Test with timestamp');
-      
+
+      debugLog("Test with timestamp");
+
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/^\[AutoClaude \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]/),
-        'Test with timestamp'
+        expect.stringMatching(
+          /^\[AutoClaude \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]/,
+        ),
+        "Test with timestamp",
       );
       consoleSpy.mockRestore();
     });
 
-    it('should handle multiple arguments', () => {
-      const consoleSpy = jest.spyOn(console, 'log');
+    it("should handle multiple arguments", () => {
+      const consoleSpy = jest.spyOn(console, "log");
       setDebugMode(true);
-      
-      debugLog('Message with multiple arguments 123');
-      
+
+      debugLog("Message with multiple arguments 123");
+
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Message with multiple arguments 123')
+        expect.stringContaining("Message with multiple arguments 123"),
       );
       consoleSpy.mockRestore();
     });
 
-    it('should handle objects and complex data types', () => {
-      const consoleSpy = jest.spyOn(console, 'log');
+    it("should handle objects and complex data types", () => {
+      const consoleSpy = jest.spyOn(console, "log");
       setDebugMode(true);
-      
-      const testObject = { key: 'value', number: 42 };
+
+      const testObject = { key: "value", number: 42 };
       debugLog(`Object test: ${JSON.stringify(testObject)}`);
-      
+
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Object test:')
+        expect.stringContaining("Object test:"),
       );
       consoleSpy.mockRestore();
     });
 
-    it('should handle undefined and null values', () => {
-      const consoleSpy = jest.spyOn(console, 'log');
+    it("should handle undefined and null values", () => {
+      const consoleSpy = jest.spyOn(console, "log");
       setDebugMode(true);
-      
-      debugLog('Null test: null undefined');
-      
+
+      debugLog("Null test: null undefined");
+
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Null test:')
+        expect.stringContaining("Null test:"),
       );
       consoleSpy.mockRestore();
     });

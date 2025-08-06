@@ -58,7 +58,7 @@ export class ClaudeSession extends EventEmitter {
                 } catch (e) {
                     // Ignore if no processes found
                 }
-                
+
                 // Then force kill any remaining
                 try {
                     await execAsync('pkill -KILL claude');
@@ -81,24 +81,24 @@ export class ClaudeSession extends EventEmitter {
         try {
             // Kill any zombie Claude processes before starting
             await this.killZombieClaudeProcesses();
-            
+
             // Find Python executable
             const pythonCmd = await this.findPython();
-            
+
             // Get the wrapper script path
             const wrapperPath = path.join(__dirname, '..', 'claude_pty_wrapper.py');
-            
+
             // Check if wrapper exists
             const fs = require('fs');
             if (!fs.existsSync(wrapperPath)) {
                 throw new Error(`PTY wrapper not found at ${wrapperPath}`);
             }
-            
+
             const args = [wrapperPath];
             if (skipPermissions) {
                 args.push('--skip-permissions');
             }
-            
+
             // Get terminal dimensions
             const cols = process.stdout.columns || 80;
             const rows = process.stdout.rows || 24;
@@ -111,17 +111,17 @@ export class ClaudeSession extends EventEmitter {
                 cols,
                 rows,
                 cwd: process.cwd(),
-                env: { 
-                    ...process.env as { [key: string]: string },
+                env: {
+                    ...(process.env as { [key: string]: string }),
                     PYTHONUNBUFFERED: '1'
-                },
+                }
             });
 
             this.isRunning = true;
             this.setupEventHandlers();
             this.startPeriodicCleanup();
             this.startKeepAlive();
-            
+
             this.logger.info('Claude session started');
             this.emit('started');
 
@@ -131,7 +131,6 @@ export class ClaudeSession extends EventEmitter {
             } catch (readyError) {
                 this.logger.warn(`Claude ready check failed: ${readyError}, continuing anyway`);
             }
-            
         } catch (error) {
             this.isRunning = false;
             this.logger.error(`Failed to start Claude session: ${error}`);
@@ -147,33 +146,32 @@ export class ClaudeSession extends EventEmitter {
                 this.pty.kill();
                 this.pty = null;
             }
-            
+
             this.isRunning = false;
             this.outputBuffer = '';
             this.currentScreen = '';
-            
+
             if (this.outputTimer) {
                 clearTimeout(this.outputTimer);
                 this.outputTimer = null;
             }
-            
+
             if (this.cleanupTimer) {
                 clearInterval(this.cleanupTimer);
                 this.cleanupTimer = null;
             }
-            
+
             if (this.keepAliveTimer) {
                 clearInterval(this.keepAliveTimer);
                 this.keepAliveTimer = null;
             }
-            
+
             // Clear any pending message timeouts
             this.messageTimeouts.forEach(timer => clearTimeout(timer));
             this.messageTimeouts.clear();
-            
+
             this.logger.info('Claude session stopped');
             this.emit('stopped');
-            
         } catch (error) {
             this.logger.error('Error stopping session:', toLogMetadata({ error: toError(error) }));
         }
@@ -213,7 +211,7 @@ export class ClaudeSession extends EventEmitter {
                 // Remove timeout from set
                 this.messageTimeouts.delete(timeoutTimer);
             };
-            
+
             // Start progress reporting if callback provided
             if (onProgress) {
                 progressTimer = setInterval(() => {
@@ -225,27 +223,29 @@ export class ClaudeSession extends EventEmitter {
             const outputHandler = (output: string) => {
                 lastOutputTime = Date.now();
                 this.updateLastActivity();
-                
+
                 // Log raw output for debugging
                 this.logger.debug(`Raw Claude output: ${JSON.stringify(output)}`);
-                this.logger.debug(`Response buffer length: ${responseBuffer.length}, isCollecting: ${isCollecting}`);
-                
+                this.logger.debug(
+                    `Response buffer length: ${responseBuffer.length}, isCollecting: ${isCollecting}`
+                );
+
                 // Start collecting after a short delay to skip initial echo
                 const timeSinceStart = Date.now() - startTime;
                 if (!isCollecting && timeSinceStart > 500) {
                     isCollecting = true;
                 }
-                
+
                 if (isCollecting) {
                     // Skip if this is just echoing our message back
                     if (output.includes(message) && timeSinceStart < 2000) {
                         this.logger.debug('Skipping message echo');
                         return;
                     }
-                    
+
                     // Collect the output
                     responseBuffer += output;
-                    
+
                     // Check if Claude is done responding
                     if (this.isResponseComplete(responseBuffer)) {
                         cleanup();
@@ -253,24 +253,26 @@ export class ClaudeSession extends EventEmitter {
                     }
                 }
             };
-            
+
             // Also add an inactivity checker
             inactivityChecker = setInterval(() => {
                 const timeSinceLastOutput = Date.now() - lastOutputTime;
                 const timeSinceStart = Date.now() - startTime;
-                
+
                 // If we have a response and no output for 3 seconds, consider done
                 if (isCollecting && timeSinceLastOutput > 3000 && responseBuffer.length > 50) {
                     clearInterval(inactivityChecker);
                     cleanup();
                     resolve(this.cleanResponse(responseBuffer));
                 }
-                
+
                 // If we've been waiting 30 seconds with no meaningful response, give up
                 if (timeSinceStart > 30000 && responseBuffer.length < 10) {
                     clearInterval(inactivityChecker);
                     cleanup();
-                    resolve('No response received from Claude. The session may need to be restarted.');
+                    resolve(
+                        'No response received from Claude. The session may need to be restarted.'
+                    );
                 }
             }, 1000);
 
@@ -278,12 +280,12 @@ export class ClaudeSession extends EventEmitter {
                 cleanup();
                 reject(new Error('Message timeout'));
             }, timeout);
-            
+
             // Track timeout for cleanup
             this.messageTimeouts.add(timeoutTimer);
 
             this.on('output', outputHandler);
-            
+
             // Send the message
             this.pty!.write(message + '\n');
         });
@@ -385,14 +387,14 @@ export class ClaudeSession extends EventEmitter {
     private getLastScreenClearIndex(text: string): number {
         const clearPatterns = ['\\x1b[2J', '\\x1b[3J', '\\x1b[H'];
         let lastIndex = -1;
-        
+
         clearPatterns.forEach(pattern => {
             const index = text.lastIndexOf(pattern);
             if (index > lastIndex) {
                 lastIndex = index;
             }
         });
-        
+
         return lastIndex;
     }
 
@@ -405,11 +407,14 @@ export class ClaudeSession extends EventEmitter {
 
             const checkReady = () => {
                 // More flexible ready detection patterns for Claude Code CLI
-                if (this.currentScreen.includes('Welcome to Claude') || 
+                if (
+                    this.currentScreen.includes('Welcome to Claude') ||
                     this.currentScreen.includes('Ready') ||
                     this.currentScreen.includes('>') ||
                     this.currentScreen.includes('Claude Code') ||
-                    this.currentScreen.length > 10) { // Any substantial output indicates ready
+                    this.currentScreen.length > 10
+                ) {
+                    // Any substantial output indicates ready
                     clearTimeout(timeout);
                     resolve();
                 } else {
@@ -425,24 +430,24 @@ export class ClaudeSession extends EventEmitter {
         if (response.trim().length < 5) {
             return false; // Don't consider empty responses as complete
         }
-        
+
         // Check for common Claude response endings
         const endings = [
             '\n>',
             '\nClaude>',
-            '\n$ ',  // Shell prompt
-            '\nclaude> ',  // Claude Code CLI prompt
-            'Human: ',  // Claude Code CLI human prompt
+            '\n$ ', // Shell prompt
+            '\nclaude> ', // Claude Code CLI prompt
+            'Human: ', // Claude Code CLI human prompt
             'Human:', // Without space
             '\nHuman:', // With newline
             // Claude Code CLI specific patterns
             '╰──────────────────────────────────────────────────────────────────────────────╯',
             '│                                                                          │',
-            '> ',  // Input prompt
-            '[27m',  // ANSI escape sequence end
-            '?25l',  // Cursor hide
-            '?25h',  // Cursor show
-            '[?2004h',  // Bracketed paste mode
+            '> ', // Input prompt
+            '[27m', // ANSI escape sequence end
+            '?25l', // Cursor hide
+            '?25h', // Cursor show
+            '[?2004h', // Bracketed paste mode
             'Bypassing Permissions',
             'Is there anything else',
             'Let me know if',
@@ -451,9 +456,9 @@ export class ClaudeSession extends EventEmitter {
             'How can I help',
             'today?',
             'tasks.',
-            '✓',  // Claude Code often ends with checkmarks
-            '✅',  // Success indicator
-            '❌',  // Error indicator
+            '✓', // Claude Code often ends with checkmarks
+            '✅', // Success indicator
+            '❌', // Error indicator
             'All tests passed',
             'successfully',
             'completed',
@@ -463,32 +468,33 @@ export class ClaudeSession extends EventEmitter {
             '│\n╰', // More box drawing
             '╯\n' // End of box
         ];
-        
+
         // Check if response ends with any of these patterns
         const trimmedResponse = response.trim();
         if (endings.some(ending => trimmedResponse.endsWith(ending))) {
             return true;
         }
-        
+
         // Check for Claude Code specific formatting
         if (response.includes('╰') && response.includes('╯')) {
             // Likely a complete box/panel output
             const lastBox = response.lastIndexOf('╯');
             const afterBox = response.substring(lastBox + 1).trim();
-            if (afterBox.length < 50) { // Not much content after the box
+            if (afterBox.length < 50) {
+                // Not much content after the box
                 return true;
             }
         }
-        
+
         // Also check for no new output for a period (indicates completion)
         const lastNewline = response.lastIndexOf('\n');
         const lastContent = response.substring(lastNewline + 1);
-        
+
         // If we see a question mark or period at the end of a line, likely done
         if (lastContent.endsWith('?') || lastContent.endsWith('.') || lastContent.endsWith('!')) {
             return true;
         }
-        
+
         return endings.some(ending => response.includes(ending));
     }
 
@@ -496,17 +502,17 @@ export class ClaudeSession extends EventEmitter {
         // Remove ANSI escape codes
         const ansiRegex = /\x1b\[[0-9;]*[a-zA-Z]/g;
         let cleaned = response.replace(ansiRegex, '');
-        
+
         // Remove various prompt markers
         cleaned = cleaned.replace(/\n?>/g, '');
         cleaned = cleaned.replace(/\nClaude>/g, '');
         cleaned = cleaned.replace(/\nclaude>/g, '');
         cleaned = cleaned.replace(/Human:\s*/g, '');
         cleaned = cleaned.replace(/Assistant:\s*/g, '');
-        
+
         // Remove Claude Code CLI specific UI elements and formatting
         // Remove box drawing patterns with content inside
-        cleaned = cleaned.replace(/╭[─┬]+╮[\s\S]*?╰[─┴]+╯/g, (match) => {
+        cleaned = cleaned.replace(/╭[─┬]+╮[\s\S]*?╰[─┴]+╯/g, match => {
             // Extract content from inside the box
             const lines = match.split('\n');
             const content = lines
@@ -516,34 +522,34 @@ export class ClaudeSession extends EventEmitter {
                 .join('\n');
             return content;
         });
-        
+
         // Remove remaining box characters
         cleaned = cleaned.replace(/[╭╮╰╯─│║╟╢╤╧╪═╞╡╥╨╫╬┌┐└┘├┤┬┴┼]/g, '');
-        
+
         // Remove Claude Code specific markers
         cleaned = cleaned.replace(/\[Tool Use:.*?\]/g, ''); // Tool use indicators
         cleaned = cleaned.replace(/\[File:.*?\]/g, ''); // File markers
         cleaned = cleaned.replace(/\[Code:.*?\]/g, ''); // Code block markers
-        
+
         // Clean up code fences that might be left over
-        cleaned = cleaned.replace(/```[\s\S]*?```/g, (match) => {
+        cleaned = cleaned.replace(/```[\s\S]*?```/g, match => {
             // Keep code blocks but clean them up
             return match.replace(/```(\w+)?\n?/, '').replace(/\n?```$/, '');
         });
-        
+
         // Remove excessive whitespace
         cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n'); // Max 2 newlines
         cleaned = cleaned.replace(/^\s+|\s+$/g, ''); // Trim
         cleaned = cleaned.replace(/\n\s+\n/g, '\n\n'); // Remove lines with only whitespace
-        
+
         // Remove any remaining control characters
         cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-        
+
         // Handle empty or minimal responses
         if (cleaned.trim().length < 5) {
-            return "No response received from Claude. The session may need to be restarted.";
+            return 'No response received from Claude. The session may need to be restarted.';
         }
-        
+
         return cleaned.trim();
     }
 
@@ -557,8 +563,15 @@ export class ClaudeSession extends EventEmitter {
 
     private async findPython(): Promise<string> {
         const execAsync = promisify(exec);
-        const candidates = ['python3', 'python', 'python3.8', 'python3.9', 'python3.10', 'python3.11'];
-        
+        const candidates = [
+            'python3',
+            'python',
+            'python3.8',
+            'python3.9',
+            'python3.10',
+            'python3.11'
+        ];
+
         for (const cmd of candidates) {
             try {
                 const { stdout } = await execAsync(`${cmd} --version`);
@@ -570,7 +583,7 @@ export class ClaudeSession extends EventEmitter {
                 // Try next candidate
             }
         }
-        
+
         throw new Error('Python 3 not found. Please install Python 3.8 or higher.');
     }
 
@@ -597,7 +610,7 @@ export class ClaudeSession extends EventEmitter {
         // Log cleanup if significant reduction occurred
         const bufferReduction = initialBufferSize - this.outputBuffer.length;
         const screenReduction = initialScreenSize - this.currentScreen.length;
-        
+
         if (bufferReduction > 1000 || screenReduction > 1000) {
             this.logger.debug('Memory cleanup performed', {
                 bufferReduced: bufferReduction,
@@ -618,13 +631,17 @@ export class ClaudeSession extends EventEmitter {
             if (!this.isRunning || !this.pty) return;
 
             const timeSinceLastActivity = Date.now() - this.lastActivityTime;
-            
+
             // Check for session timeout
             const hasActiveMessages = this.activeMessageCount > 0 || this.isProcessingMessage;
-            const messageInProgress = this.lastMessageStartTime > 0 && 
-                (Date.now() - this.lastMessageStartTime) < 300000; // 5 minute grace period for messages
-            
-            if (timeSinceLastActivity > this.SESSION_TIMEOUT && !hasActiveMessages && !messageInProgress) {
+            const messageInProgress =
+                this.lastMessageStartTime > 0 && Date.now() - this.lastMessageStartTime < 300000; // 5 minute grace period for messages
+
+            if (
+                timeSinceLastActivity > this.SESSION_TIMEOUT &&
+                !hasActiveMessages &&
+                !messageInProgress
+            ) {
                 this.logger.warn('Session timeout due to inactivity', {
                     timeSinceLastActivity,
                     activeMessageCount: this.activeMessageCount,
@@ -642,7 +659,10 @@ export class ClaudeSession extends EventEmitter {
                     this.pty.write('\x00'); // Null character - ignored by most terminals
                     this.logger.debug('Sent keepalive signal');
                 } catch (error) {
-                    this.logger.error('Failed to send keepalive:', toLogMetadata({ error: toError(error) }));
+                    this.logger.error(
+                        'Failed to send keepalive:',
+                        toLogMetadata({ error: toError(error) })
+                    );
                 }
             }
         }, this.KEEPALIVE_INTERVAL);
@@ -654,12 +674,17 @@ export class ClaudeSession extends EventEmitter {
 
     isActivelyProcessing(): boolean {
         const hasActiveMessages = this.activeMessageCount > 0 || this.isProcessingMessage;
-        const recentMessageStart = this.lastMessageStartTime > 0 && 
-            (Date.now() - this.lastMessageStartTime) < 300000; // 5 minutes
+        const recentMessageStart =
+            this.lastMessageStartTime > 0 && Date.now() - this.lastMessageStartTime < 300000; // 5 minutes
         return hasActiveMessages || recentMessageStart;
     }
 
-    getSessionInfo(): { isActive: boolean; isProcessing: boolean; lastActivity: number; activeMessages: number } {
+    getSessionInfo(): {
+        isActive: boolean;
+        isProcessing: boolean;
+        lastActivity: number;
+        activeMessages: number;
+    } {
         return {
             isActive: this.isRunning,
             isProcessing: this.isProcessingMessage,

@@ -49,6 +49,7 @@ Version 3.5.0 has been successfully prepared for release. This major release tra
 To publish this release:
 
 1. **Push to GitHub**:
+
    ```bash
    git push origin main
    git push origin v3.5.0
@@ -72,4 +73,4 @@ Version 3.5.0 represents a significant milestone in Claude Autopilot's evolution
 
 ---
 
-*Release prepared on: December 2024*
+_Release prepared on: December 2024_

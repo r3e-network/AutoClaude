@@ -14,9 +14,9 @@ export const COMPLETED_MESSAGE_RETENTION_HOURS = 24; // Keep completed messages 
 export const MAX_HISTORY_RUNS = 20; // Reduced from 50 to prevent memory bloat
 
 export const ANSI_CLEAR_SCREEN_PATTERNS = [
-    '\x1b[2J',           // Clear entire screen
-    '\x1b[H\x1b[2J',     // Move cursor to home + clear screen
-    '\x1b[2J\x1b[H',     // Clear screen + move cursor to home
-    '\x1b[1;1H\x1b[2J',  // Move cursor to 1,1 + clear screen
-    '\x1b[2J\x1b[1;1H'   // Clear screen + move cursor to 1,1
+  "\x1b[2J", // Clear entire screen
+  "\x1b[H\x1b[2J", // Move cursor to home + clear screen
+  "\x1b[2J\x1b[H", // Clear screen + move cursor to home
+  "\x1b[1;1H\x1b[2J", // Move cursor to 1,1 + clear screen
+  "\x1b[2J\x1b[1;1H", // Clear screen + move cursor to 1,1
 ];

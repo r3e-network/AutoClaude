@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  autoclaude:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: autoclaude:latest
+    container_name: autoclaude
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - LOG_FILE_PATH=/app/logs
+      - MAX_QUEUE_SIZE=1000
+      - MAX_MESSAGE_SIZE=50000
+      - ENABLE_XSS_PROTECTION=true
+      - ENABLE_RATE_LIMITING=true
+      - RATE_LIMIT_MAX_REQUESTS=100
+      - RATE_LIMIT_WINDOW_MS=900000
+    volumes:
+      - autoclaude-logs:/app/logs
+      - autoclaude-data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - autoclaude-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Optional: Add a database service for SQLite persistence
+  # Note: SQLite is file-based, so this is just for volume management
+  database:
+    image: alpine:latest
+    container_name: autoclaude-db
+    command: ["sh", "-c", "mkdir -p /data && sleep infinity"]
+    volumes:
+      - autoclaude-db:/data
+    networks:
+      - autoclaude-network
+
+volumes:
+  autoclaude-logs:
+    driver: local
+  autoclaude-data:
+    driver: local
+  autoclaude-db:
+    driver: local
+
+networks:
+  autoclaude-network:
+    driver: bridge

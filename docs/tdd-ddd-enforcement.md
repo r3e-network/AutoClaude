@@ -7,13 +7,15 @@ AutoClaude enforces **Test-Driven Development (TDD)** and **Document-Driven Deve
 ## Core Principles
 
 ### Test-Driven Development (TDD)
+
 - **RED**: Write failing tests first
-- **GREEN**: Write minimal code to make tests pass  
+- **GREEN**: Write minimal code to make tests pass
 - **REFACTOR**: Improve code while keeping tests green
 - **Coverage**: Maintain >90% test coverage
 - **Quality**: Ensure meaningful assertions and edge cases
 
 ### Document-Driven Development (DDD)
+
 - **Architecture First**: Document system design before coding
 - **API Contracts**: Define interfaces and contracts upfront
 - **Examples**: Include usage examples and error handling
@@ -25,6 +27,7 @@ AutoClaude enforces **Test-Driven Development (TDD)** and **Document-Driven Deve
 ### 1. SubAgent Enforcers
 
 #### TDD Enforcement SubAgent (`tdd-enforcement.yaml`)
+
 ```yaml
 capabilities:
   - Test detection and validation
@@ -36,6 +39,7 @@ capabilities:
 ```
 
 **Key Functions:**
+
 - Scans for missing test files
 - Validates test coverage thresholds
 - Ensures tests fail before implementation
@@ -44,6 +48,7 @@ capabilities:
 - Validates test quality and assertions
 
 #### DDD Enforcement SubAgent (`ddd-enforcement.yaml`)
+
 ```yaml
 capabilities:
   - Documentation detection and validation
@@ -55,6 +60,7 @@ capabilities:
 ```
 
 **Key Functions:**
+
 - Scans for missing documentation
 - Validates documentation coverage
 - Ensures architecture documentation exists
@@ -65,12 +71,14 @@ capabilities:
 ### 2. Pre-Task Validation
 
 #### PreTaskValidator (`PreTaskValidator.ts`)
+
 - Runs **BEFORE** any implementation task
 - Blocks tasks that violate TDD/DDD principles
 - Provides detailed violation reports
 - Guides developers to proper workflow
 
 **Validation Flow:**
+
 ```
 Implementation Task Request
           ↓
@@ -78,7 +86,7 @@ Implementation Task Request
           ↓
 Tests Exist? ──NO──→ BLOCK (TDD Violation)
      ↓ YES
-Docs Exist? ──NO──→ BLOCK (DDD Violation)  
+Docs Exist? ──NO──→ BLOCK (DDD Violation)
      ↓ YES
   Allow Implementation
 ```
@@ -86,6 +94,7 @@ Docs Exist? ──NO──→ BLOCK (DDD Violation)
 ### 3. Production Readiness Integration
 
 Enhanced `ProductionReadinessValidator` with TDD/DDD checks:
+
 - **Critical Issues**: Missing tests or documentation
 - **Error Conditions**: Incomplete coverage or docs
 - **Blocking**: Task completion prevented until violations fixed
@@ -97,7 +106,7 @@ The `IntelligentTaskAnalyzer` enforces proper order:
 ```
 Task Analysis Order (ENFORCED):
 1. 📝 Documentation (FIRST - DDD)
-2. 🧪 Tests (SECOND - TDD) 
+2. 🧪 Tests (SECOND - TDD)
 3. 💻 Implementation (THIRD - Only after docs & tests)
 4. ✅ Test Validation (Ensure tests pass)
 5. 📖 Documentation Validation (Ensure accuracy)
@@ -111,12 +120,13 @@ Task Analysis Order (ENFORCED):
 **Command:** "Create a user authentication system with JWT tokens"
 
 **Automatic Task Breakdown:**
+
 1. **Documentation Task** (DDD - CRITICAL)
    - Agent: `ddd-enforcement`
    - Requirements: Architecture, API contracts, examples, security docs
    - Blocks: Implementation cannot proceed without this
 
-2. **Testing Task** (TDD - CRITICAL)  
+2. **Testing Task** (TDD - CRITICAL)
    - Agent: `tdd-enforcement`
    - Requirements: Failing tests, unit/integration/edge cases
    - Depends on: Documentation completion
@@ -147,6 +157,7 @@ Task Analysis Order (ENFORCED):
 **Command:** "Fix the memory leak in UserService"
 
 **Automatic Task Breakdown:**
+
 1. **Documentation Task**
    - Document the bug and proposed solution
    - Include root cause analysis
@@ -166,6 +177,7 @@ Task Analysis Order (ENFORCED):
 ## Violation Handling
 
 ### Critical Violations (Block Execution)
+
 - ❌ Implementation task without corresponding tests
 - ❌ Implementation task without documentation
 - ❌ Tests that pass without implementation (not Red phase)
@@ -174,13 +186,14 @@ Task Analysis Order (ENFORCED):
 - ❌ Missing architecture documentation
 
 **User Experience:**
+
 ```
 🚫 Task blocked: TDD/DDD violations detected
-   
+
    Details:
    - No tests found for UserService
    - Missing documentation for authentication flow
-   
+
    Required Actions:
    1. Write comprehensive tests first
    2. Document architecture and API contracts
@@ -188,12 +201,14 @@ Task Analysis Order (ENFORCED):
 ```
 
 ### Error Conditions (Must Fix)
+
 - ⚠️ Incomplete documentation coverage
-- ⚠️ Tests without proper assertions  
+- ⚠️ Tests without proper assertions
 - ⚠️ Missing error handling documentation
 - ⚠️ API documentation without examples
 
 ### Warning Conditions (Best Practices)
+
 - 💡 Tests that might pass prematurely
 - 💡 Documentation templates not filled out
 - 💡 Missing usage examples
@@ -201,51 +216,53 @@ Task Analysis Order (ENFORCED):
 ## Template Generation
 
 ### Test Template Generation
+
 When tests are missing, the system automatically generates:
 
 ```typescript
-describe('UserService', () => {
+describe("UserService", () => {
   beforeEach(() => {
     // Setup before each test
   });
 
-  describe('authentication', () => {
-    test('should authenticate valid user credentials', () => {
+  describe("authentication", () => {
+    test("should authenticate valid user credentials", () => {
       // Arrange
-      const credentials = { username: 'test', password: 'valid' };
-      const expected = { token: 'jwt-token', user: { id: 1 } };
-      
+      const credentials = { username: "test", password: "valid" };
+      const expected = { token: "jwt-token", user: { id: 1 } };
+
       // Act
       const result = userService.authenticate(credentials);
-      
+
       // Assert
       expect(result).toEqual(expected);
     });
 
-    test('should throw error for invalid credentials', () => {
+    test("should throw error for invalid credentials", () => {
       // Arrange
-      const invalidCredentials = { username: 'test', password: 'invalid' };
-      
+      const invalidCredentials = { username: "test", password: "invalid" };
+
       // Act & Assert
       expect(() => {
         userService.authenticate(invalidCredentials);
-      }).toThrow('Invalid credentials');
+      }).toThrow("Invalid credentials");
     });
   });
 });
 ```
 
 ### Documentation Template Generation
+
 When documentation is missing:
 
-```typescript
+````typescript
 /**
  * User authentication service providing secure login functionality
- * 
+ *
  * @description Handles user authentication using JWT tokens with secure
  * password hashing and session management. Implements rate limiting
  * and security best practices.
- * 
+ *
  * @example
  * ```typescript
  * const authService = new UserService();
@@ -255,16 +272,17 @@ When documentation is missing:
  * });
  * console.log(result.token); // JWT token
  * ```
- * 
+ *
  * @param {AuthCredentials} credentials - User login credentials
  * @returns {Promise<AuthResult>} Authentication result with JWT token
  * @throws {AuthError} When credentials are invalid or user is locked
  */
-```
+````
 
 ## Configuration
 
 ### VS Code Settings
+
 ```json
 {
   "autoclaude.workflow.enforceProductionReadiness": true,
@@ -281,6 +299,7 @@ When documentation is missing:
 ```
 
 ### SubAgent Configuration
+
 Both TDD and DDD SubAgents support customization:
 
 ```yaml
@@ -296,38 +315,44 @@ options:
 ## Benefits
 
 ### Code Quality
+
 - 🎯 **Thoughtful Design**: Documentation forces design thinking before coding
 - 🧪 **Test Coverage**: Comprehensive tests catch bugs early
 - 📖 **Living Documentation**: Docs stay synchronized with code
 - 🔒 **Production Ready**: No shortcuts or placeholder code
 
-### Development Process  
+### Development Process
+
 - 📝 **Clear Requirements**: Documentation clarifies what to build
 - 🧪 **Clean Design**: Test-first drives better architecture
 - 🔄 **Safe Refactoring**: Tests enable confident code improvements
 - 🚫 **No Technical Debt**: Prevents shortcuts that create future problems
 
 ### Team Benefits
+
 - 📚 **Consistent Standards**: Same documentation approach across team
-- 🧪 **Reliable Tests**: All features have comprehensive test coverage  
+- 🧪 **Reliable Tests**: All features have comprehensive test coverage
 - 🎯 **Clear Contracts**: APIs are well-documented before implementation
 - 🔒 **Quality Assurance**: No incomplete code reaches production
 
 ## Metrics and Reporting
 
 ### TDD Metrics
+
 - Test coverage percentage
 - Tests per function ratio
 - Test execution time
 - Red-Green-Refactor cycle compliance
 
-### DDD Metrics  
+### DDD Metrics
+
 - Documentation coverage percentage
 - Functions with JSDoc percentage
 - Architecture documentation completeness
 - Example code validity
 
 ### Violation Reports
+
 - Daily TDD/DDD compliance reports
 - Trend analysis over time
 - Most common violation types
@@ -336,19 +361,23 @@ options:
 ## Advanced Features
 
 ### Learning System
+
 - Remembers successful TDD/DDD patterns
 - Suggests optimal test structures based on past success
 - Learns from documentation patterns that work well
 - Adapts enforcement based on project complexity
 
 ### Integration Points
+
 - **Git Hooks**: Pre-commit validation
 - **CI/CD**: Build pipeline integration
 - **IDE**: Real-time violation highlighting
 - **Code Review**: Automated TDD/DDD checklist
 
 ### Custom Agents
+
 Teams can create custom enforcement agents:
+
 - Domain-specific testing requirements
 - Industry-specific documentation standards
 - Company coding standards integration
@@ -359,21 +388,25 @@ Teams can create custom enforcement agents:
 ### Common Issues
 
 **"Implementation blocked - no tests found"**
+
 - Write failing tests first
 - Use test template generation
 - Ensure test files follow naming conventions
 
-**"Implementation blocked - no documentation found"**  
+**"Implementation blocked - no documentation found"**
+
 - Add JSDoc/TSDoc to functions
 - Create architecture documentation
 - Use documentation template generation
 
 **"Tests are passing without implementation"**
+
 - Ensure tests fail first (Red phase)
 - Remove any existing implementation
 - Write more specific test assertions
 
 **"Documentation incomplete"**
+
 - Fill out all template placeholders
 - Add usage examples
 - Include error handling documentation
@@ -381,7 +414,7 @@ Teams can create custom enforcement agents:
 ## Future Enhancements
 
 - **AI-Powered Test Generation**: Smarter test case suggestions
-- **Documentation Quality Scoring**: Automated doc quality assessment  
+- **Documentation Quality Scoring**: Automated doc quality assessment
 - **Visual TDD Dashboard**: Real-time Red-Green-Refactor status
 - **Team Collaboration Features**: Shared TDD/DDD best practices
 - **Performance Integration**: Test performance impact tracking

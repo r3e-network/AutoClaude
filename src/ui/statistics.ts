@@ -1,189 +1,201 @@
-import * as vscode from 'vscode';
-import { messageQueue } from '../core/state';
-import { MessageItem } from '../core/types';
+import * as vscode from "vscode";
+import { messageQueue } from "../core/state";
+import { MessageItem } from "../core/types";
 
 export interface QueueStatistics {
-    totalMessages: number;
-    pendingMessages: number;
-    processingMessages: number;
-    completedMessages: number;
-    errorMessages: number;
-    averageProcessingTime: number;
-    successRate: number;
-    messagesPerHour: number;
-    peakHour: string;
-    topScripts: { script: string; count: number }[];
-    errorTypes: { type: string; count: number }[];
-    timeDistribution: { hour: number; count: number }[];
+  totalMessages: number;
+  pendingMessages: number;
+  processingMessages: number;
+  completedMessages: number;
+  errorMessages: number;
+  averageProcessingTime: number;
+  successRate: number;
+  messagesPerHour: number;
+  peakHour: string;
+  topScripts: { script: string; count: number }[];
+  errorTypes: { type: string; count: number }[];
+  timeDistribution: { hour: number; count: number }[];
 }
 
 export class StatisticsManager {
-    private startTime: number = Date.now();
-    private processedCount: number = 0;
-    private lastHourCounts: Map<number, number> = new Map();
+  private startTime: number = Date.now();
+  private processedCount: number = 0;
+  private lastHourCounts: Map<number, number> = new Map();
 
-    constructor() {
-        // Track messages processed per hour
-        setInterval(() => {
-            const currentHour = new Date().getHours();
-            const currentCount = messageQueue.filter(m => 
-                m.status === 'completed' && 
-                m.timestamp && 
-                new Date(m.timestamp).getHours() === currentHour
-            ).length;
-            this.lastHourCounts.set(currentHour, currentCount);
-        }, 60000); // Update every minute
+  constructor() {
+    // Track messages processed per hour
+    setInterval(() => {
+      const currentHour = new Date().getHours();
+      const currentCount = messageQueue.filter(
+        (m) =>
+          m.status === "completed" &&
+          m.timestamp &&
+          new Date(m.timestamp).getHours() === currentHour,
+      ).length;
+      this.lastHourCounts.set(currentHour, currentCount);
+    }, 60000); // Update every minute
+  }
+
+  getStatistics(): QueueStatistics {
+    const now = Date.now();
+    const messages = [...messageQueue];
+
+    // Basic counts
+    const totalMessages = messages.length;
+    const pendingMessages = messages.filter(
+      (m) => m.status === "waiting" || m.status === "pending",
+    ).length;
+    const processingMessages = messages.filter(
+      (m) => m.status === "processing",
+    ).length;
+    const completedMessages = messages.filter(
+      (m) => m.status === "completed",
+    ).length;
+    const errorMessages = messages.filter((m) => m.status === "error").length;
+
+    // Calculate average processing time
+    const completedWithTime = messages.filter(
+      (m) => m.status === "completed" && m.timestamp && m.completedAt,
+    );
+    const totalProcessingTime = completedWithTime.reduce((sum, m) => {
+      const startTime = new Date(m.timestamp).getTime();
+      const endTime = new Date(m.completedAt!).getTime();
+      return sum + (endTime - startTime);
+    }, 0);
+    const averageProcessingTime =
+      completedWithTime.length > 0
+        ? totalProcessingTime / completedWithTime.length
+        : 0;
+
+    // Success rate
+    const processedTotal = completedMessages + errorMessages;
+    const successRate =
+      processedTotal > 0 ? (completedMessages / processedTotal) * 100 : 0;
+
+    // Messages per hour
+    const runningTime = (now - this.startTime) / (1000 * 60 * 60); // in hours
+    const messagesPerHour =
+      runningTime > 0 ? completedMessages / runningTime : 0;
+
+    // Time distribution
+    const timeDistribution = this.getTimeDistribution(messages);
+
+    // Peak hour
+    const peakHour = this.getPeakHour(timeDistribution);
+
+    // Top scripts
+    const topScripts = this.getTopScripts(messages);
+
+    // Error types
+    const errorTypes = this.getErrorTypes(messages);
+
+    return {
+      totalMessages,
+      pendingMessages,
+      processingMessages,
+      completedMessages,
+      errorMessages,
+      averageProcessingTime,
+      successRate,
+      messagesPerHour,
+      peakHour,
+      topScripts,
+      errorTypes,
+      timeDistribution,
+    };
+  }
+
+  private getTimeDistribution(
+    messages: MessageItem[],
+  ): { hour: number; count: number }[] {
+    const distribution = new Map<number, number>();
+
+    messages.forEach((message) => {
+      if (message.timestamp) {
+        const hour = new Date(message.timestamp).getHours();
+        distribution.set(hour, (distribution.get(hour) || 0) + 1);
+      }
+    });
+
+    // Convert to array and fill missing hours
+    const result: { hour: number; count: number }[] = [];
+    for (let hour = 0; hour < 24; hour++) {
+      result.push({ hour, count: distribution.get(hour) || 0 });
     }
 
-    getStatistics(): QueueStatistics {
-        const now = Date.now();
-        const messages = [...messageQueue];
-        
-        // Basic counts
-        const totalMessages = messages.length;
-        const pendingMessages = messages.filter(m => m.status === 'waiting' || m.status === 'pending').length;
-        const processingMessages = messages.filter(m => m.status === 'processing').length;
-        const completedMessages = messages.filter(m => m.status === 'completed').length;
-        const errorMessages = messages.filter(m => m.status === 'error').length;
+    return result;
+  }
 
-        // Calculate average processing time
-        const completedWithTime = messages.filter(m => 
-            m.status === 'completed' && m.timestamp && m.completedAt
-        );
-        const totalProcessingTime = completedWithTime.reduce((sum, m) => {
-            const startTime = new Date(m.timestamp).getTime();
-            const endTime = new Date(m.completedAt!).getTime();
-            return sum + (endTime - startTime);
-        }, 0);
-        const averageProcessingTime = completedWithTime.length > 0 
-            ? totalProcessingTime / completedWithTime.length 
-            : 0;
+  private getPeakHour(distribution: { hour: number; count: number }[]): string {
+    const peak = distribution.reduce((max, current) =>
+      current.count > max.count ? current : max,
+    );
 
-        // Success rate
-        const processedTotal = completedMessages + errorMessages;
-        const successRate = processedTotal > 0 
-            ? (completedMessages / processedTotal) * 100 
-            : 0;
+    const hour = peak.hour;
+    const period = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
 
-        // Messages per hour
-        const runningTime = (now - this.startTime) / (1000 * 60 * 60); // in hours
-        const messagesPerHour = runningTime > 0 
-            ? completedMessages / runningTime 
-            : 0;
+    return `${displayHour}:00 ${period}`;
+  }
 
-        // Time distribution
-        const timeDistribution = this.getTimeDistribution(messages);
-        
-        // Peak hour
-        const peakHour = this.getPeakHour(timeDistribution);
+  private getTopScripts(
+    messages: MessageItem[],
+  ): { script: string; count: number }[] {
+    const scriptCounts = new Map<string, number>();
 
-        // Top scripts
-        const topScripts = this.getTopScripts(messages);
-
-        // Error types
-        const errorTypes = this.getErrorTypes(messages);
-
-        return {
-            totalMessages,
-            pendingMessages,
-            processingMessages,
-            completedMessages,
-            errorMessages,
-            averageProcessingTime,
-            successRate,
-            messagesPerHour,
-            peakHour,
-            topScripts,
-            errorTypes,
-            timeDistribution
-        };
-    }
-
-    private getTimeDistribution(messages: MessageItem[]): { hour: number; count: number }[] {
-        const distribution = new Map<number, number>();
-        
-        messages.forEach(message => {
-            if (message.timestamp) {
-                const hour = new Date(message.timestamp).getHours();
-                distribution.set(hour, (distribution.get(hour) || 0) + 1);
-            }
+    messages.forEach((message) => {
+      if (message.attachedScripts) {
+        message.attachedScripts.forEach((script: string) => {
+          scriptCounts.set(script, (scriptCounts.get(script) || 0) + 1);
         });
+      }
+    });
 
-        // Convert to array and fill missing hours
-        const result: { hour: number; count: number }[] = [];
-        for (let hour = 0; hour < 24; hour++) {
-            result.push({ hour, count: distribution.get(hour) || 0 });
-        }
-        
-        return result;
-    }
+    return Array.from(scriptCounts.entries())
+      .map(([script, count]) => ({ script, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }
 
-    private getPeakHour(distribution: { hour: number; count: number }[]): string {
-        const peak = distribution.reduce((max, current) => 
-            current.count > max.count ? current : max
-        );
-        
-        const hour = peak.hour;
-        const period = hour >= 12 ? 'PM' : 'AM';
-        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-        
-        return `${displayHour}:00 ${period}`;
-    }
+  private getErrorTypes(
+    messages: MessageItem[],
+  ): { type: string; count: number }[] {
+    const errorTypes = new Map<string, number>();
+    const errorMessages = messages.filter((m) => m.status === "error");
 
-    private getTopScripts(messages: MessageItem[]): { script: string; count: number }[] {
-        const scriptCounts = new Map<string, number>();
-        
-        messages.forEach(message => {
-            if (message.attachedScripts) {
-                message.attachedScripts.forEach((script: string) => {
-                    scriptCounts.set(script, (scriptCounts.get(script) || 0) + 1);
-                });
-            }
-        });
+    errorMessages.forEach((message) => {
+      if (message.error) {
+        const errorType = this.categorizeError(message.error);
+        errorTypes.set(errorType, (errorTypes.get(errorType) || 0) + 1);
+      }
+    });
 
-        return Array.from(scriptCounts.entries())
-            .map(([script, count]) => ({ script, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 5);
-    }
+    return Array.from(errorTypes.entries())
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count);
+  }
 
-    private getErrorTypes(messages: MessageItem[]): { type: string; count: number }[] {
-        const errorTypes = new Map<string, number>();
-        const errorMessages = messages.filter(m => m.status === 'error');
-        
-        errorMessages.forEach(message => {
-            if (message.error) {
-                const errorType = this.categorizeError(message.error);
-                errorTypes.set(errorType, (errorTypes.get(errorType) || 0) + 1);
-            }
-        });
+  private categorizeError(error: string): string {
+    if (error.includes("timeout")) return "Timeout";
+    if (error.includes("permission")) return "Permission";
+    if (error.includes("network")) return "Network";
+    if (error.includes("memory")) return "Memory";
+    if (error.includes("syntax")) return "Syntax";
+    return "Other";
+  }
 
-        return Array.from(errorTypes.entries())
-            .map(([type, count]) => ({ type, count }))
-            .sort((a, b) => b.count - a.count);
-    }
+  formatStatistics(stats: QueueStatistics): string {
+    const formatTime = (ms: number): string => {
+      const seconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
 
-    private categorizeError(error: string): string {
-        if (error.includes('timeout')) return 'Timeout';
-        if (error.includes('permission')) return 'Permission';
-        if (error.includes('network')) return 'Network';
-        if (error.includes('memory')) return 'Memory';
-        if (error.includes('syntax')) return 'Syntax';
-        return 'Other';
-    }
+      if (hours > 0) return `${hours}h ${minutes % 60}m`;
+      if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+      return `${seconds}s`;
+    };
 
-    formatStatistics(stats: QueueStatistics): string {
-        const formatTime = (ms: number): string => {
-            const seconds = Math.floor(ms / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const hours = Math.floor(minutes / 60);
-            
-            if (hours > 0) return `${hours}h ${minutes % 60}m`;
-            if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
-            return `${seconds}s`;
-        };
-
-        return `
+    return `
 📊 **Queue Statistics**
 
 **Overview:**
@@ -200,44 +212,44 @@ export class StatisticsManager {
 • Peak Hour: ${stats.peakHour}
 
 **Top Scripts:**
-${stats.topScripts.map((s, i) => `${i + 1}. ${s.script} (${s.count} uses)`).join('\n')}
+${stats.topScripts.map((s, i) => `${i + 1}. ${s.script} (${s.count} uses)`).join("\n")}
 
 **Error Distribution:**
-${stats.errorTypes.map(e => `• ${e.type}: ${e.count}`).join('\n')}
+${stats.errorTypes.map((e) => `• ${e.type}: ${e.count}`).join("\n")}
 `;
-    }
+  }
 
-    async showStatisticsWebview(context: vscode.ExtensionContext): Promise<void> {
-        const panel = vscode.window.createWebviewPanel(
-            'queueStatistics',
-            'Queue Statistics',
-            vscode.ViewColumn.One,
-            {
-                enableScripts: true
-            }
-        );
+  async showStatisticsWebview(context: vscode.ExtensionContext): Promise<void> {
+    const panel = vscode.window.createWebviewPanel(
+      "queueStatistics",
+      "Queue Statistics",
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+      },
+    );
 
-        const stats = this.getStatistics();
-        panel.webview.html = this.getStatisticsHtml(stats);
+    const stats = this.getStatistics();
+    panel.webview.html = this.getStatisticsHtml(stats);
 
-        // Update every 5 seconds
-        const updateInterval = setInterval(() => {
-            if (panel.visible) {
-                const newStats = this.getStatistics();
-                panel.webview.postMessage({
-                    command: 'updateStats',
-                    stats: newStats
-                });
-            }
-        }, 5000);
-
-        panel.onDidDispose(() => {
-            clearInterval(updateInterval);
+    // Update every 5 seconds
+    const updateInterval = setInterval(() => {
+      if (panel.visible) {
+        const newStats = this.getStatistics();
+        panel.webview.postMessage({
+          command: "updateStats",
+          stats: newStats,
         });
-    }
+      }
+    }, 5000);
 
-    private getStatisticsHtml(stats: QueueStatistics): string {
-        return `<!DOCTYPE html>
+    panel.onDidDispose(() => {
+      clearInterval(updateInterval);
+    });
+  }
+
+  private getStatisticsHtml(stats: QueueStatistics): string {
+    return `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -408,5 +420,5 @@ ${stats.errorTypes.map(e => `• ${e.type}: ${e.count}`).join('\n')}
     </script>
 </body>
 </html>`;
-    }
+  }
 }

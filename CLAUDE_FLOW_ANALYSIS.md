@@ -11,11 +11,13 @@ After analyzing the claude-flow project (v2.0.0-alpha.84), I've identified sever
 **What it is:** A sophisticated multi-agent system with specialized roles working under a central coordinator.
 
 **Benefits for AutoClaude:**
+
 - Handle complex, multi-faceted tasks by dividing work among specialized agents
 - Parallel processing of large codebases
 - Better task decomposition and delegation
 
 **Implementation Ideas:**
+
 - Create specialized agents for neo-rs project:
   - Rust Conversion Agent
   - Test Migration Agent
@@ -28,12 +30,14 @@ After analyzing the claude-flow project (v2.0.0-alpha.84), I've identified sever
 **What it is:** Automated pre/post-operation triggers that enhance workflow.
 
 **Current claude-flow hooks:**
+
 - `pre-task`: Auto-assigns appropriate agents
 - `pre-edit`: Validates files before modification
 - `post-edit`: Auto-formats code
 - `post-command`: Updates memory and learns patterns
 
 **Benefits for AutoClaude:**
+
 - Automatic code formatting after edits
 - Pre-validation before file modifications
 - Automatic test running after code changes
@@ -44,12 +48,14 @@ After analyzing the claude-flow project (v2.0.0-alpha.84), I've identified sever
 **What it is:** SQLite-based memory with 12 specialized tables for cross-session context.
 
 **Benefits for AutoClaude:**
+
 - Remember project patterns across sessions
 - Track conversion progress for neo-rs
 - Store learned patterns and successful transformations
 - Maintain project-specific knowledge base
 
 **Implementation Ideas:**
+
 - Store C# to Rust conversion patterns
 - Track which files have been converted
 - Remember common issues and their solutions
@@ -60,6 +66,7 @@ After analyzing the claude-flow project (v2.0.0-alpha.84), I've identified sever
 **What it is:** AI-driven pattern learning from development workflows.
 
 **Benefits for AutoClaude:**
+
 - Learn from successful conversions
 - Identify similar code patterns automatically
 - Suggest optimizations based on past experiences
@@ -70,6 +77,7 @@ After analyzing the claude-flow project (v2.0.0-alpha.84), I've identified sever
 **What it is:** Multiple coordination modes (hierarchical, mesh, hybrid) that adapt to task complexity.
 
 **Benefits for AutoClaude:**
+
 - Adapt strategy based on project size
 - Use hierarchical for structured conversions
 - Use mesh for collaborative problem-solving
@@ -80,6 +88,7 @@ After analyzing the claude-flow project (v2.0.0-alpha.84), I've identified sever
 **What it is:** Organized memory and context management using namespaces.
 
 **Benefits for AutoClaude:**
+
 - Separate contexts for different neo-rs modules
 - Maintain isolated memory for different conversion tasks
 - Better organization of large project conversions
@@ -87,6 +96,7 @@ After analyzing the claude-flow project (v2.0.0-alpha.84), I've identified sever
 ## Recommended Implementation Priority
 
 ### Phase 1: Foundation (High Priority)
+
 1. **Hook System** - Immediate automation benefits
    - Pre-edit validation hooks
    - Post-edit formatting hooks
@@ -97,6 +107,7 @@ After analyzing the claude-flow project (v2.0.0-alpha.84), I've identified sever
    - Implement simple task routing
 
 ### Phase 2: Intelligence (Medium Priority)
+
 3. **Persistent Memory System**
    - SQLite integration for cross-session memory
    - Pattern storage and retrieval
@@ -108,6 +119,7 @@ After analyzing the claude-flow project (v2.0.0-alpha.84), I've identified sever
    - Suggest similar transformations
 
 ### Phase 3: Advanced Features (Lower Priority)
+
 5. **Full Hive-Mind Coordination**
    - Multiple agent types with specific roles
    - Dynamic coordination strategies
@@ -121,18 +133,21 @@ After analyzing the claude-flow project (v2.0.0-alpha.84), I've identified sever
 ## Specific Features for Neo-rs Development
 
 ### 1. C# to Rust Conversion Agents
+
 - **Parser Agent**: Analyzes C# code structure
 - **Converter Agent**: Transforms to Rust idioms
 - **Validator Agent**: Ensures conversion accuracy
 - **Test Agent**: Converts and validates tests
 
 ### 2. Automated Workflows
+
 - **Pre-conversion Hook**: Analyze dependencies
 - **Post-conversion Hook**: Run clippy and tests
 - **Validation Hook**: Compare behavior with C# version
 - **Documentation Hook**: Update docs automatically
 
 ### 3. Memory Patterns
+
 - Store successful conversion patterns
 - Remember type mappings (C# → Rust)
 - Track API equivalencies

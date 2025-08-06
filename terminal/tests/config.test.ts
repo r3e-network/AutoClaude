@@ -12,10 +12,10 @@ describe('Config', () => {
         if (fs.existsSync(testConfigDir)) {
             fs.rmSync(testConfigDir, { recursive: true });
         }
-        
+
         // Mock home directory
         jest.spyOn(os, 'homedir').mockReturnValue(testConfigDir);
-        
+
         config = new Config();
     });
 
@@ -42,22 +42,22 @@ describe('Config', () => {
     test('should reset to defaults', () => {
         config.set('queue', 'maxSize', 500);
         expect(config.get('queue', 'maxSize')).toBe(500);
-        
+
         config.reset();
         expect(config.get('queue', 'maxSize')).toBe(1000);
     });
 
     test('should save and load from file', () => {
         const testFile = path.join(testConfigDir, 'test-config.json');
-        
+
         config.set('ui', 'theme', 'light');
         config.saveToFile(testFile);
-        
+
         expect(fs.existsSync(testFile)).toBe(true);
-        
+
         const newConfig = new Config();
         newConfig.loadFromFile(testFile);
-        
+
         expect(newConfig.get('ui', 'theme')).toBe('light');
     });
 });

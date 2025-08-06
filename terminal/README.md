@@ -14,6 +14,7 @@ A powerful terminal-based Claude AI automation tool with parallel agents, intell
 - 📊 **Real-time Monitoring**: Live agent status and performance metrics
 
 ### New in v3.4.0 🎉
+
 - 🔒 **Enterprise Security**: Command injection prevention, path traversal protection
 - 🛡️ **Professional Error Handling**: Comprehensive error hierarchy with recovery
 - 📈 **Performance Monitoring**: Real-time CPU/memory tracking with leak detection
@@ -40,7 +41,7 @@ npm link
 
 ## Prerequisites
 
-- Node.js 16+ 
+- Node.js 16+
 - Claude CLI (install from https://claude.ai/cli)
 - tmux (for parallel agents feature)
 - Linux/macOS terminal
@@ -107,6 +108,7 @@ autoclaude check -l -m 5
 ## Keyboard Shortcuts
 
 ### Global
+
 - `Ctrl+S` - Start processing
 - `Ctrl+X` - Stop processing
 - `Ctrl+L` - Clear Claude output
@@ -115,10 +117,12 @@ autoclaude check -l -m 5
 - `Q` - Quit
 
 ### Message Input
+
 - `Ctrl+Enter` - Send message
 - `Escape` - Clear input
 
 ### Queue
+
 - `D` - Delete selected message
 - `C` - Clear all messages
 
@@ -128,39 +132,39 @@ Configuration file: `~/.autoclaude/config.json`
 
 ```json
 {
-  "session": {
-    "skipPermissions": true,
-    "autoStart": false,
-    "timeout": 300000,
-    "keepAliveInterval": 30000
-  },
-  "queue": {
-    "maxSize": 5000,
-    "maxMessageSize": 100000,
-    "retentionHours": 24,
-    "persistInterval": 60000
-  },
-  "parallelAgents": {
-    "enabled": true,
-    "maxAgents": 50,
-    "defaultAgents": 5,
-    "autoRestart": true
-  },
-  "ui": {
-    "theme": "dark",
-    "autoScroll": true
-  },
-  "performance": {
-    "monitoring": true,
-    "monitoringInterval": 30000,
-    "maxMemoryMB": 1024,
-    "maxCpuPercent": 80
-  },
-  "logging": {
-    "level": "info",
-    "maxFiles": 10,
-    "maxSize": "50m"
-  }
+    "session": {
+        "skipPermissions": true,
+        "autoStart": false,
+        "timeout": 300000,
+        "keepAliveInterval": 30000
+    },
+    "queue": {
+        "maxSize": 5000,
+        "maxMessageSize": 100000,
+        "retentionHours": 24,
+        "persistInterval": 60000
+    },
+    "parallelAgents": {
+        "enabled": true,
+        "maxAgents": 50,
+        "defaultAgents": 5,
+        "autoRestart": true
+    },
+    "ui": {
+        "theme": "dark",
+        "autoScroll": true
+    },
+    "performance": {
+        "monitoring": true,
+        "monitoringInterval": 30000,
+        "maxMemoryMB": 1024,
+        "maxCpuPercent": 80
+    },
+    "logging": {
+        "level": "info",
+        "maxFiles": 10,
+        "maxSize": "50m"
+    }
 }
 ```
 
@@ -211,6 +215,7 @@ autoclaude check -d /path/to/project
 ```
 
 Default checks:
+
 - Production readiness (TODOs, FIXMEs)
 - Build verification
 - Test execution
@@ -273,12 +278,14 @@ export AUTOCLAUDE_DATA=/custom/data
 ## Troubleshooting
 
 ### Claude CLI not found
+
 ```bash
 # Install Claude CLI first
 curl -fsSL https://claude.ai/cli/install.sh | sh
 ```
 
 ### tmux not found
+
 ```bash
 # Ubuntu/Debian
 sudo apt-get install tmux
@@ -291,6 +298,7 @@ sudo yum install tmux
 ```
 
 ### Permission issues
+
 ```bash
 # Fix permissions
 chmod +x ~/.autoclaude/scripts/*.sh

@@ -13,6 +13,7 @@ For easy releases, use the automated release script:
 ```
 
 This script will:
+
 1. ✅ Verify you're on the main branch with clean working directory
 2. ✅ Update package.json version
 3. ✅ Run production tests
@@ -26,16 +27,18 @@ This script will:
 If you prefer to release manually:
 
 1. **Prepare the release**:
+
    ```bash
    # Ensure you're on main branch
    git checkout main
    git pull origin main
-   
+
    # Update version in package.json
    npm version 2.4.1 --no-git-tag-version
    ```
 
 2. **Run quality checks**:
+
    ```bash
    npm run test:production
    npm run compile
@@ -43,6 +46,7 @@ If you prefer to release manually:
    ```
 
 3. **Commit and tag**:
+
    ```bash
    git add package.json package-lock.json
    git commit -m "chore: bump version to 2.4.1"
@@ -118,6 +122,7 @@ gh run view <run-id> --log
 ```
 
 Common issues:
+
 - Version mismatch between tag and package.json
 - Build/compilation errors
 - Missing dependencies

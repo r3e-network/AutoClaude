@@ -75,15 +75,15 @@ const configSchema = {
             type: 'object',
             required: ['level', 'maxFiles', 'maxSize'],
             properties: {
-                level: { 
-                    type: 'string', 
-                    enum: ['error', 'warn', 'info', 'debug', 'verbose'] 
+                level: {
+                    type: 'string',
+                    enum: ['error', 'warn', 'info', 'debug', 'verbose']
                 },
                 maxFiles: { type: 'number', minimum: 1, maximum: 100 },
                 maxSize: { type: 'string', pattern: '^\\d+[kmg]?$' },
-                format: { 
-                    type: 'string', 
-                    enum: ['json', 'simple', 'combined'] 
+                format: {
+                    type: 'string',
+                    enum: ['json', 'simple', 'combined']
                 },
                 console: { type: 'boolean' },
                 file: { type: 'boolean' }
@@ -131,16 +131,17 @@ export class ConfigValidator {
      */
     validateConfig(config: any): void {
         const valid = this.validate(config);
-        
+
         if (!valid) {
-            const errors = this.validate.errors.map((err: any) => {
-                return `${err.instancePath} ${err.message}`;
-            }).join(', ');
-            
-            throw new InvalidConfigError(
-                `Configuration validation failed: ${errors}`,
-                { errors: this.validate.errors }
-            );
+            const errors = this.validate.errors
+                .map((err: any) => {
+                    return `${err.instancePath} ${err.message}`;
+                })
+                .join(', ');
+
+            throw new InvalidConfigError(`Configuration validation failed: ${errors}`, {
+                errors: this.validate.errors
+            });
         }
 
         // Additional custom validations
@@ -163,17 +164,13 @@ export class ConfigValidator {
         for (const key of pathKeys) {
             const path = config.paths[key];
             if (path.includes('..') || path.includes('~')) {
-                throw new InvalidConfigError(
-                    `Path ${key} contains dangerous characters: ${path}`
-                );
+                throw new InvalidConfigError(`Path ${key} contains dangerous characters: ${path}`);
             }
         }
 
         // Validate log file size format
         if (config.logging.maxSize && !/^\d+[kmg]?$/i.test(config.logging.maxSize)) {
-            throw new InvalidConfigError(
-                'logging.maxSize must be in format: 10, 10k, 10m, or 10g'
-            );
+            throw new InvalidConfigError('logging.maxSize must be in format: 10, 10k, 10m, or 10g');
         }
     }
 
@@ -238,8 +235,16 @@ export class ConfigValidator {
             security: {
                 enableSandbox: true,
                 allowedCommands: [
-                    'tmux', 'pkill', 'pgrep', 'ps', 'df', 'which', 
-                    'python', 'python3', 'node', 'npm'
+                    'tmux',
+                    'pkill',
+                    'pgrep',
+                    'ps',
+                    'df',
+                    'which',
+                    'python',
+                    'python3',
+                    'node',
+                    'npm'
                 ],
                 maxCommandLength: 1000,
                 enableAudit: true
@@ -260,7 +265,7 @@ export class ConfigValidator {
      */
     private static deepMerge(target: any, source: any): any {
         const output = { ...target };
-        
+
         if (this.isObject(target) && this.isObject(source)) {
             Object.keys(source).forEach(key => {
                 if (this.isObject(source[key])) {
@@ -274,7 +279,7 @@ export class ConfigValidator {
                 }
             });
         }
-        
+
         return output;
     }
 

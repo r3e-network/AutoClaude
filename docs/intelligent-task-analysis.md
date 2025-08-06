@@ -7,18 +7,21 @@ The Intelligent Task Analysis and Decomposition System is a core component of Au
 ## Key Features
 
 ### 1. Natural Language Understanding
+
 - Analyzes user commands to understand intent, scope, and requirements
 - Extracts entities (files, classes, functions) from the command
 - Determines urgency and complexity levels
 - Identifies primary action (create, fix, improve, analyze, test, document, deploy, configure)
 
 ### 2. Intelligent Task Decomposition
+
 - Automatically breaks complex tasks into logical subtasks
 - Creates proper dependency chains between subtasks
 - Identifies opportunities for parallel execution
 - Estimates duration for each subtask and overall task
 
 ### 3. Smart Agent Assignment
+
 - Matches subtask requirements to agent capabilities
 - Assigns primary and backup agents for each subtask
 - Considers agent specializations:
@@ -32,6 +35,7 @@ The Intelligent Task Analysis and Decomposition System is a core component of Au
   - `production-readiness`: Production checks, deployment readiness
 
 ### 4. Automated Tool Selection
+
 - Determines which tools are needed for each subtask
 - Creates optimal tool execution sequences
 - Tool categories:
@@ -44,12 +48,14 @@ The Intelligent Task Analysis and Decomposition System is a core component of Au
   - Git operations: Bash
 
 ### 5. Context-Aware Planning
+
 - Gathers relevant context from the workspace
 - Searches memory for similar past tasks
 - Learns from successful task patterns
 - Adapts plans based on project configuration
 
 ### 6. Production Readiness Enforcement
+
 - Validates all code before marking tasks complete
 - Checks for:
   - TODOs, FIXMEs, placeholders
@@ -91,6 +97,7 @@ The Intelligent Task Analysis and Decomposition System is a core component of Au
 ## Usage Examples
 
 ### Example 1: Feature Implementation
+
 ```
 Command: "Create a user authentication system with JWT tokens, password reset, and email verification"
 
@@ -103,6 +110,7 @@ Analysis Result:
 ```
 
 ### Example 2: Bug Fix
+
 ```
 Command: "Fix the memory leak in the UserService class"
 
@@ -115,6 +123,7 @@ Analysis Result:
 ```
 
 ### Example 3: Performance Optimization
+
 ```
 Command: "Optimize database queries in the reporting module"
 

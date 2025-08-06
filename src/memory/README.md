@@ -9,6 +9,7 @@ The persistent memory system uses SQLite to store learned patterns, conversion h
 ### Core Tables
 
 #### 1. **conversion_patterns**
+
 Stores successful C# to Rust conversion patterns.
 
 ```sql
@@ -32,6 +33,7 @@ CREATE INDEX idx_confidence ON conversion_patterns(confidence DESC);
 ```
 
 #### 2. **project_context**
+
 Maintains project-specific information and progress.
 
 ```sql
@@ -52,6 +54,7 @@ CREATE TABLE project_context (
 ```
 
 #### 3. **conversion_history**
+
 Tracks individual file conversions.
 
 ```sql
@@ -76,6 +79,7 @@ CREATE INDEX idx_status ON conversion_history(conversion_status);
 ```
 
 #### 4. **learned_optimizations**
+
 Stores performance optimizations discovered during conversions.
 
 ```sql
@@ -94,6 +98,7 @@ CREATE TABLE learned_optimizations (
 ```
 
 #### 5. **agent_memory**
+
 Agent-specific memory and state.
 
 ```sql
@@ -115,6 +120,7 @@ CREATE INDEX idx_importance ON agent_memory(importance DESC);
 ```
 
 #### 6. **type_mappings**
+
 C# to Rust type equivalencies.
 
 ```sql
@@ -146,6 +152,7 @@ INSERT INTO type_mappings (csharp_type, rust_type, conversion_complexity) VALUES
 ```
 
 #### 7. **session_state**
+
 Maintains session continuity.
 
 ```sql
@@ -165,84 +172,95 @@ CREATE TABLE session_state (
 
 ```typescript
 // src/memory/MemoryManager.ts
-import * as sqlite3 from 'sqlite3';
-import { open, Database } from 'sqlite';
-import * as path from 'path';
+import * as sqlite3 from "sqlite3";
+import { open, Database } from "sqlite";
+import * as path from "path";
 
 export class MemoryManager {
-    private db: Database | null = null;
-    private memoryPath: string;
+  private db: Database | null = null;
+  private memoryPath: string;
 
-    constructor(workspacePath: string) {
-        this.memoryPath = path.join(workspacePath, '.autoclaude', 'memory.db');
-    }
+  constructor(workspacePath: string) {
+    this.memoryPath = path.join(workspacePath, ".autoclaude", "memory.db");
+  }
 
-    async initialize(): Promise<void> {
-        this.db = await open({
-            filename: this.memoryPath,
-            driver: sqlite3.Database
-        });
+  async initialize(): Promise<void> {
+    this.db = await open({
+      filename: this.memoryPath,
+      driver: sqlite3.Database,
+    });
 
-        await this.createTables();
-        await this.loadBuiltinPatterns();
-    }
+    await this.createTables();
+    await this.loadBuiltinPatterns();
+  }
 
-    // Pattern Learning
-    async recordPattern(
-        csharpPattern: string,
-        rustPattern: string,
-        type: string,
-        confidence: number = 0.5
-    ): Promise<void> {
-        const hash = this.hashPattern(csharpPattern + rustPattern);
-        
-        await this.db?.run(`
+  // Pattern Learning
+  async recordPattern(
+    csharpPattern: string,
+    rustPattern: string,
+    type: string,
+    confidence: number = 0.5,
+  ): Promise<void> {
+    const hash = this.hashPattern(csharpPattern + rustPattern);
+
+    await this.db?.run(
+      `
             INSERT INTO conversion_patterns 
             (pattern_hash, csharp_pattern, rust_pattern, pattern_type, confidence)
             VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(pattern_hash) DO UPDATE SET
                 usage_count = usage_count + 1,
                 last_used = CURRENT_TIMESTAMP
-        `, [hash, csharpPattern, rustPattern, type, confidence]);
-    }
+        `,
+      [hash, csharpPattern, rustPattern, type, confidence],
+    );
+  }
 
-    async findSimilarPattern(csharpCode: string): Promise<ConversionPattern | null> {
-        // Use fuzzy matching or embedding similarity
-        const patterns = await this.db?.all(`
+  async findSimilarPattern(
+    csharpCode: string,
+  ): Promise<ConversionPattern | null> {
+    // Use fuzzy matching or embedding similarity
+    const patterns = await this.db?.all(`
             SELECT * FROM conversion_patterns
             WHERE pattern_type IN ('syntax', 'idiom')
             ORDER BY confidence DESC, usage_count DESC
             LIMIT 10
         `);
 
-        // Find best matching pattern
-        return this.findBestMatch(csharpCode, patterns || []);
-    }
+    // Find best matching pattern
+    return this.findBestMatch(csharpCode, patterns || []);
+  }
 
-    // Project Progress
-    async updateProjectProgress(
-        projectPath: string,
-        module: string,
-        updates: Partial<ProjectProgress>
-    ): Promise<void> {
-        const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
-        const values = Object.values(updates);
-        
-        await this.db?.run(`
+  // Project Progress
+  async updateProjectProgress(
+    projectPath: string,
+    module: string,
+    updates: Partial<ProjectProgress>,
+  ): Promise<void> {
+    const fields = Object.keys(updates)
+      .map((k) => `${k} = ?`)
+      .join(", ");
+    const values = Object.values(updates);
+
+    await this.db?.run(
+      `
             UPDATE project_context 
             SET ${fields}, updated_at = CURRENT_TIMESTAMP
             WHERE project_path = ? AND module_name = ?
-        `, [...values, projectPath, module]);
-    }
+        `,
+      [...values, projectPath, module],
+    );
+  }
 
-    // Agent Memory
-    async storeAgentMemory(
-        agentId: string,
-        key: string,
-        value: any,
-        importance: number = 0.5
-    ): Promise<void> {
-        await this.db?.run(`
+  // Agent Memory
+  async storeAgentMemory(
+    agentId: string,
+    key: string,
+    value: any,
+    importance: number = 0.5,
+  ): Promise<void> {
+    await this.db?.run(
+      `
             INSERT INTO agent_memory 
             (agent_id, agent_type, memory_key, memory_value, importance)
             VALUES (?, ?, ?, ?, ?)
@@ -251,42 +269,59 @@ export class MemoryManager {
                 importance = excluded.importance,
                 access_count = access_count + 1,
                 last_accessed = CURRENT_TIMESTAMP
-        `, [agentId, this.getAgentType(agentId), key, JSON.stringify(value), importance]);
-    }
+        `,
+      [
+        agentId,
+        this.getAgentType(agentId),
+        key,
+        JSON.stringify(value),
+        importance,
+      ],
+    );
+  }
 
-    async recallAgentMemory(agentId: string, key: string): Promise<any> {
-        const result = await this.db?.get(`
+  async recallAgentMemory(agentId: string, key: string): Promise<any> {
+    const result = await this.db?.get(
+      `
             SELECT memory_value FROM agent_memory
             WHERE agent_id = ? AND memory_key = ?
-        `, [agentId, key]);
+        `,
+      [agentId, key],
+    );
 
-        return result ? JSON.parse(result.memory_value) : null;
-    }
+    return result ? JSON.parse(result.memory_value) : null;
+  }
 
-    // Memory Optimization
-    async pruneOldMemory(daysToKeep: number = 30): Promise<void> {
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+  // Memory Optimization
+  async pruneOldMemory(daysToKeep: number = 30): Promise<void> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
-        // Remove low-importance, unused memories
-        await this.db?.run(`
+    // Remove low-importance, unused memories
+    await this.db?.run(
+      `
             DELETE FROM agent_memory
             WHERE importance < 0.3 
             AND last_accessed < ?
             AND access_count < 5
-        `, [cutoffDate.toISOString()]);
+        `,
+      [cutoffDate.toISOString()],
+    );
 
-        // Archive old conversion history
-        await this.db?.run(`
+    // Archive old conversion history
+    await this.db?.run(
+      `
             DELETE FROM conversion_history
             WHERE created_at < ?
             AND conversion_status = 'completed'
-        `, [cutoffDate.toISOString()]);
-    }
+        `,
+      [cutoffDate.toISOString()],
+    );
+  }
 
-    // Analytics
-    async getConversionStats(): Promise<ConversionStats> {
-        const stats = await this.db?.get(`
+  // Analytics
+  async getConversionStats(): Promise<ConversionStats> {
+    const stats = await this.db?.get(`
             SELECT 
                 COUNT(*) as total_conversions,
                 SUM(CASE WHEN conversion_status = 'completed' THEN 1 ELSE 0 END) as successful,
@@ -295,7 +330,7 @@ export class MemoryManager {
             FROM conversion_history
         `);
 
-        const patterns = await this.db?.get(`
+    const patterns = await this.db?.get(`
             SELECT 
                 COUNT(*) as total_patterns,
                 AVG(confidence) as avg_confidence,
@@ -303,57 +338,60 @@ export class MemoryManager {
             FROM conversion_patterns
         `);
 
-        return { ...stats, ...patterns };
-    }
+    return { ...stats, ...patterns };
+  }
 
-    // Helper methods
-    private hashPattern(pattern: string): string {
-        // Simple hash for demo - use crypto.createHash in production
-        return pattern.split('').reduce((a, b) => {
-            a = ((a << 5) - a) + b.charCodeAt(0);
-            return a & a;
-        }, 0).toString(36);
-    }
+  // Helper methods
+  private hashPattern(pattern: string): string {
+    // Simple hash for demo - use crypto.createHash in production
+    return pattern
+      .split("")
+      .reduce((a, b) => {
+        a = (a << 5) - a + b.charCodeAt(0);
+        return a & a;
+      }, 0)
+      .toString(36);
+  }
 
-    private getAgentType(agentId: string): string {
-        // Extract agent type from ID
-        return agentId.split('-')[0] || 'unknown';
-    }
+  private getAgentType(agentId: string): string {
+    // Extract agent type from ID
+    return agentId.split("-")[0] || "unknown";
+  }
 
-    private async createTables(): Promise<void> {
-        // Execute all CREATE TABLE statements from schema
-        // ... (implementation of schema creation)
-    }
+  private async createTables(): Promise<void> {
+    // Execute all CREATE TABLE statements from schema
+    // ... (implementation of schema creation)
+  }
 
-    private async loadBuiltinPatterns(): Promise<void> {
-        // Load common C# to Rust patterns
-        // ... (implementation of pattern loading)
-    }
+  private async loadBuiltinPatterns(): Promise<void> {
+    // Load common C# to Rust patterns
+    // ... (implementation of pattern loading)
+  }
 }
 
 // Types
 interface ConversionPattern {
-    id: number;
-    csharp_pattern: string;
-    rust_pattern: string;
-    pattern_type: string;
-    confidence: number;
-    usage_count: number;
+  id: number;
+  csharp_pattern: string;
+  rust_pattern: string;
+  pattern_type: string;
+  confidence: number;
+  usage_count: number;
 }
 
 interface ProjectProgress {
-    conversion_status: string;
-    files_converted: number;
-    tests_passing: number;
+  conversion_status: string;
+  files_converted: number;
+  tests_passing: number;
 }
 
 interface ConversionStats {
-    total_conversions: number;
-    successful: number;
-    avg_duration: number;
-    projects_touched: number;
-    total_patterns: number;
-    avg_confidence: number;
+  total_conversions: number;
+  successful: number;
+  avg_duration: number;
+  projects_touched: number;
+  total_patterns: number;
+  avg_confidence: number;
 }
 ```
 
@@ -367,10 +405,10 @@ await memory.initialize();
 
 // After successful conversion
 await memory.recordPattern(
-    'public class $name : IDisposable',
-    'pub struct $name { /* fields */ }\n\nimpl Drop for $name',
-    'syntax',
-    0.85
+  "public class $name : IDisposable",
+  "pub struct $name { /* fields */ }\n\nimpl Drop for $name",
+  "syntax",
+  0.85,
 );
 ```
 
@@ -378,12 +416,12 @@ await memory.recordPattern(
 
 ```typescript
 const similarPattern = await memory.findSimilarPattern(
-    'public sealed class Configuration : IConfiguration'
+  "public sealed class Configuration : IConfiguration",
 );
 
 if (similarPattern) {
-    console.log(`Found pattern with ${similarPattern.confidence} confidence`);
-    // Apply pattern transformation
+  console.log(`Found pattern with ${similarPattern.confidence} confidence`);
+  // Apply pattern transformation
 }
 ```
 
@@ -392,35 +430,31 @@ if (similarPattern) {
 ```typescript
 // Converter agent remembers successful strategies
 await memory.storeAgentMemory(
-    'converter-agent-1',
-    'async-pattern-strategy',
-    {
-        pattern: 'Task<T> to Future<T>',
-        success_rate: 0.92,
-        notes: 'Use tokio::spawn for fire-and-forget tasks'
-    },
-    0.9 // high importance
+  "converter-agent-1",
+  "async-pattern-strategy",
+  {
+    pattern: "Task<T> to Future<T>",
+    success_rate: 0.92,
+    notes: "Use tokio::spawn for fire-and-forget tasks",
+  },
+  0.9, // high importance
 );
 
 // Later recall
 const strategy = await memory.recallAgentMemory(
-    'converter-agent-1',
-    'async-pattern-strategy'
+  "converter-agent-1",
+  "async-pattern-strategy",
 );
 ```
 
 ### 4. Project Progress Tracking
 
 ```typescript
-await memory.updateProjectProgress(
-    '/home/user/neo-rs',
-    'Neo.VM',
-    {
-        files_converted: 15,
-        tests_passing: 142,
-        conversion_status: 'in_progress'
-    }
-);
+await memory.updateProjectProgress("/home/user/neo-rs", "Neo.VM", {
+  files_converted: 15,
+  tests_passing: 142,
+  conversion_status: "in_progress",
+});
 ```
 
 ## Benefits

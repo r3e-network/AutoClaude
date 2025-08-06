@@ -145,7 +145,11 @@ export class QueueError extends AutoClaudeError {
 
 export class MessageProcessingError extends QueueError {
     constructor(messageId: string, reason: string, details?: any) {
-        super(`Failed to process message ${messageId}: ${reason}`, 'MESSAGE_PROCESSING_ERROR', details);
+        super(
+            `Failed to process message ${messageId}: ${reason}`,
+            'MESSAGE_PROCESSING_ERROR',
+            details
+        );
         this.name = 'MessageProcessingError';
     }
 }

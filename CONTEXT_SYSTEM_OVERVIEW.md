@@ -3,6 +3,7 @@
 ## 🚀 New Features Added
 
 ### 1. **Automatic Project Context Generation**
+
 - **Project Indexer**: Automatically indexes all files in your workspace
   - Tracks file changes in real-time
   - Extracts symbols (classes, functions, etc.) from code files
@@ -10,6 +11,7 @@
   - Detects frameworks, dependencies, and project structure
 
 ### 2. **Cross-Session Task Persistence**
+
 - **Task Manager**: Maintains task history across VSCode sessions
   - Tasks persist even after closing VSCode
   - Tracks task status, priority, and context
@@ -17,6 +19,7 @@
   - Maintains relationships between tasks (dependencies, subtasks)
 
 ### 3. **Enhanced Context Provider**
+
 - **Smart Context Generation**: Provides relevant context to Claude
   - Generates full project context or targeted file context
   - Includes unfinished tasks and recent changes
@@ -24,6 +27,7 @@
   - Automatically saves context to `.autopilot/CLAUDE_CONTEXT.md`
 
 ### 4. **Project Learning Engine**
+
 - **Intelligent Insights**: Analyzes your codebase for patterns and issues
   - Detects design patterns (Singleton, Factory, Observer, etc.)
   - Identifies architectural patterns (MVC, Layered Architecture)
@@ -31,6 +35,7 @@
   - Calculates complexity metrics and maintainability index
 
 ### 5. **Claude Integration**
+
 - **Message Tracking**: Automatically tracks Claude interactions
   - Links messages to current tasks
   - Extracts mentioned files and commands
@@ -65,26 +70,34 @@
 ## 🔧 How It Works
 
 ### Automatic Initialization
+
 When you open a workspace, AutoClaude:
+
 1. Indexes all project files
 2. Loads previous tasks and sessions
 3. Generates initial project context
 4. Sets up file watchers for real-time updates
 
 ### Context Updates
+
 The context automatically updates when:
+
 - Files are created, modified, or deleted
 - Tasks are created or updated
 - Every 5 minutes (configurable refresh)
 
 ### Task Tracking
+
 Tasks are automatically created when:
+
 - User messages contain action keywords (fix, implement, create, etc.)
 - Claude is actively working on something
 - Tasks persist across sessions until marked complete
 
 ### Smart Context Generation
+
 When Claude needs context, the system provides:
+
 - Quick context (current file, active task)
 - Full project context (complete overview)
 - Targeted context (specific file with related tasks)
@@ -112,16 +125,19 @@ When Claude needs context, the system provides:
 Generated at: 2025-01-30T...
 
 ## Workspace
+
 - **Root**: /home/user/project
 - **Type**: web frontend
 - **Last Updated**: 2025-01-30T...
 
 ## Statistics
+
 - **Total Files**: 156
 - **Estimated Lines**: 12,450
 - **Average File Size**: 3,245 bytes
 
 ## Languages
+
 - **typescript**: 89 files
 - **javascript**: 34 files
 - **json**: 23 files
@@ -129,19 +145,25 @@ Generated at: 2025-01-30T...
 ## Unfinished Tasks
 
 ### High Priority
+
 #### Fix TypeScript compilation errors
+
 - **Status**: in_progress
 - **Created**: 2025-01-30T...
 - **Recent Errors**: TS2304: Cannot find name 'TaskContext'
 - **Files**: src/context/contextProvider.ts
 
 ## Recent Changes
+
 ### Git Status
 ```
+
 M src/extension.ts
 A src/context/projectIndexer.ts
 A src/context/taskPersistence.ts
+
 ```
+
 ```
 
 ## 🚧 Future Enhancements

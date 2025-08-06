@@ -14,16 +14,19 @@ AutoClaude v3.0.1+ is fully compatible with web-based VS Code environments.
 ## How It Works
 
 ### Resource Loading
-- All webview resources are loaded using `asWebviewUri` 
+
+- All webview resources are loaded using `asWebviewUri`
 - No file system dependencies for web environments
 - Resources are served through VS Code's webview protocol
 
 ### Content Security Policy
+
 - CSP configured to work in both desktop and web contexts
 - Proper nonce-based script loading for security
 - Compatible with VS Code's web security model
 
 ### HTML Generation
+
 - Webview HTML is generated inline (no external files)
 - All assets use proper URI resolution
 - Works seamlessly across all environments
@@ -33,31 +36,42 @@ AutoClaude v3.0.1+ is fully compatible with web-based VS Code environments.
 ### Key Changes Made
 
 1. **Resource URIs**
+
    ```typescript
    // Before (breaks in web)
-   const cssPath = path.join(context.extensionPath, 'out', 'webview', 'styles.css');
-   
+   const cssPath = path.join(
+     context.extensionPath,
+     "out",
+     "webview",
+     "styles.css",
+   );
+
    // After (works everywhere)
-   const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'out', 'webview', 'styles.css'));
+   const styleUri = webview.asWebviewUri(
+     vscode.Uri.joinPath(context.extensionUri, "out", "webview", "styles.css"),
+   );
    ```
 
 2. **Local Resource Roots**
+
    ```typescript
    localResourceRoots: [
-       vscode.Uri.joinPath(context.extensionUri, 'out'),
-       vscode.Uri.joinPath(context.extensionUri, 'src'),
-       context.extensionUri
-   ]
+     vscode.Uri.joinPath(context.extensionUri, "out"),
+     vscode.Uri.joinPath(context.extensionUri, "src"),
+     context.extensionUri,
+   ];
    ```
 
 3. **Content Security Policy**
    ```html
-   <meta http-equiv="Content-Security-Policy" 
-         content="default-src 'none'; 
+   <meta
+     http-equiv="Content-Security-Policy"
+     content="default-src 'none'; 
                   style-src ${webview.cspSource} 'unsafe-inline'; 
                   script-src 'nonce-${nonce}'; 
                   font-src ${webview.cspSource}; 
-                  img-src ${webview.cspSource} data: https:;">
+                  img-src ${webview.cspSource} data: https:;"
+   />
    ```
 
 ## Testing
@@ -87,16 +101,19 @@ To test in web environments:
 ## Troubleshooting
 
 ### Blank Webview
+
 - Ensure you're using v3.0.1 or later
 - Check browser console for errors
 - Verify extension is properly activated
 
 ### Resources Not Loading
+
 - Check CSP errors in console
 - Ensure localResourceRoots are set
 - Verify URIs use asWebviewUri
 
 ### Performance Issues
+
 - Web environments may be slower
 - Consider reducing parallel agents
 - Monitor network latency

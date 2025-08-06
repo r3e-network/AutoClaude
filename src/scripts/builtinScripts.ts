@@ -1,12 +1,18 @@
+import { debugLog } from "../utils/logging";
+
 /**
  * Built-in scripts for AutoClaude
  * These scripts are embedded in the extension and copied to workspace .autoclaude folder
  */
 
-import { TDD_AUTOMATION_SCRIPT, AI_CODE_REVIEW_SCRIPT, DOC_GENERATOR_SCRIPT } from './automationScripts';
+import {
+  TDD_AUTOMATION_SCRIPT,
+  AI_CODE_REVIEW_SCRIPT,
+  DOC_GENERATOR_SCRIPT,
+} from "./automationScripts";
 
 export const BUILTIN_SCRIPTS = {
-    'production-readiness.js': `#!/usr/bin/env node
+  "production-readiness.js": `#!/usr/bin/env node
 /**
  * Production Readiness Check
  * Checks for TODO, FIXME, placeholders, and incomplete implementations
@@ -108,7 +114,7 @@ async function check() {
     }
     
     // Output results
-    console.log(JSON.stringify({
+    debugLog(JSON.stringify({
         passed: errors.length === 0,
         errors: errors,
         warnings: warnings
@@ -118,14 +124,14 @@ async function check() {
 // Run the check
 check().catch(error => {
     console.error(\`Unexpected error during production readiness check: \${error.message}\`);
-    console.log(JSON.stringify({
+    debugLog(JSON.stringify({
         passed: false,
         errors: [\`Unexpected error: \${error.message}\`]
     }, null, 2));
     process.exit(1);
 });`,
 
-    'build-check.js': `#!/usr/bin/env node
+  "build-check.js": `#!/usr/bin/env node
 /**
  * Build Check Script
  * Verifies that the project builds successfully
@@ -244,7 +250,7 @@ async function check() {
     }
     
     // Output results
-    console.log(JSON.stringify({
+    debugLog(JSON.stringify({
         passed: errors.length === 0,
         errors: errors,
         warnings: warnings
@@ -254,14 +260,14 @@ async function check() {
 // Run the check
 check().catch(error => {
     console.error(\`Unexpected error during build check: \${error.message}\`);
-    console.log(JSON.stringify({
+    debugLog(JSON.stringify({
         passed: false,
         errors: [\`Unexpected error: \${error.message}\`]
     }, null, 2));
     process.exit(1);
 });`,
 
-    'test-check.js': `#!/usr/bin/env node
+  "test-check.js": `#!/usr/bin/env node
 /**
  * Test Check Script
  * Verifies that all tests pass
@@ -470,7 +476,7 @@ async function check() {
     }
     
     // Output results
-    console.log(JSON.stringify({
+    debugLog(JSON.stringify({
         passed: errors.length === 0,
         errors: errors,
         warnings: warnings
@@ -480,14 +486,14 @@ async function check() {
 // Run the check
 check().catch(error => {
     console.error(\`Unexpected error during test check: \${error.message}\`);
-    console.log(JSON.stringify({
+    debugLog(JSON.stringify({
         passed: false,
         errors: [\`Unexpected error: \${error.message}\`]
     }, null, 2));
     process.exit(1);
 });`,
 
-    'format-check.js': `#!/usr/bin/env node
+  "format-check.js": `#!/usr/bin/env node
 /**
  * Format Check Script
  * Verifies that code is properly formatted
@@ -612,7 +618,7 @@ async function check() {
     }
     
     // Output results
-    console.log(JSON.stringify({
+    debugLog(JSON.stringify({
         passed: errors.length === 0,
         errors: errors,
         warnings: warnings
@@ -622,14 +628,14 @@ async function check() {
 // Run the check
 check().catch(error => {
     console.error(\`Unexpected error during format check: \${error.message}\`);
-    console.log(JSON.stringify({
+    debugLog(JSON.stringify({
         passed: false,
         errors: [\`Unexpected error: \${error.message}\`]
     }, null, 2));
     process.exit(1);
 });`,
 
-    'github-actions.js': `#!/usr/bin/env node
+  "github-actions.js": `#!/usr/bin/env node
 /**
  * GitHub Actions Workflow Check
  * Validates GitHub Actions workflow files
@@ -689,7 +695,7 @@ async function check() {
         
         if (!fs.existsSync(workflowsDir)) {
             warnings.push('No .github/workflows directory found');
-            console.log(JSON.stringify({
+            debugLog(JSON.stringify({
                 passed: true,
                 errors: errors,
                 warnings: warnings
@@ -770,7 +776,7 @@ async function check() {
     }
     
     // Output results
-    console.log(JSON.stringify({
+    debugLog(JSON.stringify({
         passed: errors.length === 0,
         errors: errors,
         warnings: warnings
@@ -787,7 +793,7 @@ try {
 
 // Run the check
 check().then(result => {
-    console.log(JSON.stringify(result, null, 2));
+    debugLog(JSON.stringify(result, null, 2));
     process.exit(result.passed ? 0 : 1);
 }).catch(error => {
     console.error(JSON.stringify({
@@ -797,71 +803,72 @@ check().then(result => {
     process.exit(1);
 });`,
 
-    'tdd-automation.js': TDD_AUTOMATION_SCRIPT,
-    'ai-code-review.js': AI_CODE_REVIEW_SCRIPT,
-    'doc-generator.js': DOC_GENERATOR_SCRIPT
+  "tdd-automation.js": TDD_AUTOMATION_SCRIPT,
+  "ai-code-review.js": AI_CODE_REVIEW_SCRIPT,
+  "doc-generator.js": DOC_GENERATOR_SCRIPT,
 };
 
 export const DEFAULT_CONFIG = {
-    scripts: [
-        {
-            id: "production-readiness",
-            name: "Production Readiness Check",
-            description: "Checks for TODO, FIXME, placeholders, and incomplete implementations",
-            enabled: true,
-            order: 1
-        },
-        {
-            id: "build-check",
-            name: "Build Check",
-            description: "Verifies that the project builds successfully",
-            enabled: true,
-            order: 2
-        },
-        {
-            id: "test-check",
-            name: "Test Check",
-            description: "Runs tests to ensure they all pass",
-            enabled: true,
-            order: 3
-        },
-        {
-            id: "format-check",
-            name: "Format Check",
-            description: "Ensures code is properly formatted",
-            enabled: true,
-            order: 4
-        },
-        {
-            id: "github-actions",
-            name: "GitHub Actions Check",
-            description: "Validates GitHub Actions workflows",
-            enabled: true,
-            order: 5
-        },
-        {
-            id: "tdd-automation",
-            name: "TDD Automation",
-            description: "Ensures test coverage and test-driven development",
-            enabled: true,
-            order: 6
-        },
-        {
-            id: "ai-code-review",
-            name: "AI Code Review",
-            description: "AI-powered code quality, security, and performance review",
-            enabled: true,
-            order: 7
-        },
-        {
-            id: "doc-generator",
-            name: "Documentation Check",
-            description: "Checks for missing documentation and generates suggestions",
-            enabled: true,
-            order: 8
-        }
-    ],
-    maxIterations: 5
+  scripts: [
+    {
+      id: "production-readiness",
+      name: "Production Readiness Check",
+      description:
+        "Checks for TODO, FIXME, placeholders, and incomplete implementations",
+      enabled: true,
+      order: 1,
+    },
+    {
+      id: "build-check",
+      name: "Build Check",
+      description: "Verifies that the project builds successfully",
+      enabled: true,
+      order: 2,
+    },
+    {
+      id: "test-check",
+      name: "Test Check",
+      description: "Runs tests to ensure they all pass",
+      enabled: true,
+      order: 3,
+    },
+    {
+      id: "format-check",
+      name: "Format Check",
+      description: "Ensures code is properly formatted",
+      enabled: true,
+      order: 4,
+    },
+    {
+      id: "github-actions",
+      name: "GitHub Actions Check",
+      description: "Validates GitHub Actions workflows",
+      enabled: true,
+      order: 5,
+    },
+    {
+      id: "tdd-automation",
+      name: "TDD Automation",
+      description: "Ensures test coverage and test-driven development",
+      enabled: true,
+      order: 6,
+    },
+    {
+      id: "ai-code-review",
+      name: "AI Code Review",
+      description: "AI-powered code quality, security, and performance review",
+      enabled: true,
+      order: 7,
+    },
+    {
+      id: "doc-generator",
+      name: "Documentation Check",
+      description: "Checks for missing documentation and generates suggestions",
+      enabled: true,
+      order: 8,
+    },
+  ],
+  maxIterations: 5,
 };
 
 export const SCRIPTS_README = `# AutoClaude Scripts

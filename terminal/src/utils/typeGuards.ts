@@ -16,7 +16,7 @@ export function isObject(value: unknown): value is Record<string, unknown> {
  */
 export function isLogMetadata(value: unknown): value is LogMetadata {
     if (!isObject(value)) return false;
-    
+
     // LogMetadata has optional fields, so any object is valid
     // But we can check for expected field types if present
     if ('component' in value && typeof value.component !== 'string') return false;
@@ -24,7 +24,7 @@ export function isLogMetadata(value: unknown): value is LogMetadata {
     if ('userId' in value && typeof value.userId !== 'string') return false;
     if ('sessionId' in value && typeof value.sessionId !== 'string') return false;
     if ('duration' in value && typeof value.duration !== 'number') return false;
-    
+
     return true;
 }
 
@@ -34,27 +34,27 @@ export function isLogMetadata(value: unknown): value is LogMetadata {
 export function toLogMetadata(value: unknown): LogMetadata | undefined {
     if (value === undefined || value === null) return undefined;
     if (isLogMetadata(value)) return value;
-    
+
     // If it's an object but not valid LogMetadata, try to extract valid fields
     if (isObject(value)) {
         const metadata: LogMetadata = {};
-        
+
         if (typeof value.component === 'string') metadata.component = value.component;
         if (typeof value.action === 'string') metadata.action = value.action;
         if (typeof value.userId === 'string') metadata.userId = value.userId;
         if (typeof value.sessionId === 'string') metadata.sessionId = value.sessionId;
         if (typeof value.duration === 'number') metadata.duration = value.duration;
-        
+
         // Copy other fields
         for (const [key, val] of Object.entries(value)) {
             if (!(key in metadata)) {
                 metadata[key] = val;
             }
         }
-        
+
         return metadata;
     }
-    
+
     // For non-objects, wrap in an object
     return { value };
 }

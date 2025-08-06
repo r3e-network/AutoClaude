@@ -1,187 +1,193 @@
-import * as vscode from 'vscode';
-import { debugLog } from '../utils/logging';
-import { WorkflowOrchestrator } from '../automation/workflowOrchestrator';
+import * as vscode from "vscode";
+import { debugLog } from "../utils/logging";
+import { WorkflowOrchestrator } from "../automation/workflowOrchestrator";
 
 export interface QuickStartOption {
-    id: string;
-    title: string;
-    description: string;
-    icon: string;
-    action: () => Promise<void>;
-    category: 'getting-started' | 'common-tasks' | 'advanced';
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  action: () => Promise<void>;
+  category: "getting-started" | "common-tasks" | "advanced";
 }
 
 export class QuickStartManager {
-    private workspacePath: string;
-    private orchestrator?: WorkflowOrchestrator;
+  private workspacePath: string;
+  private orchestrator?: WorkflowOrchestrator;
 
-    constructor(workspacePath: string) {
-        this.workspacePath = workspacePath;
-    }
+  constructor(workspacePath: string) {
+    this.workspacePath = workspacePath;
+  }
 
-    async initialize(): Promise<void> {
-        this.orchestrator = new WorkflowOrchestrator(this.workspacePath);
-        await this.orchestrator.initialize();
-    }
+  async initialize(): Promise<void> {
+    this.orchestrator = new WorkflowOrchestrator(this.workspacePath);
+    await this.orchestrator.initialize();
+  }
 
-    getQuickStartOptions(): QuickStartOption[] {
-        return [
-            // Getting Started Options
-            {
-                id: 'first-time-setup',
-                title: '🎯 First Time Setup',
-                description: 'Complete setup guide for new users',
-                icon: '$(getting-started)',
-                category: 'getting-started',
-                action: async () => {
-                    await this.showFirstTimeSetup();
-                }
-            },
-            {
-                id: 'quick-demo',
-                title: '🎬 Quick Demo',
-                description: 'See AutoClaude in action with a 2-minute demo',
-                icon: '$(play-circle)',
-                category: 'getting-started',
-                action: async () => {
-                    await this.runQuickDemo();
-                }
-            },
-            {
-                id: 'project-health-check',
-                title: '🏥 Project Health Check',
-                description: 'Quick analysis of your project\'s current state',
-                icon: '$(pulse)',
-                category: 'getting-started',
-                action: async () => {
-                    await this.runProjectHealthCheck();
-                }
-            },
+  getQuickStartOptions(): QuickStartOption[] {
+    return [
+      // Getting Started Options
+      {
+        id: "first-time-setup",
+        title: "🎯 First Time Setup",
+        description: "Complete setup guide for new users",
+        icon: "$(getting-started)",
+        category: "getting-started",
+        action: async () => {
+          await this.showFirstTimeSetup();
+        },
+      },
+      {
+        id: "quick-demo",
+        title: "🎬 Quick Demo",
+        description: "See AutoClaude in action with a 2-minute demo",
+        icon: "$(play-circle)",
+        category: "getting-started",
+        action: async () => {
+          await this.runQuickDemo();
+        },
+      },
+      {
+        id: "project-health-check",
+        title: "🏥 Project Health Check",
+        description: "Quick analysis of your project's current state",
+        icon: "$(pulse)",
+        category: "getting-started",
+        action: async () => {
+          await this.runProjectHealthCheck();
+        },
+      },
 
-            // Common Tasks
-            {
-                id: 'fix-common-issues',
-                title: '🔧 Fix Common Issues',
-                description: 'Automatically detect and fix typical code problems',
-                icon: '$(tools)',
-                category: 'common-tasks',
-                action: async () => {
-                    if (!this.orchestrator) await this.initialize();
-                    await this.orchestrator!.executeWorkflow('auto-fix-workflow');
-                }
-            },
-            {
-                id: 'quality-check',
-                title: '✅ Quality Check',
-                description: 'Run comprehensive quality checks on your code',
-                icon: '$(verified)',
-                category: 'common-tasks',
-                action: async () => {
-                    if (!this.orchestrator) await this.initialize();
-                    await this.orchestrator!.executeWorkflow('quick-quality-check');
-                }
-            },
-            {
-                id: 'code-review',
-                title: '👁️ AI Code Review',
-                description: 'Get detailed AI-powered code review and suggestions',
-                icon: '$(search-view-icon)',
-                category: 'common-tasks',
-                action: async () => {
-                    if (!this.orchestrator) await this.initialize();
-                    await this.orchestrator!.executeWorkflow('comprehensive-analysis');
-                }
-            },
-            {
-                id: 'ask-claude',
-                title: '💬 Ask Claude Anything',
-                description: 'Get help with specific coding questions or problems',
-                icon: '$(comment-discussion)',
-                category: 'common-tasks',
-                action: async () => {
-                    await this.openClaudeChat();
-                }
-            },
+      // Common Tasks
+      {
+        id: "fix-common-issues",
+        title: "🔧 Fix Common Issues",
+        description: "Automatically detect and fix typical code problems",
+        icon: "$(tools)",
+        category: "common-tasks",
+        action: async () => {
+          if (!this.orchestrator) await this.initialize();
+          await this.orchestrator!.executeWorkflow("auto-fix-workflow");
+        },
+      },
+      {
+        id: "quality-check",
+        title: "✅ Quality Check",
+        description: "Run comprehensive quality checks on your code",
+        icon: "$(verified)",
+        category: "common-tasks",
+        action: async () => {
+          if (!this.orchestrator) await this.initialize();
+          await this.orchestrator!.executeWorkflow("quick-quality-check");
+        },
+      },
+      {
+        id: "code-review",
+        title: "👁️ AI Code Review",
+        description: "Get detailed AI-powered code review and suggestions",
+        icon: "$(search-view-icon)",
+        category: "common-tasks",
+        action: async () => {
+          if (!this.orchestrator) await this.initialize();
+          await this.orchestrator!.executeWorkflow("comprehensive-analysis");
+        },
+      },
+      {
+        id: "ask-claude",
+        title: "💬 Ask Claude Anything",
+        description: "Get help with specific coding questions or problems",
+        icon: "$(comment-discussion)",
+        category: "common-tasks",
+        action: async () => {
+          await this.openClaudeChat();
+        },
+      },
 
-            // Advanced Options
-            {
-                id: 'deployment-prep',
-                title: '🚀 Prepare for Deployment',
-                description: 'Comprehensive pre-deployment checks and optimization',
-                icon: '$(rocket)',
-                category: 'advanced',
-                action: async () => {
-                    if (!this.orchestrator) await this.initialize();
-                    await this.orchestrator!.executeWorkflow('deployment-prep');
-                }
-            },
-            {
-                id: 'feature-planning',
-                title: '🎯 Plan New Feature',
-                description: 'Get guidance for implementing a new feature',
-                icon: '$(lightbulb)',
-                category: 'advanced',
-                action: async () => {
-                    if (!this.orchestrator) await this.initialize();
-                    await this.orchestrator!.executeWorkflow('new-feature-setup');
-                }
-            },
-            {
-                id: 'custom-workflow',
-                title: '🧙 Create Custom Workflow',
-                description: 'Build a personalized automation workflow',
-                icon: '$(settings-gear)',
-                category: 'advanced',
-                action: async () => {
-                    await this.openWorkflowWizard();
-                }
+      // Advanced Options
+      {
+        id: "deployment-prep",
+        title: "🚀 Prepare for Deployment",
+        description: "Comprehensive pre-deployment checks and optimization",
+        icon: "$(rocket)",
+        category: "advanced",
+        action: async () => {
+          if (!this.orchestrator) await this.initialize();
+          await this.orchestrator!.executeWorkflow("deployment-prep");
+        },
+      },
+      {
+        id: "feature-planning",
+        title: "🎯 Plan New Feature",
+        description: "Get guidance for implementing a new feature",
+        icon: "$(lightbulb)",
+        category: "advanced",
+        action: async () => {
+          if (!this.orchestrator) await this.initialize();
+          await this.orchestrator!.executeWorkflow("new-feature-setup");
+        },
+      },
+      {
+        id: "custom-workflow",
+        title: "🧙 Create Custom Workflow",
+        description: "Build a personalized automation workflow",
+        icon: "$(settings-gear)",
+        category: "advanced",
+        action: async () => {
+          await this.openWorkflowWizard();
+        },
+      },
+    ];
+  }
+
+  async showQuickStart(): Promise<void> {
+    const options = this.getQuickStartOptions();
+
+    // Group options by category
+    const categories = {
+      "getting-started": options.filter(
+        (o) => o.category === "getting-started",
+      ),
+      "common-tasks": options.filter((o) => o.category === "common-tasks"),
+      advanced: options.filter((o) => o.category === "advanced"),
+    };
+
+    const panel = vscode.window.createWebviewPanel(
+      "autoclaudeQuickStart",
+      "⚡ AutoClaude Quick Start",
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+      },
+    );
+
+    panel.webview.html = this.generateQuickStartHTML(categories);
+
+    panel.webview.onDidReceiveMessage(async (message) => {
+      switch (message.command) {
+        case "executeOption":
+          const option = options.find((o) => o.id === message.optionId);
+          if (option) {
+            try {
+              await option.action();
+            } catch (error) {
+              vscode.window.showErrorMessage(
+                `Failed to execute ${option.title}: ${error instanceof Error ? error.message : String(error)}`,
+              );
             }
-        ];
-    }
+          }
+          break;
+        case "close":
+          panel.dispose();
+          break;
+      }
+    });
+  }
 
-    async showQuickStart(): Promise<void> {
-        const options = this.getQuickStartOptions();
-        
-        // Group options by category
-        const categories = {
-            'getting-started': options.filter(o => o.category === 'getting-started'),
-            'common-tasks': options.filter(o => o.category === 'common-tasks'),
-            'advanced': options.filter(o => o.category === 'advanced')
-        };
-
-        const panel = vscode.window.createWebviewPanel(
-            'autoclaudeQuickStart',
-            '⚡ AutoClaude Quick Start',
-            vscode.ViewColumn.One,
-            {
-                enableScripts: true,
-                retainContextWhenHidden: true
-            }
-        );
-
-        panel.webview.html = this.generateQuickStartHTML(categories);
-
-        panel.webview.onDidReceiveMessage(async (message) => {
-            switch (message.command) {
-                case 'executeOption':
-                    const option = options.find(o => o.id === message.optionId);
-                    if (option) {
-                        try {
-                            await option.action();
-                        } catch (error) {
-                            vscode.window.showErrorMessage(`Failed to execute ${option.title}: ${error instanceof Error ? error.message : String(error)}`);
-                        }
-                    }
-                    break;
-                case 'close':
-                    panel.dispose();
-                    break;
-            }
-        });
-    }
-
-    private generateQuickStartHTML(categories: Record<string, QuickStartOption[]>): string {
-        return `
+  private generateQuickStartHTML(
+    categories: Record<string, QuickStartOption[]>,
+  ): string {
+    return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -327,9 +333,9 @@ export class QuickStartManager {
         </ul>
     </div>
 
-    ${this.generateCategoryHTML('🚀 Getting Started', 'getting-started', categories['getting-started'])}
-    ${this.generateCategoryHTML('⚡ Common Tasks', 'common-tasks', categories['common-tasks'])}
-    ${this.generateCategoryHTML('🎯 Advanced Features', 'advanced', categories['advanced'])}
+    ${this.generateCategoryHTML("🚀 Getting Started", "getting-started", categories["getting-started"])}
+    ${this.generateCategoryHTML("⚡ Common Tasks", "common-tasks", categories["common-tasks"])}
+    ${this.generateCategoryHTML("🎯 Advanced Features", "advanced", categories["advanced"])}
 
     <div class="footer">
         <p>Need help? Check our documentation or ask Claude directly!</p>
@@ -359,18 +365,26 @@ export class QuickStartManager {
     </script>
 </body>
 </html>`;
-    }
+  }
 
-    private generateCategoryHTML(title: string, className: string, options: QuickStartOption[]): string {
-        const optionsHTML = options.map(option => `
+  private generateCategoryHTML(
+    title: string,
+    className: string,
+    options: QuickStartOption[],
+  ): string {
+    const optionsHTML = options
+      .map(
+        (option) => `
             <div class="option-card" data-option-id="${option.id}">
                 <div class="option-icon">${option.icon}</div>
                 <div class="option-title">${option.title}</div>
                 <div class="option-description">${option.description}</div>
             </div>
-        `).join('');
+        `,
+      )
+      .join("");
 
-        return `
+    return `
             <div class="category ${className}">
                 <h2>${title}</h2>
                 <div class="options-grid">
@@ -378,110 +392,111 @@ export class QuickStartManager {
                 </div>
             </div>
         `;
+  }
+
+  private async showFirstTimeSetup(): Promise<void> {
+    const steps = [
+      "Welcome to AutoClaude! Let's get you set up.",
+      "AutoClaude works best with Claude AI. Make sure you have Claude access.",
+      "AutoClaude will analyze your code and help you improve it automatically.",
+      "You can ask Claude questions, run quality checks, and automate common tasks.",
+      "Let's run a quick health check on your current project.",
+    ];
+
+    for (let i = 0; i < steps.length; i++) {
+      const choice = await vscode.window.showInformationMessage(
+        `${steps[i]} (${i + 1}/${steps.length})`,
+        i === steps.length - 1 ? "Run Health Check" : "Next",
+        "Skip Setup",
+      );
+
+      if (choice === "Skip Setup") {
+        return;
+      }
+
+      if (choice === "Run Health Check") {
+        await this.runProjectHealthCheck();
+        return;
+      }
+    }
+  }
+
+  private async runQuickDemo(): Promise<void> {
+    await vscode.window.showInformationMessage(
+      "🎬 AutoClaude Demo: I'll show you the key features in action!",
+      "Start Demo",
+    );
+
+    // Start AutoClaude if not already running
+    await vscode.commands.executeCommand("autoclaude.start");
+
+    // Wait a moment
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    // Run a quick quality check as demo
+    await vscode.window.showInformationMessage(
+      "🔍 Demo Step 1: Running quality checks on your project...",
+      "Continue",
+    );
+
+    await vscode.commands.executeCommand("autoclaude.runScriptChecks");
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    await vscode.window.showInformationMessage(
+      "✨ Demo Complete! AutoClaude has analyzed your project. Check the AutoClaude panel for detailed results.",
+      "Got it!",
+    );
+  }
+
+  private async runProjectHealthCheck(): Promise<void> {
+    if (!this.orchestrator) {
+      await this.initialize();
     }
 
-    private async showFirstTimeSetup(): Promise<void> {
-        const steps = [
-            'Welcome to AutoClaude! Let\'s get you set up.',
-            'AutoClaude works best with Claude AI. Make sure you have Claude access.',
-            'AutoClaude will analyze your code and help you improve it automatically.',
-            'You can ask Claude questions, run quality checks, and automate common tasks.',
-            'Let\'s run a quick health check on your current project.'
-        ];
+    const suggestedWorkflow = await this.orchestrator!.suggestWorkflow();
 
-        for (let i = 0; i < steps.length; i++) {
-            const choice = await vscode.window.showInformationMessage(
-                `${steps[i]} (${i + 1}/${steps.length})`,
-                i === steps.length - 1 ? 'Run Health Check' : 'Next',
-                'Skip Setup'
-            );
+    if (suggestedWorkflow) {
+      const choice = await vscode.window.showInformationMessage(
+        `🏥 Health Check Complete! Based on your project, I recommend the "${suggestedWorkflow.name}" workflow.`,
+        "Run Recommended Workflow",
+        "View All Options",
+        "Maybe Later",
+      );
 
-            if (choice === 'Skip Setup') {
-                return;
-            }
-
-            if (choice === 'Run Health Check') {
-                await this.runProjectHealthCheck();
-                return;
-            }
-        }
+      switch (choice) {
+        case "Run Recommended Workflow":
+          await this.orchestrator!.executeWorkflow(suggestedWorkflow.id);
+          break;
+        case "View All Options":
+          await this.showQuickStart();
+          break;
+      }
+    } else {
+      await vscode.window.showInformationMessage(
+        "✅ Your project looks healthy! Consider running a comprehensive analysis to get detailed insights.",
+        "Run Analysis",
+        "Thanks!",
+      );
     }
+  }
 
-    private async runQuickDemo(): Promise<void> {
-        await vscode.window.showInformationMessage(
-            '🎬 AutoClaude Demo: I\'ll show you the key features in action!',
-            'Start Demo'
-        );
+  private async openClaudeChat(): Promise<void> {
+    const message = await vscode.window.showInputBox({
+      prompt: "💬 What would you like to ask Claude?",
+      placeHolder:
+        "e.g., How can I improve this function? What are best practices for...?",
+    });
 
-        // Start AutoClaude if not already running
-        await vscode.commands.executeCommand('autoclaude.start');
-
-        // Wait a moment
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // Run a quick quality check as demo
-        await vscode.window.showInformationMessage(
-            '🔍 Demo Step 1: Running quality checks on your project...',
-            'Continue'
-        );
-
-        await vscode.commands.executeCommand('autoclaude.runScriptChecks');
-
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        await vscode.window.showInformationMessage(
-            '✨ Demo Complete! AutoClaude has analyzed your project. Check the AutoClaude panel for detailed results.',
-            'Got it!'
-        );
+    if (message) {
+      // Start AutoClaude if not running
+      await vscode.commands.executeCommand("autoclaude.start");
+      // Add message to queue
+      await vscode.commands.executeCommand("autoclaude.addMessage");
     }
+  }
 
-    private async runProjectHealthCheck(): Promise<void> {
-        if (!this.orchestrator) {
-            await this.initialize();
-        }
-
-        const suggestedWorkflow = await this.orchestrator!.suggestWorkflow();
-        
-        if (suggestedWorkflow) {
-            const choice = await vscode.window.showInformationMessage(
-                `🏥 Health Check Complete! Based on your project, I recommend the "${suggestedWorkflow.name}" workflow.`,
-                'Run Recommended Workflow',
-                'View All Options',
-                'Maybe Later'
-            );
-
-            switch (choice) {
-                case 'Run Recommended Workflow':
-                    await this.orchestrator!.executeWorkflow(suggestedWorkflow.id);
-                    break;
-                case 'View All Options':
-                    await this.showQuickStart();
-                    break;
-            }
-        } else {
-            await vscode.window.showInformationMessage(
-                '✅ Your project looks healthy! Consider running a comprehensive analysis to get detailed insights.',
-                'Run Analysis',
-                'Thanks!'
-            );
-        }
-    }
-
-    private async openClaudeChat(): Promise<void> {
-        const message = await vscode.window.showInputBox({
-            prompt: '💬 What would you like to ask Claude?',
-            placeHolder: 'e.g., How can I improve this function? What are best practices for...?'
-        });
-
-        if (message) {
-            // Start AutoClaude if not running
-            await vscode.commands.executeCommand('autoclaude.start');
-            // Add message to queue
-            await vscode.commands.executeCommand('autoclaude.addMessage');
-        }
-    }
-
-    private async openWorkflowWizard(): Promise<void> {
-        await vscode.commands.executeCommand('autoclaude.workflowWizard');
-    }
+  private async openWorkflowWizard(): Promise<void> {
+    await vscode.commands.executeCommand("autoclaude.workflowWizard");
+  }
 }

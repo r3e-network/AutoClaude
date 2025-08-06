@@ -1,314 +1,505 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:; img-src data: https:;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:; img-src data: https:;"
+    />
     <title>AutoClaude</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-<body>
+  <body>
     <div class="container">
-        <div class="header">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==" 
-                         alt="Claude" style="width: 32px; height: 32px; border-radius: 6px;" id="claudeIcon">
-                    <h1>Claude Assistant</h1>
-                </div>
-                <button id="settingsBtn" onclick="openSettings()" class="btn-secondary" title="Open Settings">
-                    <span class="btn-icon">⚙️</span>Settings
-                </button>
-            </div>
-            <p>Intelligent AI-powered development assistant with automated workflows and Claude integration</p>
+      <div class="header">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 10px">
+            <img
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
+              alt="Claude"
+              style="width: 32px; height: 32px; border-radius: 6px"
+              id="claudeIcon"
+            />
+            <h1>Claude Assistant</h1>
+          </div>
+          <button
+            id="settingsBtn"
+            onclick="openSettings()"
+            class="btn-secondary"
+            title="Open Settings"
+          >
+            <span class="btn-icon">⚙️</span>Settings
+          </button>
         </div>
+        <p>
+          Intelligent AI-powered development assistant with automated workflows
+          and Claude integration
+        </p>
+      </div>
 
-        <div class="input-section">
-            <h3>Add Message to Queue</h3>
-            <div class="message-input-container">
-                <textarea id="messageInput" placeholder="Enter your message for Claude... (Type @ to mention scripts)"></textarea>
-                <div id="scriptSuggestions" class="script-suggestions" style="display: none;">
-                    <!-- Script suggestions will be populated dynamically -->
-                </div>
-            </div>
-            <div class="attached-scripts" id="attachedScripts" style="display: none;">
-                <div class="attached-scripts-header">
-                    <span>📎 Scripts attached to this message:</span>
-                </div>
-                <div class="attached-scripts-list" id="attachedScriptsList">
-                    <!-- Attached scripts will be shown here -->
-                </div>
-            </div>
-            <div class="controls"
-                style="justify-content: flex-end; margin-top: 5px; border-bottom: 1px solid var(--vscode-panel-border); padding-bottom: 20px;">
-                <small style="color: var(--vscode-descriptionForeground); margin-left: 12px; opacity: 0.8;">
-                    Press Cmd+Enter (Mac) or Ctrl+Enter to add message • Type @ to attach scripts
-                </small>
-                <button onclick="addMessage()" class="btn-primary">
-                    <span class="btn-icon">➕</span>Add Message
-                </button>
-            </div>
+      <div class="input-section">
+        <h3>Add Message to Queue</h3>
+        <div class="message-input-container">
+          <textarea
+            id="messageInput"
+            placeholder="Enter your message for Claude... (Type @ to mention scripts)"
+          ></textarea>
+          <div
+            id="scriptSuggestions"
+            class="script-suggestions"
+            style="display: none"
+          >
+            <!-- Script suggestions will be populated dynamically -->
+          </div>
         </div>
+        <div
+          class="attached-scripts"
+          id="attachedScripts"
+          style="display: none"
+        >
+          <div class="attached-scripts-header">
+            <span>📎 Scripts attached to this message:</span>
+          </div>
+          <div class="attached-scripts-list" id="attachedScriptsList">
+            <!-- Attached scripts will be shown here -->
+          </div>
+        </div>
+        <div
+          class="controls"
+          style="
+            justify-content: flex-end;
+            margin-top: 5px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            padding-bottom: 20px;
+          "
+        >
+          <small
+            style="
+              color: var(--vscode-descriptionForeground);
+              margin-left: 12px;
+              opacity: 0.8;
+            "
+          >
+            Press Cmd+Enter (Mac) or Ctrl+Enter to add message • Type @ to
+            attach scripts
+          </small>
+          <button onclick="addMessage()" class="btn-primary">
+            <span class="btn-icon">➕</span>Add Message
+          </button>
+        </div>
+      </div>
 
-        <div class="controls">
-            <button id="startBtn" onclick="startProcessing()" class="btn-success" disabled>
-                <span class="btn-icon">▶️</span>Start Processing
+      <div class="controls">
+        <button
+          id="startBtn"
+          onclick="startProcessing()"
+          class="btn-success"
+          disabled
+        >
+          <span class="btn-icon">▶️</span>Start Processing
+        </button>
+        <button
+          id="stopBtn"
+          onclick="stopProcessing()"
+          class="btn-danger"
+          disabled
+        >
+          <span class="btn-icon">⏹️</span>Stop Processing
+        </button>
+        <button
+          id="interruptBtn"
+          onclick="interruptClaude()"
+          class="btn-warning"
+        >
+          <span class="btn-icon">⚠️</span>Interrupt (ESC)
+        </button>
+        <button id="resetBtn" onclick="resetSession()" class="btn-warning">
+          <span class="btn-icon">🔄</span>Reset Session
+        </button>
+        <div
+          class="toggle-container"
+          style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+          "
+        >
+          <label class="toggle-switch">
+            <input type="checkbox" id="skipPermissions" checked />
+            <span class="toggle-slider"></span>
+          </label>
+          <span style="color: var(--vscode-foreground); font-size: 14px"
+            >Skip permissions check</span
+          >
+        </div>
+      </div>
+
+      <div
+        id="securityWarning"
+        style="
+          display: none;
+          background: #ff6b6b22;
+          border: 1px solid #ff6b6b;
+          border-radius: 4px;
+          padding: 8px;
+          margin-bottom: 15px;
+          color: #ff6b6b;
+          font-size: 13px;
+        "
+      >
+        ⚠️ XSS bypass is enabled - potentially dangerous content allowed in
+        messages
+      </div>
+
+      <div class="debug-section" id="debugSection" style="display: none">
+        <div class="debug-header">
+          <h3>🧪 Development Debug Controls</h3>
+          <small style="opacity: 0.7"
+            >These controls are only available in development mode</small
+          >
+        </div>
+        <div class="debug-controls">
+          <button onclick="simulateUsageLimit()" class="btn-warning btn-small">
+            <span class="btn-icon">⏱️</span>Simulate Usage Limit (10sec)
+          </button>
+          <button onclick="clearAllTimers()" class="btn-secondary btn-small">
+            <span class="btn-icon">🔄</span>Clear All Timers
+          </button>
+          <button onclick="debugQueueState()" class="btn-secondary btn-small">
+            <span class="btn-icon">🐛</span>Debug Queue State
+          </button>
+          <button onclick="toggleDebugMode()" class="btn-secondary btn-small">
+            <span class="btn-icon">🔍</span>Toggle Debug Logging
+          </button>
+        </div>
+      </div>
+
+      <div class="claude-output-section">
+        <div class="claude-header">
+          <h3 class="claude-title">🤖 Claude Live Output</h3>
+          <div style="display: flex; gap: 10px">
+            <button
+              id="scrollLockBtn"
+              onclick="toggleScrollLock()"
+              class="btn-secondary btn-small"
+              title="Toggle auto-scroll"
+            >
+              <span id="scrollLockIcon">🔓</span> Auto-scroll
             </button>
-            <button id="stopBtn" onclick="stopProcessing()" class="btn-danger" disabled>
-                <span class="btn-icon">⏹️</span>Stop Processing
+            <button
+              id="scrollToBottomBtn"
+              onclick="scrollToBottom()"
+              class="btn-secondary btn-small"
+              title="Scroll to bottom"
+            >
+              <span>⬇️</span> To Bottom
             </button>
-            <button id="interruptBtn" onclick="interruptClaude()" class="btn-warning">
-                <span class="btn-icon">⚠️</span>Interrupt (ESC)
+            <button onclick="clearClaudeOutput()" class="clear-button">
+              Clear
             </button>
-            <button id="resetBtn" onclick="resetSession()" class="btn-warning">
-                <span class="btn-icon">🔄</span>Reset Session
+          </div>
+        </div>
+        <div id="claudeOutputContainer">
+          <div class="claude-live-output" tabindex="0">
+            <div class="claude-ready-message">
+              <div style="display: flex; align-items: center; gap: 8px">
+                <div class="pulse-dot"></div>
+                <span>Ready to receive Claude output...</span>
+              </div>
+              <br /><br />
+              <small style="opacity: 0.6"
+                >Click here and use arrow keys + Enter to navigate Claude
+                interface</small
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="terminal-section">
+        <div class="terminal-header">
+          <h3 class="terminal-title">📋 Terminal Output</h3>
+        </div>
+        <div id="terminalContainer">
+          <div class="terminal-output">
+            <div class="terminal-ready-message">
+              <div class="pulse-dot-green"></div>
+              <span>Ready to start processing messages</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scripts-section">
+        <div class="scripts-header">
+          <div>
+            <h3>Quality Checks & Automation</h3>
+            <small
+              style="
+                color: var(--vscode-descriptionForeground);
+                font-size: 11px;
+              "
+            >
+              🔍 Basic checks validate code • 🤖 Automation features provide
+              intelligent assistance
+            </small>
+          </div>
+          <div class="scripts-controls">
+            <label style="font-size: 12px; margin-right: 10px">
+              Max Iterations:
+              <input
+                type="number"
+                id="maxIterations"
+                min="1"
+                max="20"
+                value="5"
+                style="width: 40px; margin-left: 5px"
+              />
+            </label>
+            <button onclick="runScriptChecks()" class="btn-secondary btn-small">
+              <span class="btn-icon">🔍</span>Run Checks
             </button>
-            <div class="toggle-container" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
-                <label class="toggle-switch">
-                    <input type="checkbox" id="skipPermissions" checked>
-                    <span class="toggle-slider"></span>
-                </label>
-                <span style="color: var(--vscode-foreground); font-size: 14px;">Skip permissions check</span>
-            </div>
+            <button onclick="runScriptLoop()" class="btn-primary btn-small">
+              <span class="btn-icon">🔄</span>Run Loop
+            </button>
+          </div>
         </div>
-
-        <div id="securityWarning"
-            style="display: none; background: #ff6b6b22; border: 1px solid #ff6b6b; border-radius: 4px; padding: 8px; margin-bottom: 15px; color: #ff6b6b; font-size: 13px;">
-            ⚠️ XSS bypass is enabled - potentially dangerous content allowed in messages
+        <div class="scripts-config" id="scriptsConfig">
+          <div
+            class="script-item"
+            draggable="true"
+            data-script-id="production-readiness"
+          >
+            <span class="order-number">1.</span>
+            <span class="drag-handle">☰</span>
+            <label>
+              <input type="checkbox" id="script-production-readiness" checked />
+              <span class="script-name">Production Readiness Check</span>
+              <span class="script-badge basic-badge">🔍 BASIC</span>
+              <span
+                class="subagent-indicator"
+                style="display: none"
+                title="Claude Sub-Agent"
+                >🤖</span
+              >
+            </label>
+            <button
+              class="script-run-btn"
+              onclick="runSingleScript('production-readiness')"
+              title="Run this script only"
+            >
+              ▶
+            </button>
+            <div class="subagent-capabilities" style="display: none">
+              <div class="capabilities-header">🤖 Sub-Agent Capabilities:</div>
+              <ul class="capabilities-list">
+                <li>• Analyze TODOs and FIXMEs</li>
+                <li>• Fix placeholders</li>
+                <li>• Complete implementations</li>
+                <li>• Suggest improvements</li>
+              </ul>
+            </div>
+          </div>
+          <div
+            class="script-item"
+            draggable="true"
+            data-script-id="build-check"
+          >
+            <span class="order-number">2.</span>
+            <span class="drag-handle">☰</span>
+            <label>
+              <input type="checkbox" id="script-build-check" checked />
+              <span class="script-name">Build Check</span>
+              <span class="script-badge basic-badge">🔍 BASIC</span>
+            </label>
+            <button
+              class="script-run-btn"
+              onclick="runSingleScript('build-check')"
+              title="Run this script only"
+            >
+              ▶
+            </button>
+          </div>
+          <div class="script-item" draggable="true" data-script-id="test-check">
+            <span class="order-number">3.</span>
+            <span class="drag-handle">☰</span>
+            <label>
+              <input type="checkbox" id="script-test-check" checked />
+              <span class="script-name">Test Check</span>
+              <span class="script-badge basic-badge">🔍 BASIC</span>
+            </label>
+            <button
+              class="script-run-btn"
+              onclick="runSingleScript('test-check')"
+              title="Run this script only"
+            >
+              ▶
+            </button>
+          </div>
+          <div
+            class="script-item"
+            draggable="true"
+            data-script-id="format-check"
+          >
+            <span class="order-number">4.</span>
+            <span class="drag-handle">☰</span>
+            <label>
+              <input type="checkbox" id="script-format-check" checked />
+              <span class="script-name">Format Check</span>
+              <span class="script-badge basic-badge">🔍 BASIC</span>
+            </label>
+            <button
+              class="script-run-btn"
+              onclick="runSingleScript('format-check')"
+              title="Run this script only"
+            >
+              ▶
+            </button>
+          </div>
+          <div
+            class="script-item"
+            draggable="true"
+            data-script-id="github-actions"
+          >
+            <span class="order-number">5.</span>
+            <span class="drag-handle">☰</span>
+            <label>
+              <input type="checkbox" id="script-github-actions" checked />
+              <span class="script-name">GitHub Actions Check</span>
+              <span class="script-badge basic-badge">🔍 BASIC</span>
+            </label>
+            <button
+              class="script-run-btn"
+              onclick="runSingleScript('github-actions')"
+              title="Run this script only"
+            >
+              ▶
+            </button>
+          </div>
+          <div
+            class="script-item automation-script"
+            draggable="true"
+            data-script-id="tdd-automation"
+          >
+            <span class="order-number">6.</span>
+            <span class="drag-handle">☰</span>
+            <label>
+              <input type="checkbox" id="script-tdd-automation" checked />
+              <span class="script-name">TDD Automation</span>
+              <span class="script-badge automation-badge">🤖 AUTO</span>
+            </label>
+            <button
+              class="script-run-btn"
+              onclick="runSingleScript('tdd-automation')"
+              title="Run this script only"
+            >
+              ▶
+            </button>
+          </div>
+          <div
+            class="script-item automation-script"
+            draggable="true"
+            data-script-id="ai-code-review"
+          >
+            <span class="order-number">7.</span>
+            <span class="drag-handle">☰</span>
+            <label>
+              <input type="checkbox" id="script-ai-code-review" checked />
+              <span class="script-name">AI Code Review</span>
+              <span class="script-badge automation-badge">🤖 AUTO</span>
+            </label>
+            <button
+              class="script-run-btn"
+              onclick="runSingleScript('ai-code-review')"
+              title="Run this script only"
+            >
+              ▶
+            </button>
+          </div>
+          <div
+            class="script-item automation-script"
+            draggable="true"
+            data-script-id="doc-generator"
+          >
+            <span class="order-number">8.</span>
+            <span class="drag-handle">☰</span>
+            <label>
+              <input type="checkbox" id="script-doc-generator" checked />
+              <span class="script-name">Documentation Check</span>
+              <span class="script-badge automation-badge">🤖 AUTO</span>
+            </label>
+            <button
+              class="script-run-btn"
+              onclick="runSingleScript('doc-generator')"
+              title="Run this script only"
+            >
+              ▶
+            </button>
+          </div>
         </div>
+      </div>
 
-        <div class="debug-section" id="debugSection" style="display: none;">
-            <div class="debug-header">
-                <h3>🧪 Development Debug Controls</h3>
-                <small style="opacity: 0.7;">These controls are only available in development mode</small>
-            </div>
-            <div class="debug-controls">
-                <button onclick="simulateUsageLimit()" class="btn-warning btn-small">
-                    <span class="btn-icon">⏱️</span>Simulate Usage Limit (10sec)
-                </button>
-                <button onclick="clearAllTimers()" class="btn-secondary btn-small">
-                    <span class="btn-icon">🔄</span>Clear All Timers
-                </button>
-                <button onclick="debugQueueState()" class="btn-secondary btn-small">
-                    <span class="btn-icon">🐛</span>Debug Queue State
-                </button>
-                <button onclick="toggleDebugMode()" class="btn-secondary btn-small">
-                    <span class="btn-icon">🔍</span>Toggle Debug Logging
-                </button>
-            </div>
+      <div class="queue-section">
+        <div class="queue-header">
+          <h3>Message Queue</h3>
+          <div class="queue-controls">
+            <select id="sortField" onchange="sortQueue()">
+              <option value="timestamp">Sort by Time</option>
+              <option value="status">Sort by Status</option>
+              <option value="text">Sort by Text</option>
+            </select>
+            <select id="sortDirection" onchange="sortQueue()">
+              <option value="asc">Ascending</option>
+              <option value="desc">Descending</option>
+            </select>
+            <button
+              id="clearBtn"
+              onclick="clearQueue()"
+              class="btn-secondary btn-small"
+            >
+              <span class="btn-icon">🗑️</span>Clear Queue
+            </button>
+          </div>
         </div>
-
-        <div class="claude-output-section">
-            <div class="claude-header">
-                <h3 class="claude-title">🤖 Claude Live Output</h3>
-                <div style="display: flex; gap: 10px;">
-                    <button id="scrollLockBtn" onclick="toggleScrollLock()" class="btn-secondary btn-small" title="Toggle auto-scroll">
-                        <span id="scrollLockIcon">🔓</span> Auto-scroll
-                    </button>
-                    <button id="scrollToBottomBtn" onclick="scrollToBottom()" class="btn-secondary btn-small" title="Scroll to bottom">
-                        <span>⬇️</span> To Bottom
-                    </button>
-                    <button onclick="clearClaudeOutput()" class="clear-button">Clear</button>
-                </div>
-            </div>
-            <div id="claudeOutputContainer">
-                <div class="claude-live-output" tabindex="0">
-                    <div class="claude-ready-message">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div class="pulse-dot"></div>
-                            <span>Ready to receive Claude output...</span>
-                        </div>
-                        <br><br>
-                        <small style="opacity: 0.6;">Click here and use arrow keys + Enter to navigate Claude
-                            interface</small>
-                    </div>
-                </div>
-            </div>
+        <div id="queueContainer">
+          <div class="empty-queue">No messages in queue</div>
         </div>
+      </div>
 
-        <div class="terminal-section">
-            <div class="terminal-header">
-                <h3 class="terminal-title">📋 Terminal Output</h3>
-            </div>
-            <div id="terminalContainer">
-                <div class="terminal-output">
-                    <div class="terminal-ready-message">
-                        <div class="pulse-dot-green"></div>
-                        <span>Ready to start processing messages</span>
-                    </div>
-                </div>
-            </div>
+      <div class="history-section">
+        <div class="history-header">
+          <h3>History</h3>
+          <div class="history-controls">
+            <select id="historyFilter" onchange="filterHistory()">
+              <option value="all">All Runs</option>
+              <option value="waiting">With Waiting Messages</option>
+              <option value="completed">Completed Runs</option>
+              <option value="errors">With Errors</option>
+              <option value="recent">Recent (10)</option>
+            </select>
+            <button
+              onclick="deleteAllHistory()"
+              class="btn-secondary btn-small"
+            >
+              <span class="btn-icon">🗑️</span>Delete All
+            </button>
+          </div>
         </div>
-
-        <div class="scripts-section">
-            <div class="scripts-header">
-                <div>
-                    <h3>Quality Checks & Automation</h3>
-                    <small style="color: var(--vscode-descriptionForeground); font-size: 11px;">
-                        🔍 Basic checks validate code • 🤖 Automation features provide intelligent assistance
-                    </small>
-                </div>
-                <div class="scripts-controls">
-                    <label style="font-size: 12px; margin-right: 10px;">
-                        Max Iterations: 
-                        <input type="number" id="maxIterations" min="1" max="20" value="5" style="width: 40px; margin-left: 5px;">
-                    </label>
-                    <button onclick="runScriptChecks()" class="btn-secondary btn-small">
-                        <span class="btn-icon">🔍</span>Run Checks
-                    </button>
-                    <button onclick="runScriptLoop()" class="btn-primary btn-small">
-                        <span class="btn-icon">🔄</span>Run Loop
-                    </button>
-                </div>
-            </div>
-            <div class="scripts-config" id="scriptsConfig">
-                <div class="script-item" draggable="true" data-script-id="production-readiness">
-                    <span class="order-number">1.</span>
-                    <span class="drag-handle">☰</span>
-                    <label>
-                        <input type="checkbox" id="script-production-readiness" checked>
-                        <span class="script-name">Production Readiness Check</span>
-                        <span class="script-badge basic-badge">🔍 BASIC</span>
-                        <span class="subagent-indicator" style="display: none;" title="Claude Sub-Agent">🤖</span>
-                    </label>
-                    <button class="script-run-btn" onclick="runSingleScript('production-readiness')" title="Run this script only">▶</button>
-                    <div class="subagent-capabilities" style="display: none;">
-                        <div class="capabilities-header">🤖 Sub-Agent Capabilities:</div>
-                        <ul class="capabilities-list">
-                            <li>• Analyze TODOs and FIXMEs</li>
-                            <li>• Fix placeholders</li>
-                            <li>• Complete implementations</li>
-                            <li>• Suggest improvements</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="script-item" draggable="true" data-script-id="build-check">
-                    <span class="order-number">2.</span>
-                    <span class="drag-handle">☰</span>
-                    <label>
-                        <input type="checkbox" id="script-build-check" checked>
-                        <span class="script-name">Build Check</span>
-                        <span class="script-badge basic-badge">🔍 BASIC</span>
-                    </label>
-                    <button class="script-run-btn" onclick="runSingleScript('build-check')" title="Run this script only">▶</button>
-                </div>
-                <div class="script-item" draggable="true" data-script-id="test-check">
-                    <span class="order-number">3.</span>
-                    <span class="drag-handle">☰</span>
-                    <label>
-                        <input type="checkbox" id="script-test-check" checked>
-                        <span class="script-name">Test Check</span>
-                        <span class="script-badge basic-badge">🔍 BASIC</span>
-                    </label>
-                    <button class="script-run-btn" onclick="runSingleScript('test-check')" title="Run this script only">▶</button>
-                </div>
-                <div class="script-item" draggable="true" data-script-id="format-check">
-                    <span class="order-number">4.</span>
-                    <span class="drag-handle">☰</span>
-                    <label>
-                        <input type="checkbox" id="script-format-check" checked>
-                        <span class="script-name">Format Check</span>
-                        <span class="script-badge basic-badge">🔍 BASIC</span>
-                    </label>
-                    <button class="script-run-btn" onclick="runSingleScript('format-check')" title="Run this script only">▶</button>
-                </div>
-                <div class="script-item" draggable="true" data-script-id="github-actions">
-                    <span class="order-number">5.</span>
-                    <span class="drag-handle">☰</span>
-                    <label>
-                        <input type="checkbox" id="script-github-actions" checked>
-                        <span class="script-name">GitHub Actions Check</span>
-                        <span class="script-badge basic-badge">🔍 BASIC</span>
-                    </label>
-                    <button class="script-run-btn" onclick="runSingleScript('github-actions')" title="Run this script only">▶</button>
-                </div>
-                <div class="script-item automation-script" draggable="true" data-script-id="tdd-automation">
-                    <span class="order-number">6.</span>
-                    <span class="drag-handle">☰</span>
-                    <label>
-                        <input type="checkbox" id="script-tdd-automation" checked>
-                        <span class="script-name">TDD Automation</span>
-                        <span class="script-badge automation-badge">🤖 AUTO</span>
-                    </label>
-                    <button class="script-run-btn" onclick="runSingleScript('tdd-automation')" title="Run this script only">▶</button>
-                </div>
-                <div class="script-item automation-script" draggable="true" data-script-id="ai-code-review">
-                    <span class="order-number">7.</span>
-                    <span class="drag-handle">☰</span>
-                    <label>
-                        <input type="checkbox" id="script-ai-code-review" checked>
-                        <span class="script-name">AI Code Review</span>
-                        <span class="script-badge automation-badge">🤖 AUTO</span>
-                    </label>
-                    <button class="script-run-btn" onclick="runSingleScript('ai-code-review')" title="Run this script only">▶</button>
-                </div>
-                <div class="script-item automation-script" draggable="true" data-script-id="doc-generator">
-                    <span class="order-number">8.</span>
-                    <span class="drag-handle">☰</span>
-                    <label>
-                        <input type="checkbox" id="script-doc-generator" checked>
-                        <span class="script-name">Documentation Check</span>
-                        <span class="script-badge automation-badge">🤖 AUTO</span>
-                    </label>
-                    <button class="script-run-btn" onclick="runSingleScript('doc-generator')" title="Run this script only">▶</button>
-                </div>
-            </div>
+        <div id="historyContainer">
+          <div class="empty-history">Loading history...</div>
         </div>
-
-        <div class="queue-section">
-            <div class="queue-header">
-                <h3>Message Queue</h3>
-                <div class="queue-controls">
-                    <select id="sortField" onchange="sortQueue()">
-                        <option value="timestamp">Sort by Time</option>
-                        <option value="status">Sort by Status</option>
-                        <option value="text">Sort by Text</option>
-                    </select>
-                    <select id="sortDirection" onchange="sortQueue()">
-                        <option value="asc">Ascending</option>
-                        <option value="desc">Descending</option>
-                    </select>
-                    <button id="clearBtn" onclick="clearQueue()" class="btn-secondary btn-small">
-                        <span class="btn-icon">🗑️</span>Clear Queue
-                    </button>
-                </div>
-            </div>
-            <div id="queueContainer">
-                <div class="empty-queue">
-                    No messages in queue
-                </div>
-            </div>
-        </div>
-
-        <div class="history-section">
-            <div class="history-header">
-                <h3>History</h3>
-                <div class="history-controls">
-                    <select id="historyFilter" onchange="filterHistory()">
-                        <option value="all">All Runs</option>
-                        <option value="waiting">With Waiting Messages</option>
-                        <option value="completed">Completed Runs</option>
-                        <option value="errors">With Errors</option>
-                        <option value="recent">Recent (10)</option>
-                    </select>
-                    <button onclick="deleteAllHistory()" class="btn-secondary btn-small">
-                        <span class="btn-icon">🗑️</span>Delete All
-                    </button>
-                </div>
-            </div>
-            <div id="historyContainer">
-                <div class="empty-history">
-                    Loading history...
-                </div>
-            </div>
-        </div>
-
+      </div>
     </div>
 
     <script src="script.js"></script>
-</body>
-
+  </body>
 </html>

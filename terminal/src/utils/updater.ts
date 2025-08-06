@@ -17,8 +17,17 @@ export async function checkForUpdates(): Promise<void> {
             '',
             chalk.yellow('╭─────────────────────────────────────────────────────╮'),
             chalk.yellow('│                                                     │'),
-            chalk.yellow('│') + chalk.cyan('   Update available ') + chalk.gray(notifier.update.current) + ' → ' + chalk.green(notifier.update.latest) + chalk.yellow('              │'),
-            chalk.yellow('│') + chalk.white('   Run ') + chalk.cyan('npm install -g @r3e/autoclaude') + chalk.white(' to update') + chalk.yellow('   │'),
+            chalk.yellow('│') +
+                chalk.cyan('   Update available ') +
+                chalk.gray(notifier.update.current) +
+                ' → ' +
+                chalk.green(notifier.update.latest) +
+                chalk.yellow('              │'),
+            chalk.yellow('│') +
+                chalk.white('   Run ') +
+                chalk.cyan('npm install -g @r3e/autoclaude') +
+                chalk.white(' to update') +
+                chalk.yellow('   │'),
             chalk.yellow('│                                                     │'),
             chalk.yellow('╰─────────────────────────────────────────────────────╯'),
             ''

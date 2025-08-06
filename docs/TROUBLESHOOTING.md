@@ -17,18 +17,21 @@ Before diving into specific issues, run through this checklist:
 ### 1. "Claude CLI not found" Error
 
 **Symptoms:**
+
 - Error message: "Claude CLI is not installed or not found in PATH"
 - Extension shows dependency check failed
 
 **Solutions:**
 
 1. **Install Claude CLI**
+
    ```bash
    # Follow installation instructions at:
    # https://www.anthropic.com/claude-code
    ```
 
 2. **Verify Installation**
+
    ```bash
    claude --version
    ```
@@ -47,6 +50,7 @@ Before diving into specific issues, run through this checklist:
 ### 2. Extension Not Starting
 
 **Symptoms:**
+
 - No Claude Autopilot panel appears
 - Commands not available in Command Palette
 
@@ -72,18 +76,21 @@ Before diving into specific issues, run through this checklist:
 ### 3. Claude Session Won't Start
 
 **Symptoms:**
+
 - "Failed to start Claude session" error
 - Claude process exits immediately
 
 **Solutions:**
 
 1. **Check Claude Authentication**
+
    ```bash
    claude auth status
    claude auth login  # If not authenticated
    ```
 
 2. **Verify Claude CLI Works**
+
    ```bash
    claude --help
    claude # Start interactive session manually
@@ -102,6 +109,7 @@ Before diving into specific issues, run through this checklist:
 ### 4. Messages Not Processing
 
 **Symptoms:**
+
 - Messages stay in "pending" status
 - Queue processing appears stuck
 
@@ -129,12 +137,14 @@ Before diving into specific issues, run through this checklist:
 ### 5. Performance Issues
 
 **Symptoms:**
+
 - VS Code becomes slow or unresponsive
 - High CPU/memory usage
 
 **Solutions:**
 
 1. **Reduce Queue Size**
+
    ```json
    {
      "autoclaude.queue.maxSize": 100,
@@ -143,6 +153,7 @@ Before diving into specific issues, run through this checklist:
    ```
 
 2. **Disable Debug Mode**
+
    ```json
    {
      "autoclaude.developmentMode": false
@@ -150,6 +161,7 @@ Before diving into specific issues, run through this checklist:
    ```
 
 3. **Enable Queue Cleanup**
+
    ```json
    {
      "autoclaude.queue.autoMaintenance": true
@@ -167,6 +179,7 @@ Before diving into specific issues, run through this checklist:
 ### 6. Script Runner Issues
 
 **Symptoms:**
+
 - Quality check scripts failing
 - "Script not found" errors
 
@@ -177,6 +190,7 @@ Before diving into specific issues, run through this checklist:
    - Run scripts manually to test
 
 2. **Script Permissions**
+
    ```bash
    chmod +x .autoclaude/scripts/*.sh
    ```
@@ -192,6 +206,7 @@ Before diving into specific issues, run through this checklist:
 ### 7. Configuration Problems
 
 **Symptoms:**
+
 - Settings not taking effect
 - Validation errors on startup
 
@@ -202,6 +217,7 @@ Before diving into specific issues, run through this checklist:
    - Or manually reset in VS Code settings
 
 2. **Check Setting Format**
+
    ```json
    {
      "autoclaude.session.scheduledStartTime": "09:30",
@@ -216,11 +232,13 @@ Before diving into specific issues, run through this checklist:
 ### 8. Remote Development Issues
 
 **Symptoms:**
+
 - Extension doesn't work in SSH/WSL/Containers
 
 **Solutions:**
 
 1. **Install on Remote Host**
+
    ```bash
    # On the remote machine
    npm install -g claude-autopilot
@@ -240,6 +258,7 @@ Before diving into specific issues, run through this checklist:
 ### Enable Debug Logging
 
 1. **Enable Development Mode**
+
    ```json
    {
      "autoclaude.developmentMode": true
@@ -257,6 +276,7 @@ Before diving into specific issues, run through this checklist:
 ### Check System Resources
 
 1. **Memory Usage**
+
    ```bash
    # Check VS Code memory usage
    ps aux | grep "code"
@@ -275,6 +295,7 @@ Before diving into specific issues, run through this checklist:
 ### Configuration Validation
 
 Run configuration validation:
+
 ```
 Command Palette → "Claude: Validate Configuration"
 ```
@@ -331,6 +352,7 @@ When reporting issues, please include:
 ### Regular Cleanup
 
 1. **Clear Old Logs**
+
    ```bash
    find .autoclaude/logs -name "*.log" -mtime +7 -delete
    ```
@@ -347,6 +369,7 @@ When reporting issues, please include:
 ### Performance Optimization
 
 1. **Optimize Settings**
+
    ```json
    {
      "autoclaude.queue.retentionHours": 24,
@@ -366,4 +389,4 @@ When reporting issues, please include:
 
 ---
 
-*This troubleshooting guide is regularly updated. For the latest version, check the [GitHub repository](https://github.com/claude-code/claude-autopilot).*
+_This troubleshooting guide is regularly updated. For the latest version, check the [GitHub repository](https://github.com/claude-code/claude-autopilot)._

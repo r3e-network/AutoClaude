@@ -45,21 +45,21 @@ program
     .option('-q, --quiet', 'Suppress banner and non-essential output')
     .option('-v, --verbose', 'Enable verbose logging')
     .option('-c, --config <path>', 'Use custom config file')
-    .hook('preAction', async (thisCommand) => {
+    .hook('preAction', async thisCommand => {
         const opts = thisCommand.opts();
-        
+
         if (!opts.quiet) {
             showBanner();
         }
-        
+
         if (opts.verbose) {
             logger.setLevel('debug');
         }
-        
+
         if (opts.config) {
             config.loadFromFile(opts.config);
         }
-        
+
         await checkUpdates();
     });
 
@@ -70,7 +70,7 @@ program
     .option('-m, --message <text>', 'Add initial message to queue')
     .option('-s, --skip-permissions', 'Skip Claude permission prompts')
     .option('-a, --auto-start', 'Automatically start processing queue')
-    .action(async (options) => {
+    .action(async options => {
         const cli = new AutoClaudeCLI(config, logger);
         await cli.start(options);
     });
@@ -81,7 +81,7 @@ program
     .description('Start AutoClaude in terminal mode (Claude Code style)')
     .option('-s, --skip-permissions', 'Skip Claude permission prompts')
     .option('-a, --auto-start', 'Automatically start processing queue')
-    .action(async (options) => {
+    .action(async options => {
         // Override config with CLI options
         if (options.skipPermissions) {
             config.set('session', 'skipPermissions', true);
@@ -125,7 +125,7 @@ program
     .option('-l, --list', 'List running agents')
     .option('-k, --stop', 'Stop all agents')
     .option('-m, --monitor', 'Open agent monitor dashboard')
-    .action(async (options) => {
+    .action(async options => {
         const cli = new AutoClaudeCLI(config, logger);
         await cli.manageAgents(options);
     });
@@ -138,7 +138,7 @@ program
     .option('-a, --add <message>', 'Add message to queue')
     .option('-c, --clear', 'Clear all messages')
     .option('-r, --remove <id>', 'Remove message by ID')
-    .action(async (options) => {
+    .action(async options => {
         const cli = new AutoClaudeCLI(config, logger);
         await cli.manageQueue(options);
     });
@@ -152,7 +152,7 @@ program
     .option('-g, --get <key>', 'Get configuration value')
     .option('-r, --reset', 'Reset to defaults')
     .option('-e, --edit', 'Open config in editor')
-    .action(async (options) => {
+    .action(async options => {
         const cli = new AutoClaudeCLI(config, logger);
         await cli.manageConfig(options);
     });
@@ -164,13 +164,13 @@ program
     .option('-d, --dir <path>', 'Project directory', process.cwd())
     .option('-l, --loop', 'Run in loop mode until all issues fixed')
     .option('-m, --max-iterations <n>', 'Maximum loop iterations', '5')
-    .action(async (options) => {
+    .action(async options => {
         const cli = new AutoClaudeCLI(config, logger);
         await cli.runChecks(options);
     });
 
 // Error handling
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
     try {
         logger.error('Uncaught exception:', error);
     } catch (logError) {

@@ -14,6 +14,7 @@ claude-autopilot  # or just 'cap'
 ```
 
 **Key Features:**
+
 - Beautiful terminal UI built with blessed
 - Works on any Linux/macOS terminal
 - Perfect for headless servers
@@ -23,6 +24,7 @@ claude-autopilot  # or just 'cap'
 ### 📜 Enhanced Auto-Scroll (VS Code)
 
 Claude output now intelligently manages scrolling:
+
 - **Always scrolls to bottom by default** - Never miss important output
 - **Smart scroll lock toggle** - Review past output without interruption
 - **Persistent preferences** - Settings saved per workspace
@@ -31,6 +33,7 @@ Claude output now intelligently manages scrolling:
 ### 🤖 Parallel Agent System (Both Versions)
 
 The powerful parallel agent system is now available in both VS Code and terminal:
+
 - **50+ Parallel Agents** - Massive concurrent processing
 - **Automatic Orchestration** - One-click fully automatic operation
 - **Work Detection** - Finds and fixes issues automatically
@@ -41,6 +44,7 @@ The powerful parallel agent system is now available in both VS Code and terminal
 ### 🚀 Complete Automation
 
 Everything is now fully automatic:
+
 1. **Auto-Start** - Agents start when work is detected
 2. **Auto-Scale** - Agent count adjusts to workload
 3. **Auto-Complete** - Shuts down when finished
@@ -50,12 +54,14 @@ Everything is now fully automatic:
 ### 📦 Installation
 
 #### VS Code Extension
+
 ```bash
 code --install-extension autoclaude-3.0.0.vsix
 # Or install from VS Code Marketplace
 ```
 
 #### Terminal Version
+
 ```bash
 # From npm
 npm install -g claude-autopilot

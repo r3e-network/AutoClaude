@@ -68,10 +68,10 @@ export class ParallelAgentManager extends EventEmitter {
 
         // Start agents with stagger delay
         const staggerDelay = this.config.get('parallelAgents', 'staggerDelay') * 1000;
-        
+
         for (let i = 0; i < count; i++) {
             await this.startAgent(i);
-            
+
             if (i < count - 1) {
                 await new Promise(resolve => setTimeout(resolve, staggerDelay));
             }
@@ -79,7 +79,7 @@ export class ParallelAgentManager extends EventEmitter {
 
         // Start monitoring
         this.startMonitoring();
-        
+
         this.logger.info(`Started ${count} agents successfully`);
         this.emit('agentsStarted', count);
     }
@@ -100,7 +100,10 @@ export class ParallelAgentManager extends EventEmitter {
         try {
             await this.execCommand('tmux kill-session -t claude_agents');
         } catch (error) {
-            this.logger.error('Error killing tmux session:', toLogMetadata({ error: toError(error) }));
+            this.logger.error(
+                'Error killing tmux session:',
+                toLogMetadata({ error: toError(error) })
+            );
         }
 
         // Clear agent data
@@ -131,13 +134,13 @@ export class ParallelAgentManager extends EventEmitter {
             try {
                 await queue.updateMessageStatus(message.id!, 'processing');
                 agent.status = 'busy';
-                
+
                 // Send work to agent
                 await this.sendWorkToAgent(agent.id, message.text);
-                
+
                 // Monitor agent output and wait for completion
                 const completed = await this.waitForAgentCompletion(agent.id, 300000); // 5 minute timeout
-                
+
                 if (completed) {
                     agent.status = 'ready';
                     agent.messagesProcessed++;
@@ -145,11 +148,13 @@ export class ParallelAgentManager extends EventEmitter {
                 } else {
                     throw new Error('Agent task timed out after 5 minutes');
                 }
-                
+
                 await queue.updateMessageStatus(message.id!, 'completed', 'Work completed');
-                
             } catch (error) {
-                this.logger.error(`Error processing message in agent ${agent.id}:`, toLogMetadata({ error: toError(error), agentId: agent.id }));
+                this.logger.error(
+                    `Error processing message in agent ${agent.id}:`,
+                    toLogMetadata({ error: toError(error), agentId: agent.id })
+                );
                 agent.status = 'error';
                 await queue.updateMessageStatus(message.id!, 'error', undefined, String(error));
             }
@@ -194,15 +199,13 @@ export class ParallelAgentManager extends EventEmitter {
 
         // Start Claude in the window
         const skipPermissions = this.config.get('session', 'skipPermissions');
-        const command = skipPermissions ? 
-            'claude --dangerously-skip-permissions' : 
-            'claude';
-        
+        const command = skipPermissions ? 'claude --dangerously-skip-permissions' : 'claude';
+
         await this.execCommand(`tmux send-keys -t claude_agents:${windowName} "${command}" C-m`);
 
         // Wait for Claude to start
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
+
         agent.status = 'ready';
         this.logger.debug(`Agent ${agentName} started`);
     }
@@ -214,19 +217,21 @@ export class ParallelAgentManager extends EventEmitter {
         }
 
         const windowName = agent.name;
-        
+
         // Escape special characters in work text
         const escapedWork = work.replace(/"/g, '\\"').replace(/\$/g, '\\$');
-        
+
         // Send work to agent's tmux window
-        await this.execCommand(`tmux send-keys -t claude_agents:${windowName} "${escapedWork}" C-m`);
-        
+        await this.execCommand(
+            `tmux send-keys -t claude_agents:${windowName} "${escapedWork}" C-m`
+        );
+
         this.logger.debug(`Sent work to agent ${agent.name}`);
     }
 
     private startMonitoring(): void {
         const checkInterval = 10 * 1000; // 10 seconds default
-        
+
         this.monitorInterval = setInterval(() => {
             this.checkAgentHealth();
         }, checkInterval);
@@ -236,25 +241,30 @@ export class ParallelAgentManager extends EventEmitter {
         for (const agent of this.agents.values()) {
             try {
                 // Check if tmux window still exists
-                await this.execCommand(`tmux list-windows -t claude_agents -F "#W" | grep -q "^${agent.name}$"`);
-                
+                await this.execCommand(
+                    `tmux list-windows -t claude_agents -F "#W" | grep -q "^${agent.name}$"`
+                );
+
                 // Update CPU and memory usage (simplified)
                 agent.cpuUsage = Math.random() * 100;
                 agent.memoryUsage = Math.random() * 1000;
-                
+
                 // Check for stuck agents
                 const idleTime = Date.now() - agent.lastActivity;
-                if (idleTime > 300000 && agent.status === 'busy') { // 5 minutes
+                if (idleTime > 300000 && agent.status === 'busy') {
+                    // 5 minutes
                     this.logger.warn(`Agent ${agent.name} appears stuck, restarting...`);
                     agent.status = 'error';
-                    
+
                     if (this.config.get('parallelAgents', 'autoRestart')) {
                         await this.restartAgent(agent);
                     }
                 }
-                
             } catch (error) {
-                this.logger.error(`Health check failed for agent ${agent.name}:`, toLogMetadata({ error: toError(error), agentName: agent.name }));
+                this.logger.error(
+                    `Health check failed for agent ${agent.name}:`,
+                    toLogMetadata({ error: toError(error), agentName: agent.name })
+                );
                 agent.status = 'error';
             }
         }
@@ -262,17 +272,17 @@ export class ParallelAgentManager extends EventEmitter {
 
     private async restartAgent(agent: Agent): Promise<void> {
         this.logger.info(`Restarting agent ${agent.name}...`);
-        
+
         // Kill the window
         try {
             await this.execCommand(`tmux kill-window -t claude_agents:${agent.name}`);
         } catch (error) {
             // Ignore if window doesn't exist
         }
-        
+
         // Get agent index from name
         const index = parseInt(agent.name.replace('agent', ''));
-        
+
         // Start new agent
         await this.startAgent(index);
     }
@@ -294,11 +304,13 @@ export class ParallelAgentManager extends EventEmitter {
                 );
 
                 // Check for common completion patterns
-                if (output.includes('Task complete') || 
+                if (
+                    output.includes('Task complete') ||
                     output.includes('Done.') ||
                     output.includes('Completed successfully') ||
                     output.includes('✓ Finished') ||
-                    output.includes('Processing complete')) {
+                    output.includes('Processing complete')
+                ) {
                     return true;
                 }
 
@@ -306,7 +318,6 @@ export class ParallelAgentManager extends EventEmitter {
                 if (output.match(/Human:|Assistant:|>|\$\s*$/)) {
                     return true;
                 }
-
             } catch (error) {
                 this.logger.debug(`Error checking agent completion: ${error}`);
             }
@@ -323,15 +334,15 @@ export class ParallelAgentManager extends EventEmitter {
             let stdout = '';
             let stderr = '';
 
-            child.stdout.on('data', (data) => {
+            child.stdout.on('data', data => {
                 stdout += data.toString();
             });
 
-            child.stderr.on('data', (data) => {
+            child.stderr.on('data', data => {
                 stderr += data.toString();
             });
 
-            child.on('close', (code) => {
+            child.on('close', code => {
                 if (code === 0) {
                     resolve(stdout.trim());
                 } else {

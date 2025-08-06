@@ -1,7 +1,7 @@
 // Advanced shell scripts for the new sub-agents
 
 export const ADVANCED_SHELL_SCRIPTS = {
-    'context-check.sh': `#!/bin/bash
+  "context-check.sh": `#!/bin/bash
 # Context Awareness Check
 # Analyzes project structure and context
 
@@ -57,7 +57,7 @@ fi
 cat "\$RESULT_FILE"
 `,
 
-    'dependency-check.sh': `#!/bin/bash
+  "dependency-check.sh": `#!/bin/bash
 # Dependency Resolution Check
 # Checks for missing dependencies and security issues
 
@@ -132,7 +132,7 @@ fi
 cat "\$RESULT_FILE"
 `,
 
-    'code-understanding-check.sh': `#!/bin/bash
+  "code-understanding-check.sh": `#!/bin/bash
 # Code Understanding Check
 # Analyzes code quality and patterns
 
@@ -190,7 +190,7 @@ fi
 cat "\$RESULT_FILE"
 `,
 
-    'integration-testing-check.sh': `#!/bin/bash
+  "integration-testing-check.sh": `#!/bin/bash
 # Integration Testing Check
 # Validates test coverage and integration tests
 
@@ -242,7 +242,7 @@ fi
 cat "\$RESULT_FILE"
 `,
 
-    'performance-check.sh': `#!/bin/bash
+  "performance-check.sh": `#!/bin/bash
 # Performance Check
 # Analyzes performance bottlenecks and optimization opportunities
 
@@ -308,7 +308,7 @@ fi
 cat "\$RESULT_FILE"
 `,
 
-    'security-audit-check.sh': `#!/bin/bash
+  "security-audit-check.sh": `#!/bin/bash
 # Security Audit Check
 # Scans for security vulnerabilities and best practices
 
@@ -383,5 +383,5 @@ fi
 
 # Output result
 cat "\$RESULT_FILE"
-`
+`,
 };

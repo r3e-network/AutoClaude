@@ -26,7 +26,9 @@ export class Logger {
     constructor(logFile?: string) {
         this.sessionId = this.generateSessionId();
         const dateStr = new Date().toISOString().split('T')[0];
-        const logsDir = logFile ? path.dirname(logFile) : path.join(os.homedir(), '.autoclaude', 'logs');
+        const logsDir = logFile
+            ? path.dirname(logFile)
+            : path.join(os.homedir(), '.autoclaude', 'logs');
 
         // Ensure logs directory exists
         try {
@@ -45,7 +47,7 @@ export class Logger {
                     winston.format.printf(({ timestamp, level, message, ...meta }) => {
                         const coloredLevel = this.colorizeLevel(level);
                         let output = `${chalk.gray(timestamp)} ${coloredLevel} ${message}`;
-                        
+
                         // Add important metadata
                         if (meta.error) {
                             output += `\n  ${chalk.red('Error:')} ${meta.error}`;
@@ -56,7 +58,7 @@ export class Logger {
                         if (meta.component) {
                             output = `${chalk.gray(timestamp)} ${coloredLevel} [${chalk.cyan(meta.component)}] ${message}`;
                         }
-                        
+
                         return output;
                     })
                 )
@@ -94,8 +96,10 @@ export class Logger {
                     format: winston.format.combine(
                         winston.format.timestamp(),
                         winston.format.json(),
-                        winston.format((info) => {
-                            return (info.duration !== undefined || info.metric !== undefined) ? info : false;
+                        winston.format(info => {
+                            return info.duration !== undefined || info.metric !== undefined
+                                ? info
+                                : false;
                         })()
                     )
                 })
@@ -112,12 +116,12 @@ export class Logger {
             },
             transports,
             exceptionHandlers: [
-                new winston.transports.File({ 
+                new winston.transports.File({
                     filename: path.join(logsDir, `exceptions-${dateStr}.log`)
                 })
             ],
             rejectionHandlers: [
-                new winston.transports.File({ 
+                new winston.transports.File({
                     filename: path.join(logsDir, `rejections-${dateStr}.log`)
                 })
             ]
@@ -167,13 +171,13 @@ export class Logger {
         if (startTime) {
             const duration = Date.now() - startTime;
             this.startTimes.delete(label);
-            
+
             // Update metrics
             const metric = this.metrics.get(label) || { count: 0, totalDuration: 0 };
             metric.count++;
             metric.totalDuration += duration;
             this.metrics.set(label, metric);
-            
+
             this.info(`${label} completed`, {
                 ...metadata,
                 duration,
@@ -186,7 +190,7 @@ export class Logger {
     // Log metrics summary
     logMetrics(): void {
         const metricsData: any[] = [];
-        
+
         this.metrics.forEach((metric, label) => {
             metricsData.push({
                 label,
@@ -195,7 +199,7 @@ export class Logger {
                 avgDuration: Math.round(metric.totalDuration / metric.count)
             });
         });
-        
+
         if (metricsData.length > 0) {
             this.info('Performance metrics summary', {
                 component: 'metrics',
@@ -228,17 +232,17 @@ export class Logger {
 
     private sanitizeMetadata(metadata?: LogMetadata): LogMetadata {
         if (!metadata) return {};
-        
+
         // Remove sensitive data
         const sanitized = { ...metadata };
         const sensitiveKeys = ['password', 'token', 'secret', 'key', 'auth'];
-        
+
         Object.keys(sanitized).forEach(key => {
             if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
                 sanitized[key] = '[REDACTED]';
             }
         });
-        
+
         return sanitized;
     }
 
@@ -262,8 +266,8 @@ export class Logger {
     async close(): Promise<void> {
         this.logMetrics();
         this.info('Logger closing', { component: 'logger' });
-        
-        return new Promise((resolve) => {
+
+        return new Promise(resolve => {
             this.winston.on('finish', resolve);
             this.winston.end();
         });

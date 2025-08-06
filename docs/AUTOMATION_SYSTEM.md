@@ -7,24 +7,28 @@ The AutoClaude Intelligent Task Automation System is a groundbreaking feature th
 ## Key Features
 
 ### 1. **Intelligent Command Processing**
+
 - Natural language command interpretation
 - Automatic task decomposition
 - Smart workflow selection
 - Context-aware execution
 
 ### 2. **Cross-Session Task Persistence**
+
 - Tasks persist across VSCode sessions
 - Automatic progress tracking
 - Work resumption after interruptions
 - Complete task history
 
 ### 3. **Specialized Sub-Agents**
+
 - 12+ specialized agents for different tasks
 - Each agent has specific capabilities
 - Agents work together to complete complex tasks
 - Extensible architecture for custom agents
 
 ### 4. **Automatic Error Recovery**
+
 - Real-time task health monitoring
 - Pattern-based error detection
 - Multiple recovery strategies
@@ -35,35 +39,45 @@ The AutoClaude Intelligent Task Automation System is a groundbreaking feature th
 ### Core Components
 
 #### 1. **CommandOrchestrator** (`src/automation/commandOrchestrator.ts`)
+
 The brain of the automation system that:
+
 - Interprets high-level commands
 - Matches commands to workflow templates
 - Coordinates task execution
 - Manages workflow state and progress
 
 #### 2. **TaskDecomposer** (`src/automation/taskDecomposer.ts`)
+
 Breaks down complex commands into manageable subtasks:
+
 - Provides workflow templates for common tasks
 - Handles task dependencies
 - Estimates time for each step
 - Prioritizes task execution
 
 #### 3. **ProjectIndexer** (`src/context/projectIndexer.ts`)
+
 Provides comprehensive project understanding:
+
 - Indexes all project files
 - Extracts symbols and patterns
 - Analyzes code complexity
 - Tracks file relationships
 
 #### 4. **TaskPersistenceManager** (`src/context/taskPersistence.ts`)
+
 Ensures work continuity:
+
 - Persists tasks to disk
 - Maintains task history
 - Enables cross-session continuity
 - Tracks task context and progress
 
 #### 5. **TaskResumptionEngine** (`src/automation/taskResumptionEngine.ts`)
+
 Monitors and recovers tasks:
+
 - Real-time health monitoring
 - Detects interrupted work
 - Generates recovery plans
@@ -72,6 +86,7 @@ Monitors and recovers tasks:
 ### Specialized Sub-Agents
 
 #### Production Agents
+
 1. **TestFixerAgent**: Analyzes and fixes failing unit tests
 2. **TestCreatorAgent**: Creates unit tests for untested code
 3. **DocGeneratorAgent**: Creates comprehensive documentation
@@ -79,17 +94,20 @@ Monitors and recovers tasks:
 5. **CodeCleanerAgent**: Cleans and organizes codebase
 
 #### Creation Agents
+
 1. **ProjectInitializerAgent**: Creates new projects from specifications
 2. **WebsiteBuilderAgent**: Creates beautiful, responsive websites
 3. **RequirementAnalyzerAgent**: Analyzes requirements and creates specs
 
 #### Git Agents
+
 1. **CommitCreatorAgent**: Creates meaningful commit messages
 2. **PRCreatorAgent**: Automates pull request creation
 
 ## Usage
 
 ### Via Command Palette
+
 1. Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
 2. Run `AutoClaude: Execute Automation Command`
 3. Enter your high-level command
@@ -121,6 +139,7 @@ Monitors and recovers tasks:
 ## Workflow Templates
 
 ### Production Ready Workflow
+
 ```javascript
 {
   id: 'production-ready',
@@ -139,6 +158,7 @@ Monitors and recovers tasks:
 ```
 
 ### Test Coverage Workflow
+
 ```javascript
 {
   id: 'test-coverage',
@@ -186,13 +206,15 @@ The system implements multiple recovery strategies:
 
 ```typescript
 export class MyCustomAgent extends BaseProductionAgent {
-    name = 'My Custom Agent';
-    description = 'Does something special';
-    capabilities = ['capability1', 'capability2'];
-    
-    async executeSimple(spec?: string): Promise<{ success: boolean; message: string }> {
-        // Implementation
-    }
+  name = "My Custom Agent";
+  description = "Does something special";
+  capabilities = ["capability1", "capability2"];
+
+  async executeSimple(
+    spec?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    // Implementation
+  }
 }
 ```
 
@@ -204,14 +226,14 @@ export class MyCustomAgent extends BaseProductionAgent {
 1. Add to `TaskDecomposer` workflow templates:
 
 ```typescript
-this.templates.set('my-workflow', {
-    id: 'my-workflow',
-    name: 'My Custom Workflow',
-    estimatedTime: 15,
-    steps: [
-        { name: 'Step 1', subAgent: 'agent1' },
-        { name: 'Step 2', subAgent: 'agent2' }
-    ]
+this.templates.set("my-workflow", {
+  id: "my-workflow",
+  name: "My Custom Workflow",
+  estimatedTime: 15,
+  steps: [
+    { name: "Step 1", subAgent: "agent1" },
+    { name: "Step 2", subAgent: "agent2" },
+  ],
 });
 ```
 
@@ -245,6 +267,7 @@ this.templates.set('my-workflow', {
 ### Debug Mode
 
 Enable debug logging in settings:
+
 ```json
 {
   "autoclaude.debug": true

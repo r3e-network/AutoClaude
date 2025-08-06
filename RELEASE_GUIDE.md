@@ -23,11 +23,12 @@ You need to manually publish to the VS Code Marketplace using your Personal Acce
    - Copy the token
 
 2. **Publish using vsce**:
+
    ```bash
    # Option 1: Interactive login
    npx @vscode/vsce login R3ENetwork
    # Enter your PAT when prompted
-   
+
    # Then publish
    npm run publish
    ```
@@ -50,7 +51,7 @@ If CLI publishing fails, you can upload manually:
 
 1. Go to https://marketplace.visualstudio.com/manage/publishers/R3ENetwork
 2. Click on AutoClaude extension
-3. Click "Update" 
+3. Click "Update"
 4. Upload the `autoclaude-3.2.0.vsix` file
 5. Add release notes from CHANGELOG.md
 6. Publish
@@ -64,9 +65,9 @@ If CLI publishing fails, you can upload manually:
 
 ## 📊 Metrics
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Package Size | 45.18 MB | 679.61 KB | -98.5% |
-| Security Issues | 2 moderate | 0 | 100% fixed |
-| Build Time | ~5s | ~1s | -80% |
-| Files Included | 20,193 | 105 | -99.5% |
+| Metric          | Before     | After     | Improvement |
+| --------------- | ---------- | --------- | ----------- |
+| Package Size    | 45.18 MB   | 679.61 KB | -98.5%      |
+| Security Issues | 2 moderate | 0         | 100% fixed  |
+| Build Time      | ~5s        | ~1s       | -80%        |
+| Files Included  | 20,193     | 105       | -99.5%      |

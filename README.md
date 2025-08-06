@@ -14,12 +14,14 @@
 ## 🚀 **NEW: Universal Language Conversion System**
 
 ### 🌍 **Multi-Language Support**
+
 - **Universal Converter**: Intelligent conversion between 8+ programming languages
 - **Smart Detection**: Automatic source and target language identification
 - **Pattern Learning**: AI-powered conversion improvement over time
 - **Type Mapping**: Comprehensive type system translations across languages
 
 ### 🎯 **Supported Language Pairs**
+
 - **C# ↔ Rust**: Complete Neo-rs ecosystem support with 25+ type mappings
 - **JavaScript ↔ TypeScript**: Seamless type annotation and modern syntax
 - **Python ↔ Rust**: Performance optimization conversions
@@ -27,18 +29,21 @@
 - **Extensible Framework**: Easy addition of new language pairs
 
 ### 🧠 **Advanced Memory System**
+
 - **Persistent Learning**: SQLite-based storage with pattern recognition
 - **Multi-Language Patterns**: Cross-language conversion optimization
 - **Type Intelligence**: Dynamic type mapping learning and validation
 - **Conversion History**: Complete audit trail and performance analytics
 
 ### 🤖 **Universal Agent System**
+
 - **Multi-Language Agents**: Converter and Validator agents for any language pair
 - **Task Orchestration**: Intelligent workload distribution and priority management
 - **Real-time Monitoring**: Live agent status and performance tracking
 - **Fault Tolerance**: Automatic retry logic and graceful error recovery
 
 ### 🎯 **Agent Coordination**
+
 - **AgentCoordinator**: Centralized task management and agent orchestration
 - **Priority Queue System**: Intelligent task prioritization with deadline awareness
 - **Parallel Processing**: Concurrent execution across multiple specialized agents
@@ -49,12 +54,14 @@
 - **Performance Monitoring**: Real-time agent metrics and performance analytics
 
 ### 🔗 **Universal Validation System**
+
 - **Multi-Language Validation**: Syntax checking for all supported languages
 - **Compatibility Verification**: Ensures functional equivalence across conversions
 - **Security Scanning**: Built-in vulnerability detection for all languages
 - **Performance Analysis**: Code quality and optimization recommendations
 
 ### 📊 **System Monitoring & Analytics**
+
 - **Real-time Metrics**: CPU, memory, and conversion-specific performance tracking
 - **Alert System**: Configurable thresholds with VS Code notifications
 - **Export Capabilities**: Comprehensive metrics and learning data export
@@ -65,6 +72,7 @@
 ## 🆕 v3.8.0: Complete Session Isolation & Multi-Window Independence
 
 ### 🔒 **Complete Session Isolation**
+
 - **Independent VS Code Windows**: Each window runs completely separate Claude sessions
 - **Process Isolation**: Separate Claude CLI processes with different PIDs
 - **Memory Isolation**: No shared state or variables between different windows
@@ -72,18 +80,21 @@
 - **Automatic Cleanup**: Resource management and cleanup for inactive sessions
 
 ### 🛡️ **Multi-Window Safety**
+
 - **Zero Cross-Contamination**: Changes in one window don't affect others
 - **Crash Isolation**: Issues in one window don't impact other sessions
 - **Independent Processing**: Separate message queues per window
 - **Configuration Isolation**: Workspace-specific settings and logs
 
 ### 🚀 **Enhanced Development Experience**
+
 - **Parallel Development**: Work on multiple projects simultaneously
 - **Session Monitoring**: New command to view session isolation details
 - **Improved Reliability**: Enhanced fault tolerance across sessions
 - **Seamless Multi-Window**: No configuration needed for multi-window support
 
 ### 🔧 **Technical Excellence**
+
 - **Backward Compatibility**: No breaking changes to existing functionality
 - **Session Registry**: Global tracking of all active sessions
 - **Resource Management**: Efficient cleanup and memory management
@@ -92,14 +103,18 @@
 ## 🧠 Intelligent Task Automation System
 
 ### 🧠 **Natural Language Commands**
+
 Transform high-level goals into completed work with simple commands:
+
 - `"make project production ready"` - Fixes tests, adds docs, creates Docker config, and more
 - `"fix all failing tests"` - Analyzes failures and fixes them automatically
 - `"create a React website with authentication"` - Builds complete project from scratch
 - `"add comprehensive documentation"` - Generates README, API docs, and architecture docs
 
 ### 🤖 **12+ Specialized Sub-Agents**
+
 Each agent is an expert in its domain:
+
 - **TestFixerAgent** - Fixes failing tests automatically
 - **DocGeneratorAgent** - Creates comprehensive documentation
 - **DockerCreatorAgent** - Adds Docker support to your project
@@ -107,8 +122,10 @@ Each agent is an expert in its domain:
 - **CodeCleanerAgent** - Refactors and organizes your codebase
 - And many more!
 
-### 🚜 **NEW: Parallel Agent Farm** 
+### 🚜 **NEW: Parallel Agent Farm**
+
 Run multiple Claude agents simultaneously for massive productivity:
+
 - **20-50+ Parallel Agents** - Launch armies of AI agents working on your codebase
 - **Smart Work Distribution** - Intelligent task assignment prevents conflicts
 - **Real-time Monitoring** - Beautiful dashboard shows agent status and progress
@@ -116,14 +133,18 @@ Run multiple Claude agents simultaneously for massive productivity:
 - **34 Tech Stack Support** - Pre-configured for popular frameworks and languages
 
 ### 💾 **Cross-Session Task Persistence**
+
 Never lose work progress:
+
 - Tasks persist across VSCode sessions
 - Automatic work resumption after interruptions
 - Complete task history and context tracking
 - Recovery from failures with smart retry strategies
 
 ### 📊 **Intelligent Project Understanding**
+
 AutoClaude learns your project:
+
 - Comprehensive file indexing and analysis
 - Symbol extraction and dependency tracking
 - Pattern recognition and code complexity analysis
@@ -135,55 +156,55 @@ AutoClaude learns your project:
 
 ### 🌍 **Universal Language Conversion**
 
--   **Multi-Language Support**: Convert code between 8+ programming languages intelligently
--   **Auto-Detection**: Automatically detect source language and suggest optimal target languages
--   **Pattern Learning**: AI continuously improves conversion quality based on successful patterns
--   **Type System Mapping**: Comprehensive type translations with language-specific optimizations
--   **Neo-rs Specialization**: Advanced C# to Rust conversion with Neo blockchain compatibility
--   **Validation & Quality**: Multi-layer validation ensures converted code maintains functionality
--   **Security Scanning**: Built-in vulnerability detection across all supported languages
+- **Multi-Language Support**: Convert code between 8+ programming languages intelligently
+- **Auto-Detection**: Automatically detect source language and suggest optimal target languages
+- **Pattern Learning**: AI continuously improves conversion quality based on successful patterns
+- **Type System Mapping**: Comprehensive type translations with language-specific optimizations
+- **Neo-rs Specialization**: Advanced C# to Rust conversion with Neo blockchain compatibility
+- **Validation & Quality**: Multi-layer validation ensures converted code maintains functionality
+- **Security Scanning**: Built-in vulnerability detection across all supported languages
 
 ### 🚀 **24/7 Automated Processing**
 
--   **Set It and Forget It**: Queue hundreds of tasks and let AutoClaude work autonomously
--   **Auto-Resume**: Automatically resume processing when Claude usage limits reset - no manual intervention needed
--   **Sleep Prevention**: Keeps your computer awake during processing so work continues overnight
--   **Smart Queue Management**: Process multiple Claude Code tasks automatically with intelligent queueing
--   **Batch Processing**: Handle large workloads efficiently - perfect for weekend or overnight runs
+- **Set It and Forget It**: Queue hundreds of tasks and let AutoClaude work autonomously
+- **Auto-Resume**: Automatically resume processing when Claude usage limits reset - no manual intervention needed
+- **Sleep Prevention**: Keeps your computer awake during processing so work continues overnight
+- **Smart Queue Management**: Process multiple Claude Code tasks automatically with intelligent queueing
+- **Batch Processing**: Handle large workloads efficiently - perfect for weekend or overnight runs
 
 ### 🔧 **Robust Process Management**
 
--   **Dependency Checking**: Automatic detection and validation of Claude Code and Python dependencies
--   **Cross-Platform Support**: Works seamlessly on Windows, macOS, and Linux
--   **IDE Compatibility**: Full support for VS Code and Cursor
--   **Error Recovery**: Comprehensive error handling with automatic retry mechanisms
--   **Health Monitoring**: Continuous monitoring of Claude Code process health
+- **Dependency Checking**: Automatic detection and validation of Claude Code and Python dependencies
+- **Cross-Platform Support**: Works seamlessly on Windows, macOS, and Linux
+- **IDE Compatibility**: Full support for VS Code and Cursor
+- **Error Recovery**: Comprehensive error handling with automatic retry mechanisms
+- **Health Monitoring**: Continuous monitoring of Claude Code process health
 
 ### ⚙️ **Advanced Configuration**
 
--   **Extensive Settings**: Fine-tune every aspect of AutoClaude behavior
--   **Configuration Validation**: Built-in validation with helpful error messages
--   **Development Mode**: Special features and debugging tools for developers
--   **Sleep Prevention**: Keep your computer awake during long processing sessions
+- **Extensive Settings**: Fine-tune every aspect of AutoClaude behavior
+- **Configuration Validation**: Built-in validation with helpful error messages
+- **Development Mode**: Special features and debugging tools for developers
+- **Sleep Prevention**: Keep your computer awake during long processing sessions
 
 ### 🔍 **Script Runner & Quality Checks**
 
--   **Automated Code Quality Checks**: Run predefined and custom scripts to ensure code quality
--   **Production Readiness Check**: Automatically detect TODOs, FIXMEs, placeholders, and incomplete implementations
--   **Multi-Language Support**: Built-in checks for JavaScript, TypeScript, Go, C++, Rust, C#, Java
--   **Build & Test Verification**: Ensure your project builds and all tests pass
--   **Format Checking**: Verify code formatting standards are met
--   **GitHub Actions Validation**: Check your CI/CD workflows for errors
--   **Fix Loop**: Automatically ask Claude to fix issues and re-run checks until all pass
--   **Message Loop**: Run individual messages in a loop with script checks until they pass
--   **Custom Scripts**: Add your own validation scripts in the `.autoclaude` folder
+- **Automated Code Quality Checks**: Run predefined and custom scripts to ensure code quality
+- **Production Readiness Check**: Automatically detect TODOs, FIXMEs, placeholders, and incomplete implementations
+- **Multi-Language Support**: Built-in checks for JavaScript, TypeScript, Go, C++, Rust, C#, Java
+- **Build & Test Verification**: Ensure your project builds and all tests pass
+- **Format Checking**: Verify code formatting standards are met
+- **GitHub Actions Validation**: Check your CI/CD workflows for errors
+- **Fix Loop**: Automatically ask Claude to fix issues and re-run checks until all pass
+- **Message Loop**: Run individual messages in a loop with script checks until they pass
+- **Custom Scripts**: Add your own validation scripts in the `.autoclaude` folder
 
 ### 📊 **Rich User Interface**
 
--   **Interactive Webview**: Intuitive interface for managing queues and monitoring progress
--   **Real-time Updates**: Live status updates and progress tracking
--   **History Browser**: Browse and filter previous processing runs
--   **Command Palette**: Quick access to all AutoClaude commands
+- **Interactive Webview**: Intuitive interface for managing queues and monitoring progress
+- **Real-time Updates**: Live status updates and progress tracking
+- **History Browser**: Browse and filter previous processing runs
+- **Command Palette**: Quick access to all AutoClaude commands
 
 ## 🚀 Quick Start
 
@@ -196,6 +217,7 @@ AutoClaude learns your project:
 ### Installation
 
 #### 🖥️ **Terminal Version (Standalone)**
+
 ```bash
 npm install -g autoclaude-terminal
 autoclaude  # Start the terminal interface
@@ -203,6 +225,7 @@ ac          # Short alias
 ```
 
 #### 📦 **VS Code Extension**
+
 1. Install via command palette: `Extensions: Install Extensions` → Search "AutoClaude"
 2. Or install from VSIX: Download from [GitHub Releases](https://github.com/r3e-network/AutoClaude/releases)
 3. **Cursor**: AutoClaude works seamlessly in Cursor with the same installation process
@@ -258,7 +281,7 @@ The Script Checks section appears directly above the message input area, providi
    - Scripts only run when enabled
    - Your selection is saved automatically
 
-2. **Reorder Scripts** 
+2. **Reorder Scripts**
    - Drag scripts using the handle icon (☰)
    - Numbers (1, 2, 3...) show execution order
    - Order affects fix priority - earlier scripts are fixed first
@@ -293,12 +316,14 @@ The Script Checks section appears directly above the message input area, providi
      "warnings": ["warning1"] // optional
    }
    ```
+
    - Support any language (bash, python, node, etc.)
    - Examples provided in `.autoclaude/scripts/examples/`
 
 #### Script Configuration
 
 Scripts are configured in `.autoclaude/config.json`:
+
 ```json
 {
   "scripts": {
@@ -344,24 +369,28 @@ Run multiple Claude agents simultaneously to tackle large-scale code improvement
 #### Advanced Features
 
 **Smart Work Distribution**
+
 - Automatic chunk-based task assignment
 - Conflict prevention through file locking
 - Dynamic chunk sizing based on remaining work
 - Priority-based work queue management
 
 **Cooperating Agents Protocol**
+
 - Agents coordinate through shared work registry
 - File and feature locking prevents conflicts
 - Stale lock detection and recovery
 - Business value tracking for work items
 
 **Multi-Tech Stack Support**
+
 - 34 pre-configured technology stacks
 - Auto-detection of project type
 - Stack-specific prompts and best practices
 - Custom stack configuration support
 
 **Monitoring & Recovery**
+
 - Heartbeat monitoring for stuck agents
 - Automatic restart with exponential backoff
 - Settings backup and corruption recovery
@@ -392,6 +421,7 @@ AutoClaude provides two powerful loop features that ensure your tasks are comple
 The **"Run Loop"** button runs all enabled scripts repeatedly until they pass:
 
 **How it works:**
+
 1. Runs all enabled script checks
 2. If any fail, sends errors to Claude with fix request
 3. Claude implements fixes based on error messages
@@ -399,12 +429,14 @@ The **"Run Loop"** button runs all enabled scripts repeatedly until they pass:
 5. Continues until all pass or max iterations reached
 
 **Best for:**
+
 - Preparing code for production deployment
 - Ensuring all quality standards are met
 - Automated code cleanup and refactoring
 - Pre-commit quality assurance
 
 **Example workflow:**
+
 ```
 1. Enable: Production Check, Build, Test, Format
 2. Click "Run Loop" with max iterations = 5
@@ -417,6 +449,7 @@ The **"Run Loop"** button runs all enabled scripts repeatedly until they pass:
 The **🔄 button** on each message runs that specific task in a quality loop. **Note: Hover over a pending message to see the action buttons including the loop button (🔄).**
 
 **How it works:**
+
 1. Processes the individual message/task
 2. Runs enabled script checks on the changes
 3. If checks fail, asks Claude to fix while maintaining task completion
@@ -424,12 +457,14 @@ The **🔄 button** on each message runs that specific task in a quality loop. *
 5. Ensures task is both complete AND high quality
 
 **Best for:**
+
 - Complex features that need refinement
 - Tasks requiring multiple iterations
 - Ensuring individual changes meet standards
 - Focused quality improvement
 
 **Example workflow:**
+
 ```
 Message: "Add user authentication with JWT"
 1. Click 🔄 on the message
@@ -446,7 +481,6 @@ Control loop behavior with these settings:
 - **Max Iterations**: 1-20 (default: 5)
   - Lower for quick fixes
   - Higher for complex refactoring
-  
 - **Script Selection**: Enable only relevant scripts
   - Faster loops with fewer scripts
   - More thorough with all scripts
@@ -465,13 +499,13 @@ Control loop behavior with these settings:
 
 ## 📋 Commands
 
-| Command                          | Description                                      |
-| -------------------------------- | ------------------------------------------------ |
-| `Claude: Start AutoClaude` | Start the AutoClaude interface and session |
-| `Claude: Stop AutoClaude`  | Stop AutoClaude and close the session      |
-| `Claude: Add Message to Queue`   | Add a new message to the processing queue        |
-| `Claude: Run Script Checks`      | Run all enabled validation scripts               |
-| `Claude: Run Script Check Loop`  | Run scripts and auto-fix issues in a loop       |
+| Command                         | Description                                |
+| ------------------------------- | ------------------------------------------ |
+| `Claude: Start AutoClaude`      | Start the AutoClaude interface and session |
+| `Claude: Stop AutoClaude`       | Stop AutoClaude and close the session      |
+| `Claude: Add Message to Queue`  | Add a new message to the processing queue  |
+| `Claude: Run Script Checks`     | Run all enabled validation scripts         |
+| `Claude: Run Script Check Loop` | Run scripts and auto-fix issues in a loop  |
 
 ## ⚙️ Configuration
 
@@ -481,7 +515,7 @@ AutoClaude offers extensive configuration options. Access settings via `File →
 
 ```json
 {
-    "claudeAutopilot.queue.autoMaintenance": true
+  "claudeAutopilot.queue.autoMaintenance": true
 }
 ```
 
@@ -489,9 +523,9 @@ AutoClaude offers extensive configuration options. Access settings via `File →
 
 ```json
 {
-    "claudeAutopilot.session.autoStart": false,
-    "claudeAutopilot.session.skipPermissions": true,
-    "claudeAutopilot.session.healthCheckInterval": 30000
+  "claudeAutopilot.session.autoStart": false,
+  "claudeAutopilot.session.skipPermissions": true,
+  "claudeAutopilot.session.healthCheckInterval": 30000
 }
 ```
 
@@ -499,8 +533,8 @@ AutoClaude offers extensive configuration options. Access settings via `File →
 
 ```json
 {
-    "claudeAutopilot.sleepPrevention.enabled": true,
-    "claudeAutopilot.sleepPrevention.method": "auto"
+  "claudeAutopilot.sleepPrevention.enabled": true,
+  "claudeAutopilot.sleepPrevention.method": "auto"
 }
 ```
 
@@ -508,10 +542,10 @@ AutoClaude offers extensive configuration options. Access settings via `File →
 
 ```json
 {
-    "claudeAutopilot.history.maxRuns": 20,
-    "claudeAutopilot.history.autoSave": true,
-    "claudeAutopilot.logging.enabled": false,
-    "claudeAutopilot.logging.level": "info"
+  "claudeAutopilot.history.maxRuns": 20,
+  "claudeAutopilot.history.autoSave": true,
+  "claudeAutopilot.logging.enabled": false,
+  "claudeAutopilot.logging.level": "info"
 }
 ```
 
@@ -519,9 +553,9 @@ AutoClaude offers extensive configuration options. Access settings via `File →
 
 ```json
 {
-    "claudeAutopilot.scriptRunner.enabled": true,
-    "claudeAutopilot.scriptRunner.maxIterations": 5,
-    "claudeAutopilot.scriptRunner.autoCreateFolder": true
+  "claudeAutopilot.scriptRunner.enabled": true,
+  "claudeAutopilot.scriptRunner.maxIterations": 5,
+  "claudeAutopilot.scriptRunner.autoCreateFolder": true
 }
 ```
 
@@ -542,18 +576,18 @@ src/
 
 ### Key Components
 
--   **Queue Manager**: Handles message queueing, processing, and operations
--   **Claude Integration**: Manages Claude Code process and communication
--   **Dependency Checker**: Validates and manages required dependencies
--   **Configuration System**: Comprehensive settings with validation
--   **Script Runner**: Automated quality checks with fix loop capability
+- **Queue Manager**: Handles message queueing, processing, and operations
+- **Claude Integration**: Manages Claude Code process and communication
+- **Dependency Checker**: Validates and manages required dependencies
+- **Configuration System**: Comprehensive settings with validation
+- **Script Runner**: Automated quality checks with fix loop capability
 
 ## 🔒 Security & Privacy
 
--   **Local Processing**: All processing happens locally on your machine
--   **No Data Collection**: AutoClaude doesn't collect or transmit personal data
--   **Secure Dependencies**: Validates Claude Code and Python installations
--   **Permission Awareness**: Uses `--dangerously-skip-permissions` only in trusted environments
+- **Local Processing**: All processing happens locally on your machine
+- **No Data Collection**: AutoClaude doesn't collect or transmit personal data
+- **Secure Dependencies**: Validates Claude Code and Python installations
+- **Permission Awareness**: Uses `--dangerously-skip-permissions` only in trusted environments
 
 ## 🛠️ Development
 
@@ -590,6 +624,7 @@ To create a new release:
 7. Push release branch: `git push origin vX.X.X`
 
 The GitHub Actions workflow will automatically:
+
 - Build the extension
 - Create a `.vsix` package
 - Create a GitHub release with the package as an asset
@@ -601,21 +636,22 @@ Enable development mode for additional debugging features:
 
 ```json
 {
-    "claudeAutopilot.developmentMode": true
+  "claudeAutopilot.developmentMode": true
 }
 ```
 
 This enables:
 
--   Debug logging and diagnostics
--   Configuration validation tools
--   Advanced queue operations
+- Debug logging and diagnostics
+- Configuration validation tools
+- Advanced queue operations
 
 ## 🤖 Intelligent Sub-Agent System
 
 AutoClaude includes 12+ specialized sub-agents that work together to analyze and improve your code:
 
 ### Production Readiness Agents
+
 - **🏭 Production Readiness**: Scans for TODOs, placeholders, and incomplete implementations
 - **🔨 Build Check**: Automatically detects and validates your build system
 - **✅ Test Check**: Ensures all tests pass and identifies missing coverage
@@ -623,6 +659,7 @@ AutoClaude includes 12+ specialized sub-agents that work together to analyze and
 - **🚀 GitHub Actions**: Validates CI/CD workflows and configurations
 
 ### Advanced Analysis Agents
+
 - **🧠 Context Awareness**: Deep understanding of project structure and dependencies
 - **📋 Task Planning**: Creates detailed implementation plans for complex features
 - **🔗 Dependency Resolution**: Automatic dependency management and conflict resolution
@@ -632,6 +669,7 @@ AutoClaude includes 12+ specialized sub-agents that work together to analyze and
 - **🔒 Security Audit**: Comprehensive security vulnerability scanning
 
 ### How Sub-Agents Work
+
 1. **Enable Sub-Agent System**: Set `autoclaude.subAgents.enabled` to `true`
 2. **Run Analysis**: Use "🤖 Run AI Analysis Agents" command
 3. **Automated Improvement**: Agents analyze your code and provide intelligent fixes
@@ -641,20 +679,20 @@ AutoClaude includes 12+ specialized sub-agents that work together to analyze and
 
 ### Perfect for:
 
--   **Weekend Warriors**: Queue up your entire week's refactoring Friday evening
--   **Large Refactoring Projects**: Process hundreds of files while you sleep
--   **Batch Code Generation**: Generate components, tests, and documentation overnight
--   **Migration Tasks**: Convert frameworks or update dependencies during family time
--   **Quality Assurance**: Run comprehensive code reviews while you're at dinner
--   **Documentation Generation**: Create docs for your entire codebase while you relax
+- **Weekend Warriors**: Queue up your entire week's refactoring Friday evening
+- **Large Refactoring Projects**: Process hundreds of files while you sleep
+- **Batch Code Generation**: Generate components, tests, and documentation overnight
+- **Migration Tasks**: Convert frameworks or update dependencies during family time
+- **Quality Assurance**: Run comprehensive code reviews while you're at dinner
+- **Documentation Generation**: Create docs for your entire codebase while you relax
 
 ### Real-World Examples:
 
--   Converting a React class component codebase to functional components
--   Adding TypeScript types to a large JavaScript project
--   Generating API documentation from code comments
--   Migrating from one testing framework to another
--   Adding accessibility features across a web application
+- Converting a React class component codebase to functional components
+- Adding TypeScript types to a large JavaScript project
+- Generating API documentation from code comments
+- Migrating from one testing framework to another
+- Adding accessibility features across a web application
 
 ## 📚 Wiki & Documentation
 
@@ -696,35 +734,35 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Claude Code Not Found**
 
--   Ensure Claude Code is installed and in your PATH
--   Restart VS Code after installing Claude Code
--   Check dependency status in AutoClaude panel
+- Ensure Claude Code is installed and in your PATH
+- Restart VS Code after installing Claude Code
+- Check dependency status in AutoClaude panel
 
 **Python Not Found**
 
--   Install Python 3.8 or later
--   Ensure Python is in your PATH
--   On Windows, check "Add Python to PATH" during installation
+- Install Python 3.8 or later
+- Ensure Python is in your PATH
+- On Windows, check "Add Python to PATH" during installation
 
 **Permission Errors**
 
--   AutoClaude uses `--dangerously-skip-permissions` for automation
--   Only use in trusted development environments
--   Disable if working with sensitive data
+- AutoClaude uses `--dangerously-skip-permissions` for automation
+- Only use in trusted development environments
+- Disable if working with sensitive data
 
 ### Getting Help
 
--   🐛 [Bug Reports](https://github.com/claude-code/claude-autopilot/issues)
--   💡 [Feature Requests](https://github.com/claude-code/claude-autopilot/issues)
--   💬 [Discussions](https://github.com/claude-code/claude-autopilot/discussions)
+- 🐛 [Bug Reports](https://github.com/claude-code/claude-autopilot/issues)
+- 💡 [Feature Requests](https://github.com/claude-code/claude-autopilot/issues)
+- 💬 [Discussions](https://github.com/claude-code/claude-autopilot/discussions)
 
 ### Support
 
 If you find Claude Autopilot helpful, consider:
 
--   ⭐ Starring the repository
--   🐛 Reporting bugs or suggesting features
--   🤝 Contributing code or documentation
+- ⭐ Starring the repository
+- 🐛 Reporting bugs or suggesting features
+- 🤝 Contributing code or documentation
 
 ---
 

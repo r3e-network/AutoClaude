@@ -1,10 +1,19 @@
-import { BaseProductionAgent } from './BaseProductionAgent';
-import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { debugLog } from '../utils/logging';
+import { BaseProductionAgent } from "./BaseProductionAgent";
+import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
+import { exec } from "child_process";
+import { promisify } from "util";
+import { debugLog } from "../utils/logging";
+import {
+  ProjectSpec,
+  WebsiteSpec,
+  ProjectAnalysis,
+  ExpressError,
+  ExpressRequest,
+  ExpressResponse,
+  ExpressNext,
+} from "../types/creation";
 
 const execAsync = promisify(exec);
 
@@ -12,137 +21,133 @@ const execAsync = promisify(exec);
  * Project Initializer Agent - Creates new projects from specifications
  */
 export class ProjectInitializerAgent extends BaseProductionAgent {
-    name = 'Project Initializer';
-    description = 'Creates new projects with proper structure and configuration';
-    capabilities = [
-        'Parse project requirements',
-        'Create directory structure',
-        'Initialize git repository',
-        'Setup package managers',
-        'Configure build tools'
+  name = "Project Initializer";
+  description = "Creates new projects with proper structure and configuration";
+  capabilities = [
+    "Parse project requirements",
+    "Create directory structure",
+    "Initialize git repository",
+    "Setup package managers",
+    "Configure build tools",
+  ];
+
+  async executeSimple(
+    spec?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      // Parse project specification
+      const projectSpec = this.parseSpecification(spec || "");
+
+      // Create project structure
+      await this.createProjectStructure(projectSpec);
+
+      // Initialize version control
+      await this.initializeGit(projectSpec);
+
+      // Setup package manager
+      await this.setupPackageManager(projectSpec);
+
+      // Create initial configuration files
+      await this.createConfigFiles(projectSpec);
+
+      return {
+        success: true,
+        message: `Project "${projectSpec.name}" initialized successfully at ${projectSpec.path}`,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Project initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  }
+
+  private parseSpecification(spec: string): ProjectSpec {
+    // Default project specification
+    const defaultSpec = {
+      name: "new-project",
+      type: "node",
+      framework: "none",
+      features: [] as string[],
+      path: this.workspaceRoot,
+    };
+
+    // Parse specification from text
+    const lines = spec.split("\n");
+    const projectSpec = { ...defaultSpec };
+
+    for (const line of lines) {
+      const [key, value] = line.split(":").map((s) => s.trim());
+
+      switch (key.toLowerCase()) {
+        case "name":
+          projectSpec.name = value;
+          break;
+        case "type":
+          projectSpec.type = value;
+          break;
+        case "framework":
+          projectSpec.framework = value;
+          break;
+        case "features":
+          projectSpec.features = value.split(",").map((s) => s.trim());
+          break;
+      }
+    }
+
+    projectSpec.path = path.join(this.workspaceRoot, projectSpec.name);
+
+    return projectSpec;
+  }
+
+  private async createProjectStructure(spec: ProjectSpec): Promise<void> {
+    const dirs = ["src", "tests", "docs", "config", ".github/workflows"];
+
+    // Create project root
+    if (!fs.existsSync(spec.path)) {
+      fs.mkdirSync(spec.path, { recursive: true });
+    }
+
+    // Create standard directories
+    for (const dir of dirs) {
+      const fullPath = path.join(spec.path, dir);
+      if (!fs.existsSync(fullPath)) {
+        fs.mkdirSync(fullPath, { recursive: true });
+      }
+    }
+
+    // Create framework-specific structure
+    if (spec.framework === "react") {
+      await this.createReactStructure(spec);
+    } else if (spec.framework === "express") {
+      await this.createExpressStructure(spec);
+    } else if (spec.framework === "vue") {
+      await this.createVueStructure(spec);
+    }
+
+    // Create initial files
+    await this.createInitialFiles(spec);
+  }
+
+  private async createReactStructure(spec: ProjectSpec): Promise<void> {
+    const dirs = [
+      "src/components",
+      "src/pages",
+      "src/hooks",
+      "src/utils",
+      "src/styles",
+      "public",
     ];
 
-    async executeSimple(spec?: string): Promise<{ success: boolean; message: string }> {
-        try {
-            // Parse project specification
-            const projectSpec = this.parseSpecification(spec || '');
-            
-            // Create project structure
-            await this.createProjectStructure(projectSpec);
-            
-            // Initialize version control
-            await this.initializeGit(projectSpec);
-            
-            // Setup package manager
-            await this.setupPackageManager(projectSpec);
-            
-            // Create initial configuration files
-            await this.createConfigFiles(projectSpec);
-
-            return {
-                success: true,
-                message: `Project "${projectSpec.name}" initialized successfully at ${projectSpec.path}`
-            };
-        } catch (error: any) {
-            return {
-                success: false,
-                message: `Project initialization failed: ${error.message}`
-            };
-        }
+    for (const dir of dirs) {
+      const fullPath = path.join(spec.path, dir);
+      if (!fs.existsSync(fullPath)) {
+        fs.mkdirSync(fullPath, { recursive: true });
+      }
     }
 
-    private parseSpecification(spec: string): any {
-        // Default project specification
-        const defaultSpec = {
-            name: 'new-project',
-            type: 'node',
-            framework: 'none',
-            features: [] as string[],
-            path: this.workspaceRoot
-        };
-
-        // Parse specification from text
-        const lines = spec.split('\n');
-        const projectSpec = { ...defaultSpec };
-
-        for (const line of lines) {
-            const [key, value] = line.split(':').map(s => s.trim());
-            
-            switch (key.toLowerCase()) {
-                case 'name':
-                    projectSpec.name = value;
-                    break;
-                case 'type':
-                    projectSpec.type = value;
-                    break;
-                case 'framework':
-                    projectSpec.framework = value;
-                    break;
-                case 'features':
-                    projectSpec.features = value.split(',').map(s => s.trim());
-                    break;
-            }
-        }
-
-        projectSpec.path = path.join(this.workspaceRoot, projectSpec.name);
-        
-        return projectSpec;
-    }
-
-    private async createProjectStructure(spec: any): Promise<void> {
-        const dirs = [
-            'src',
-            'tests',
-            'docs',
-            'config',
-            '.github/workflows'
-        ];
-
-        // Create project root
-        if (!fs.existsSync(spec.path)) {
-            fs.mkdirSync(spec.path, { recursive: true });
-        }
-
-        // Create standard directories
-        for (const dir of dirs) {
-            const fullPath = path.join(spec.path, dir);
-            if (!fs.existsSync(fullPath)) {
-                fs.mkdirSync(fullPath, { recursive: true });
-            }
-        }
-
-        // Create framework-specific structure
-        if (spec.framework === 'react') {
-            await this.createReactStructure(spec);
-        } else if (spec.framework === 'express') {
-            await this.createExpressStructure(spec);
-        } else if (spec.framework === 'vue') {
-            await this.createVueStructure(spec);
-        }
-
-        // Create initial files
-        await this.createInitialFiles(spec);
-    }
-
-    private async createReactStructure(spec: any): Promise<void> {
-        const dirs = [
-            'src/components',
-            'src/pages',
-            'src/hooks',
-            'src/utils',
-            'src/styles',
-            'public'
-        ];
-
-        for (const dir of dirs) {
-            const fullPath = path.join(spec.path, dir);
-            if (!fs.existsSync(fullPath)) {
-                fs.mkdirSync(fullPath, { recursive: true });
-            }
-        }
-
-        // Create App.tsx
-        const appContent = `import React from 'react';
+    // Create App.tsx
+    const appContent = `import React from 'react';
 import './App.css';
 
 function App() {
@@ -158,10 +163,10 @@ function App() {
 
 export default App;
 `;
-        fs.writeFileSync(path.join(spec.path, 'src/App.tsx'), appContent);
+    fs.writeFileSync(path.join(spec.path, "src/App.tsx"), appContent);
 
-        // Create index.tsx
-        const indexContent = `import React from 'react';
+    // Create index.tsx
+    const indexContent = `import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
@@ -175,28 +180,28 @@ root.render(
   </React.StrictMode>
 );
 `;
-        fs.writeFileSync(path.join(spec.path, 'src/index.tsx'), indexContent);
+    fs.writeFileSync(path.join(spec.path, "src/index.tsx"), indexContent);
+  }
+
+  private async createExpressStructure(spec: ProjectSpec): Promise<void> {
+    const dirs = [
+      "src/routes",
+      "src/controllers",
+      "src/models",
+      "src/middleware",
+      "src/utils",
+      "src/services",
+    ];
+
+    for (const dir of dirs) {
+      const fullPath = path.join(spec.path, dir);
+      if (!fs.existsSync(fullPath)) {
+        fs.mkdirSync(fullPath, { recursive: true });
+      }
     }
 
-    private async createExpressStructure(spec: any): Promise<void> {
-        const dirs = [
-            'src/routes',
-            'src/controllers',
-            'src/models',
-            'src/middleware',
-            'src/utils',
-            'src/services'
-        ];
-
-        for (const dir of dirs) {
-            const fullPath = path.join(spec.path, dir);
-            if (!fs.existsSync(fullPath)) {
-                fs.mkdirSync(fullPath, { recursive: true });
-            }
-        }
-
-        // Create app.ts
-        const appContent = `import express from 'express';
+    // Create app.ts
+    const appContent = `import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 
@@ -214,7 +219,7 @@ app.get('/', (req, res) => {
 });
 
 // Error handling
-app.use((err: any, req: any, res: any, next: any) => {
+app.use((err: ExpressError, req: ExpressRequest, res: ExpressResponse, next: ExpressNext) => {
   console.error(err.stack);
   res.status(500).send('Something went wrong!');
 });
@@ -226,33 +231,33 @@ app.listen(PORT, () => {
 
 export default app;
 `;
-        fs.writeFileSync(path.join(spec.path, 'src/app.ts'), appContent);
+    fs.writeFileSync(path.join(spec.path, "src/app.ts"), appContent);
+  }
+
+  private async createVueStructure(spec: ProjectSpec): Promise<void> {
+    const dirs = [
+      "src/components",
+      "src/views",
+      "src/router",
+      "src/store",
+      "src/assets",
+      "src/utils",
+    ];
+
+    for (const dir of dirs) {
+      const fullPath = path.join(spec.path, dir);
+      if (!fs.existsSync(fullPath)) {
+        fs.mkdirSync(fullPath, { recursive: true });
+      }
     }
+  }
 
-    private async createVueStructure(spec: any): Promise<void> {
-        const dirs = [
-            'src/components',
-            'src/views',
-            'src/router',
-            'src/store',
-            'src/assets',
-            'src/utils'
-        ];
-
-        for (const dir of dirs) {
-            const fullPath = path.join(spec.path, dir);
-            if (!fs.existsSync(fullPath)) {
-                fs.mkdirSync(fullPath, { recursive: true });
-            }
-        }
-    }
-
-    private async createInitialFiles(spec: any): Promise<void> {
-        // Create README
-        const readme = `# ${spec.name}
+  private async createInitialFiles(spec: ProjectSpec): Promise<void> {
+    // Create README
+    const readme = `# ${spec.name}
 
 ## Description
-${spec.description || 'Project description goes here'}
+${spec.description || "Project description goes here"}
 
 ## Installation
 \`\`\`bash
@@ -274,10 +279,10 @@ npm run dev
 npm test
 \`\`\`
 `;
-        fs.writeFileSync(path.join(spec.path, 'README.md'), readme);
+    fs.writeFileSync(path.join(spec.path, "README.md"), readme);
 
-        // Create .gitignore
-        const gitignore = `node_modules/
+    // Create .gitignore
+    const gitignore = `node_modules/
 dist/
 build/
 .env
@@ -288,246 +293,245 @@ coverage/
 .vscode/
 .idea/
 `;
-        fs.writeFileSync(path.join(spec.path, '.gitignore'), gitignore);
+    fs.writeFileSync(path.join(spec.path, ".gitignore"), gitignore);
 
-        // Create .env.example
-        const envExample = `NODE_ENV=development
+    // Create .env.example
+    const envExample = `NODE_ENV=development
 PORT=3000
 DATABASE_URL=
 API_KEY=
 `;
-        fs.writeFileSync(path.join(spec.path, '.env.example'), envExample);
+    fs.writeFileSync(path.join(spec.path, ".env.example"), envExample);
+  }
+
+  private async initializeGit(spec: ProjectSpec): Promise<void> {
+    try {
+      await execAsync("git init", { cwd: spec.path });
+      await execAsync("git add .", { cwd: spec.path });
+      await execAsync('git commit -m "Initial commit"', { cwd: spec.path });
+      debugLog("Git repository initialized");
+    } catch (error) {
+      debugLog("Failed to initialize git repository");
     }
+  }
 
-    private async initializeGit(spec: any): Promise<void> {
-        try {
-            await execAsync('git init', { cwd: spec.path });
-            await execAsync('git add .', { cwd: spec.path });
-            await execAsync('git commit -m "Initial commit"', { cwd: spec.path });
-            debugLog('Git repository initialized');
-        } catch (error) {
-            debugLog('Failed to initialize git repository');
-        }
+  private async setupPackageManager(spec: ProjectSpec): Promise<void> {
+    if (spec.type === "node") {
+      // Create package.json
+      const packageJson = {
+        name: spec.name,
+        version: "0.1.0",
+        description: spec.description || "",
+        main: "dist/index.js",
+        scripts: {
+          start: "node dist/index.js",
+          dev: "nodemon src/index.ts",
+          build: "tsc",
+          test: "jest",
+          lint: "eslint src --ext .ts,.tsx",
+          "lint:fix": "eslint src --ext .ts,.tsx --fix",
+        },
+        keywords: [],
+        author: "",
+        license: "MIT",
+        devDependencies: {} as Record<string, string>,
+        dependencies: {} as Record<string, string>,
+      };
+
+      // Add framework-specific dependencies
+      if (spec.framework === "react") {
+        packageJson.dependencies["react"] = "^18.2.0";
+        packageJson.dependencies["react-dom"] = "^18.2.0";
+        packageJson.devDependencies["@types/react"] = "^18.2.0";
+        packageJson.devDependencies["@types/react-dom"] = "^18.2.0";
+      } else if (spec.framework === "express") {
+        packageJson.dependencies["express"] = "^4.18.0";
+        packageJson.dependencies["cors"] = "^2.8.5";
+        packageJson.dependencies["helmet"] = "^7.0.0";
+        packageJson.devDependencies["@types/express"] = "^4.17.17";
+      }
+
+      // Common dev dependencies
+      packageJson.devDependencies["typescript"] = "^5.0.0";
+      packageJson.devDependencies["@types/node"] = "^18.0.0";
+      packageJson.devDependencies["jest"] = "^29.0.0";
+      packageJson.devDependencies["@types/jest"] = "^29.0.0";
+      packageJson.devDependencies["eslint"] = "^8.0.0";
+      packageJson.devDependencies["prettier"] = "^2.8.0";
+
+      fs.writeFileSync(
+        path.join(spec.path, "package.json"),
+        JSON.stringify(packageJson, null, 2),
+      );
     }
+  }
 
-    private async setupPackageManager(spec: any): Promise<void> {
-        if (spec.type === 'node') {
-            // Create package.json
-            const packageJson = {
-                name: spec.name,
-                version: '0.1.0',
-                description: spec.description || '',
-                main: 'dist/index.js',
-                scripts: {
-                    start: 'node dist/index.js',
-                    dev: 'nodemon src/index.ts',
-                    build: 'tsc',
-                    test: 'jest',
-                    lint: 'eslint src --ext .ts,.tsx',
-                    'lint:fix': 'eslint src --ext .ts,.tsx --fix'
-                },
-                keywords: [],
-                author: '',
-                license: 'MIT',
-                devDependencies: {} as Record<string, string>,
-                dependencies: {} as Record<string, string>
-            };
+  private async createConfigFiles(spec: ProjectSpec): Promise<void> {
+    // TypeScript configuration
+    const tsConfig = {
+      compilerOptions: {
+        target: "ES2020",
+        module: "commonjs",
+        lib: ["ES2020"],
+        outDir: "./dist",
+        rootDir: "./src",
+        strict: true,
+        esModuleInterop: true,
+        skipLibCheck: true,
+        forceConsistentCasingInFileNames: true,
+        resolveJsonModule: true,
+        declaration: true,
+        declarationMap: true,
+        sourceMap: true,
+        removeComments: true,
+      },
+      include: ["src/**/*"],
+      exclude: ["node_modules", "dist", "tests"],
+    };
 
-            // Add framework-specific dependencies
-            if (spec.framework === 'react') {
-                packageJson.dependencies['react'] = '^18.2.0';
-                packageJson.dependencies['react-dom'] = '^18.2.0';
-                packageJson.devDependencies['@types/react'] = '^18.2.0';
-                packageJson.devDependencies['@types/react-dom'] = '^18.2.0';
-            } else if (spec.framework === 'express') {
-                packageJson.dependencies['express'] = '^4.18.0';
-                packageJson.dependencies['cors'] = '^2.8.5';
-                packageJson.dependencies['helmet'] = '^7.0.0';
-                packageJson.devDependencies['@types/express'] = '^4.17.17';
-            }
+    fs.writeFileSync(
+      path.join(spec.path, "tsconfig.json"),
+      JSON.stringify(tsConfig, null, 2),
+    );
 
-            // Common dev dependencies
-            packageJson.devDependencies['typescript'] = '^5.0.0';
-            packageJson.devDependencies['@types/node'] = '^18.0.0';
-            packageJson.devDependencies['jest'] = '^29.0.0';
-            packageJson.devDependencies['@types/jest'] = '^29.0.0';
-            packageJson.devDependencies['eslint'] = '^8.0.0';
-            packageJson.devDependencies['prettier'] = '^2.8.0';
+    // ESLint configuration
+    const eslintConfig = {
+      parser: "@typescript-eslint/parser",
+      extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: "module",
+      },
+      rules: {
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-explicit-any": "warn",
+      },
+    };
 
-            fs.writeFileSync(
-                path.join(spec.path, 'package.json'),
-                JSON.stringify(packageJson, null, 2)
-            );
-        }
-    }
+    fs.writeFileSync(
+      path.join(spec.path, ".eslintrc.json"),
+      JSON.stringify(eslintConfig, null, 2),
+    );
 
-    private async createConfigFiles(spec: any): Promise<void> {
-        // TypeScript configuration
-        const tsConfig = {
-            compilerOptions: {
-                target: 'ES2020',
-                module: 'commonjs',
-                lib: ['ES2020'],
-                outDir: './dist',
-                rootDir: './src',
-                strict: true,
-                esModuleInterop: true,
-                skipLibCheck: true,
-                forceConsistentCasingInFileNames: true,
-                resolveJsonModule: true,
-                declaration: true,
-                declarationMap: true,
-                sourceMap: true,
-                removeComments: true
-            },
-            include: ['src/**/*'],
-            exclude: ['node_modules', 'dist', 'tests']
-        };
+    // Prettier configuration
+    const prettierConfig = {
+      semi: true,
+      trailingComma: "all",
+      singleQuote: true,
+      printWidth: 100,
+      tabWidth: 2,
+    };
 
-        fs.writeFileSync(
-            path.join(spec.path, 'tsconfig.json'),
-            JSON.stringify(tsConfig, null, 2)
-        );
+    fs.writeFileSync(
+      path.join(spec.path, ".prettierrc"),
+      JSON.stringify(prettierConfig, null, 2),
+    );
 
-        // ESLint configuration
-        const eslintConfig = {
-            parser: '@typescript-eslint/parser',
-            extends: [
-                'eslint:recommended',
-                'plugin:@typescript-eslint/recommended'
-            ],
-            parserOptions: {
-                ecmaVersion: 2020,
-                sourceType: 'module'
-            },
-            rules: {
-                '@typescript-eslint/explicit-function-return-type': 'off',
-                '@typescript-eslint/no-explicit-any': 'warn'
-            }
-        };
+    // Jest configuration
+    const jestConfig = {
+      preset: "ts-jest",
+      testEnvironment: "node",
+      roots: ["<rootDir>/src", "<rootDir>/tests"],
+      testMatch: ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
+      transform: {
+        "^.+\\.ts$": "ts-jest",
+      },
+    };
 
-        fs.writeFileSync(
-            path.join(spec.path, '.eslintrc.json'),
-            JSON.stringify(eslintConfig, null, 2)
-        );
-
-        // Prettier configuration
-        const prettierConfig = {
-            semi: true,
-            trailingComma: 'all',
-            singleQuote: true,
-            printWidth: 100,
-            tabWidth: 2
-        };
-
-        fs.writeFileSync(
-            path.join(spec.path, '.prettierrc'),
-            JSON.stringify(prettierConfig, null, 2)
-        );
-
-        // Jest configuration
-        const jestConfig = {
-            preset: 'ts-jest',
-            testEnvironment: 'node',
-            roots: ['<rootDir>/src', '<rootDir>/tests'],
-            testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
-            transform: {
-                '^.+\\.ts$': 'ts-jest'
-            }
-        };
-
-        fs.writeFileSync(
-            path.join(spec.path, 'jest.config.js'),
-            `module.exports = ${JSON.stringify(jestConfig, null, 2)}`
-        );
-    }
+    fs.writeFileSync(
+      path.join(spec.path, "jest.config.js"),
+      `module.exports = ${JSON.stringify(jestConfig, null, 2)}`,
+    );
+  }
 }
 
 /**
  * Website Builder Agent - Creates complete websites
  */
 export class WebsiteBuilderAgent extends BaseProductionAgent {
-    name = 'Website Builder';
-    description = 'Creates beautiful, responsive websites';
-    capabilities = [
-        'Design responsive layouts',
-        'Create reusable components',
-        'Implement animations',
-        'Optimize performance',
-        'Setup deployment'
+  name = "Website Builder";
+  description = "Creates beautiful, responsive websites";
+  capabilities = [
+    "Design responsive layouts",
+    "Create reusable components",
+    "Implement animations",
+    "Optimize performance",
+    "Setup deployment",
+  ];
+
+  async executeSimple(
+    spec?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const websiteSpec = this.parseWebsiteSpec(spec || "");
+
+      // Create website structure
+      await this.createWebsiteStructure(websiteSpec);
+
+      // Generate pages
+      await this.generatePages(websiteSpec);
+
+      // Create components
+      await this.createComponents(websiteSpec);
+
+      // Add styling
+      await this.addStyling(websiteSpec);
+
+      // Setup build process
+      await this.setupBuildProcess(websiteSpec);
+
+      return {
+        success: true,
+        message: `Website "${websiteSpec.name}" created successfully!`,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Website creation failed: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  }
+
+  private parseWebsiteSpec(spec: string): WebsiteSpec {
+    return {
+      name: "my-website",
+      type: "landing",
+      pages: ["home", "about", "services", "contact"],
+      features: ["responsive", "animations", "forms"],
+      style: "modern",
+      colorScheme: {
+        primary: "#007bff",
+        secondary: "#6c757d",
+        success: "#28a745",
+        danger: "#dc3545",
+      },
+    };
+  }
+
+  private async createWebsiteStructure(spec: WebsiteSpec): Promise<void> {
+    const dirs = [
+      "src",
+      "src/pages",
+      "src/components",
+      "src/styles",
+      "src/assets",
+      "src/assets/images",
+      "src/assets/fonts",
+      "src/scripts",
+      "public",
     ];
 
-    async executeSimple(spec?: string): Promise<{ success: boolean; message: string }> {
-        try {
-            const websiteSpec = this.parseWebsiteSpec(spec || '');
-            
-            // Create website structure
-            await this.createWebsiteStructure(websiteSpec);
-            
-            // Generate pages
-            await this.generatePages(websiteSpec);
-            
-            // Create components
-            await this.createComponents(websiteSpec);
-            
-            // Add styling
-            await this.addStyling(websiteSpec);
-            
-            // Setup build process
-            await this.setupBuildProcess(websiteSpec);
-
-            return {
-                success: true,
-                message: `Website "${websiteSpec.name}" created successfully!`
-            };
-        } catch (error: any) {
-            return {
-                success: false,
-                message: `Website creation failed: ${error.message}`
-            };
-        }
+    for (const dir of dirs) {
+      const fullPath = path.join(this.workspaceRoot, spec.name, dir);
+      if (!fs.existsSync(fullPath)) {
+        fs.mkdirSync(fullPath, { recursive: true });
+      }
     }
+  }
 
-    private parseWebsiteSpec(spec: string): any {
-        return {
-            name: 'my-website',
-            type: 'landing',
-            pages: ['home', 'about', 'services', 'contact'],
-            features: ['responsive', 'animations', 'forms'],
-            style: 'modern',
-            colorScheme: {
-                primary: '#007bff',
-                secondary: '#6c757d',
-                success: '#28a745',
-                danger: '#dc3545'
-            }
-        };
-    }
-
-    private async createWebsiteStructure(spec: any): Promise<void> {
-        const dirs = [
-            'src',
-            'src/pages',
-            'src/components',
-            'src/styles',
-            'src/assets',
-            'src/assets/images',
-            'src/assets/fonts',
-            'src/scripts',
-            'public'
-        ];
-
-        for (const dir of dirs) {
-            const fullPath = path.join(this.workspaceRoot, spec.name, dir);
-            if (!fs.existsSync(fullPath)) {
-                fs.mkdirSync(fullPath, { recursive: true });
-            }
-        }
-    }
-
-    private async generatePages(spec: any): Promise<void> {
-        // Create index.html
-        const indexHtml = `<!DOCTYPE html>
+  private async generatePages(spec: WebsiteSpec): Promise<void> {
+    // Create index.html
+    const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -540,9 +544,12 @@ export class WebsiteBuilderAgent extends BaseProductionAgent {
         <div class="container">
             <a href="#" class="logo">${spec.name}</a>
             <ul class="nav-links">
-                ${spec.pages.map((page: string) => 
-                    `<li><a href="#${page}">${page.charAt(0).toUpperCase() + page.slice(1)}</a></li>`
-                ).join('\n                ')}
+                ${spec.pages
+                  .map(
+                    (page: string) =>
+                      `<li><a href="#${page}">${page.charAt(0).toUpperCase() + page.slice(1)}</a></li>`,
+                  )
+                  .join("\n                ")}
             </ul>
         </div>
     </nav>
@@ -556,13 +563,17 @@ export class WebsiteBuilderAgent extends BaseProductionAgent {
             </div>
         </section>
 
-        ${spec.pages.map((page: string) => `
+        ${spec.pages
+          .map(
+            (page: string) => `
         <section id="${page}" class="section">
             <div class="container">
                 <h2>${page.charAt(0).toUpperCase() + page.slice(1)}</h2>
                 <p>Content for ${page} section</p>
             </div>
-        </section>`).join('\n')}
+        </section>`,
+          )
+          .join("\n")}
     </main>
 
     <footer class="footer">
@@ -575,15 +586,15 @@ export class WebsiteBuilderAgent extends BaseProductionAgent {
 </body>
 </html>`;
 
-        fs.writeFileSync(
-            path.join(this.workspaceRoot, spec.name, 'index.html'),
-            indexHtml
-        );
-    }
+    fs.writeFileSync(
+      path.join(this.workspaceRoot, spec.name, "index.html"),
+      indexHtml,
+    );
+  }
 
-    private async createComponents(spec: any): Promise<void> {
-        // Create reusable component templates
-        const buttonComponent = `// Button Component
+  private async createComponents(spec: WebsiteSpec): Promise<void> {
+    // Create reusable component templates
+    const buttonComponent = `// Button Component
 class Button {
     constructor(text, type = 'primary', onClick) {
         this.text = text;
@@ -603,13 +614,13 @@ class Button {
 export default Button;
 `;
 
-        fs.writeFileSync(
-            path.join(this.workspaceRoot, spec.name, 'src/components/Button.js'),
-            buttonComponent
-        );
+    fs.writeFileSync(
+      path.join(this.workspaceRoot, spec.name, "src/components/Button.js"),
+      buttonComponent,
+    );
 
-        // Create card component
-        const cardComponent = `// Card Component
+    // Create card component
+    const cardComponent = `// Card Component
 class Card {
     constructor(title, content, image) {
         this.title = title;
@@ -634,15 +645,15 @@ class Card {
 export default Card;
 `;
 
-        fs.writeFileSync(
-            path.join(this.workspaceRoot, spec.name, 'src/components/Card.js'),
-            cardComponent
-        );
-    }
+    fs.writeFileSync(
+      path.join(this.workspaceRoot, spec.name, "src/components/Card.js"),
+      cardComponent,
+    );
+  }
 
-    private async addStyling(spec: any): Promise<void> {
-        // Create main.css
-        const mainCss = `:root {
+  private async addStyling(spec: WebsiteSpec): Promise<void> {
+    // Create main.css
+    const mainCss = `:root {
     --primary-color: ${spec.colorScheme.primary};
     --secondary-color: ${spec.colorScheme.secondary};
     --success-color: ${spec.colorScheme.success};
@@ -816,13 +827,13 @@ body {
 }
 `;
 
-        fs.writeFileSync(
-            path.join(this.workspaceRoot, spec.name, 'src/styles/main.css'),
-            mainCss
-        );
+    fs.writeFileSync(
+      path.join(this.workspaceRoot, spec.name, "src/styles/main.css"),
+      mainCss,
+    );
 
-        // Create main.js
-        const mainJs = `// Smooth scrolling for navigation links
+    // Create main.js
+    const mainJs = `// Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -872,15 +883,15 @@ style.textContent = \`
 document.head.appendChild(style);
 `;
 
-        fs.writeFileSync(
-            path.join(this.workspaceRoot, spec.name, 'src/scripts/main.js'),
-            mainJs
-        );
-    }
+    fs.writeFileSync(
+      path.join(this.workspaceRoot, spec.name, "src/scripts/main.js"),
+      mainJs,
+    );
+  }
 
-    private async setupBuildProcess(spec: any): Promise<void> {
-        // Create simple build script
-        const buildScript = `{
+  private async setupBuildProcess(spec: WebsiteSpec): Promise<void> {
+    // Create simple build script
+    const buildScript = `{
   "name": "${spec.name}",
   "version": "1.0.0",
   "description": "A beautiful website",
@@ -902,13 +913,13 @@ document.head.appendChild(style);
   }
 }`;
 
-        fs.writeFileSync(
-            path.join(this.workspaceRoot, spec.name, 'package.json'),
-            buildScript
-        );
+    fs.writeFileSync(
+      path.join(this.workspaceRoot, spec.name, "package.json"),
+      buildScript,
+    );
 
-        // Create postcss config
-        const postcssConfig = `module.exports = {
+    // Create postcss config
+    const postcssConfig = `module.exports = {
   plugins: [
     require('autoprefixer'),
     require('cssnano')({
@@ -917,103 +928,112 @@ document.head.appendChild(style);
   ]
 }`;
 
-        fs.writeFileSync(
-            path.join(this.workspaceRoot, spec.name, 'postcss.config.js'),
-            postcssConfig
-        );
-    }
+    fs.writeFileSync(
+      path.join(this.workspaceRoot, spec.name, "postcss.config.js"),
+      postcssConfig,
+    );
+  }
 }
 
 /**
  * Requirement Analyzer Agent
  */
 export class RequirementAnalyzerAgent extends BaseProductionAgent {
-    name = 'Requirement Analyzer';
-    description = 'Analyzes project requirements and creates detailed specifications';
-    capabilities = [
-        'Parse natural language requirements',
-        'Identify technical requirements',
-        'Create project specifications',
-        'Suggest technology stack'
-    ];
+  name = "Requirement Analyzer";
+  description =
+    "Analyzes project requirements and creates detailed specifications";
+  capabilities = [
+    "Parse natural language requirements",
+    "Identify technical requirements",
+    "Create project specifications",
+    "Suggest technology stack",
+  ];
 
-    async executeSimple(requirements?: string): Promise<{ success: boolean; message: string }> {
-        try {
-            const analysis = this.analyzeRequirements(requirements || '');
-            const specification = this.createSpecification(analysis);
-            
-            // Save specification
-            const specPath = path.join(this.workspaceRoot, '.autoclaude', 'project-specification.md');
-            fs.writeFileSync(specPath, specification);
+  async executeSimple(
+    requirements?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const analysis = this.analyzeRequirements(requirements || "");
+      const specification = this.createSpecification(analysis);
 
-            return {
-                success: true,
-                message: `Project specification created at ${specPath}`
-            };
-        } catch (error: any) {
-            return {
-                success: false,
-                message: `Requirement analysis failed: ${error.message}`
-            };
-        }
+      // Save specification
+      const specPath = path.join(
+        this.workspaceRoot,
+        ".autoclaude",
+        "project-specification.md",
+      );
+      fs.writeFileSync(specPath, specification);
+
+      return {
+        success: true,
+        message: `Project specification created at ${specPath}`,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Requirement analysis failed: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  }
+
+  private analyzeRequirements(requirements: string): ProjectAnalysis {
+    const analysis = {
+      projectType: "web",
+      features: [] as string[],
+      technologies: [] as string[],
+      constraints: [] as string[],
+      userStories: [] as string[],
+    };
+
+    const lines = requirements.toLowerCase().split("\n");
+
+    for (const line of lines) {
+      // Detect project type
+      if (line.includes("website") || line.includes("web app")) {
+        analysis.projectType = "web";
+      } else if (line.includes("mobile") || line.includes("app")) {
+        analysis.projectType = "mobile";
+      } else if (line.includes("api") || line.includes("backend")) {
+        analysis.projectType = "api";
+      }
+
+      // Detect features
+      if (line.includes("authentication") || line.includes("login")) {
+        analysis.features.push("authentication");
+      }
+      if (line.includes("payment") || line.includes("stripe")) {
+        analysis.features.push("payment-processing");
+      }
+      if (line.includes("real-time") || line.includes("websocket")) {
+        analysis.features.push("real-time-updates");
+      }
+      if (line.includes("database") || line.includes("data")) {
+        analysis.features.push("database");
+      }
+
+      // Detect technologies
+      if (line.includes("react")) analysis.technologies.push("React");
+      if (line.includes("vue")) analysis.technologies.push("Vue");
+      if (line.includes("angular")) analysis.technologies.push("Angular");
+      if (line.includes("node")) analysis.technologies.push("Node.js");
+      if (line.includes("python")) analysis.technologies.push("Python");
     }
 
-    private analyzeRequirements(requirements: string): any {
-        const analysis = {
-            projectType: 'web',
-            features: [] as string[],
-            technologies: [] as string[],
-            constraints: [] as string[],
-            userStories: [] as string[]
-        };
-
-        const lines = requirements.toLowerCase().split('\n');
-        
-        for (const line of lines) {
-            // Detect project type
-            if (line.includes('website') || line.includes('web app')) {
-                analysis.projectType = 'web';
-            } else if (line.includes('mobile') || line.includes('app')) {
-                analysis.projectType = 'mobile';
-            } else if (line.includes('api') || line.includes('backend')) {
-                analysis.projectType = 'api';
-            }
-
-            // Detect features
-            if (line.includes('authentication') || line.includes('login')) {
-                analysis.features.push('authentication');
-            }
-            if (line.includes('payment') || line.includes('stripe')) {
-                analysis.features.push('payment-processing');
-            }
-            if (line.includes('real-time') || line.includes('websocket')) {
-                analysis.features.push('real-time-updates');
-            }
-            if (line.includes('database') || line.includes('data')) {
-                analysis.features.push('database');
-            }
-
-            // Detect technologies
-            if (line.includes('react')) analysis.technologies.push('React');
-            if (line.includes('vue')) analysis.technologies.push('Vue');
-            if (line.includes('angular')) analysis.technologies.push('Angular');
-            if (line.includes('node')) analysis.technologies.push('Node.js');
-            if (line.includes('python')) analysis.technologies.push('Python');
-        }
-
-        // Generate user stories
-        if (analysis.features.includes('authentication')) {
-            analysis.userStories.push('As a user, I want to create an account and log in securely');
-        }
-        if (analysis.features.includes('payment-processing')) {
-            analysis.userStories.push('As a user, I want to make secure payments');
-        }
-
-        return analysis;
+    // Generate user stories
+    if (analysis.features.includes("authentication")) {
+      analysis.userStories.push(
+        "As a user, I want to create an account and log in securely",
+      );
+    }
+    if (analysis.features.includes("payment-processing")) {
+      analysis.userStories.push("As a user, I want to make secure payments");
     }
 
-    private createSpecification(analysis: any): string {
-        return `# Project Specification
+    return analysis;
+  }
+
+  private createSpecification(analysis: ProjectAnalysis): string {
+    return `# Project Specification
 
 ## Project Type
 ${analysis.projectType}
@@ -1021,21 +1041,22 @@ ${analysis.projectType}
 ## Technical Requirements
 
 ### Features
-${analysis.features.map((f: string) => `- ${f}`).join('\n')}
+${analysis.features.map((f: string) => `- ${f}`).join("\n")}
 
 ### Technology Stack
-${analysis.technologies.length > 0 ? 
-    analysis.technologies.map((t: string) => `- ${t}`).join('\n') :
-    '- To be determined based on requirements'
+${
+  analysis.technologies.length > 0
+    ? analysis.technologies.map((t: string) => `- ${t}`).join("\n")
+    : "- To be determined based on requirements"
 }
 
 ## User Stories
-${analysis.userStories.map((story: string) => `- ${story}`).join('\n')}
+${analysis.userStories.map((story: string) => `- ${story}`).join("\n")}
 
 ## Architecture Recommendations
 
 ### Frontend
-- Framework: ${analysis.projectType === 'web' ? 'React/Vue/Angular' : 'React Native/Flutter'}
+- Framework: ${analysis.projectType === "web" ? "React/Vue/Angular" : "React Native/Flutter"}
 - State Management: Redux/MobX/Context API
 - Styling: Tailwind CSS/Styled Components
 
@@ -1077,12 +1098,12 @@ ${analysis.userStories.map((story: string) => `- ${story}`).join('\n')}
 - Performance metrics met
 - Security audit passed
 `;
-    }
+  }
 }
 
 // Export all creation agents
 export const creationAgents = {
-    'project-initializer': ProjectInitializerAgent,
-    'website-builder': WebsiteBuilderAgent,
-    'requirement-analyzer': RequirementAnalyzerAgent
+  "project-initializer": ProjectInitializerAgent,
+  "website-builder": WebsiteBuilderAgent,
+  "requirement-analyzer": RequirementAnalyzerAgent,
 };

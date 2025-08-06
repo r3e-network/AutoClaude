@@ -19,7 +19,7 @@ const build = spawn('npm', ['run', 'build'], {
     stdio: 'inherit'
 });
 
-build.on('close', (code) => {
+build.on('close', code => {
     if (code !== 0) {
         console.error('❌ Build failed');
         process.exit(1);
@@ -39,7 +39,7 @@ build.on('close', (code) => {
     let testTimeout;
 
     // Capture output
-    terminal.stdout.on('data', (data) => {
+    terminal.stdout.on('data', data => {
         const text = data.toString();
         output += text;
         process.stdout.write(text);
@@ -48,7 +48,7 @@ build.on('close', (code) => {
         if (text.includes('AutoClaude Terminal Mode') && testPhase === 'startup') {
             testPhase = 'ready';
             console.log('\n✅ Terminal started successfully');
-            
+
             // Send test commands
             setTimeout(() => {
                 console.log('\n📝 Sending test message...');
@@ -69,7 +69,7 @@ build.on('close', (code) => {
         if (text.includes('Task completed successfully') && testPhase === 'waiting') {
             console.log('✅ Task completed successfully!');
             testPhase = 'completed';
-            
+
             // Check memory usage
             setTimeout(() => {
                 console.log('\n📊 Checking status...');
@@ -81,7 +81,7 @@ build.on('close', (code) => {
             console.log('⚠️  Task could not be processed (Claude session unavailable)');
             console.log('This is expected if Claude Code CLI is not running');
             testPhase = 'completed';
-            
+
             // Still check status
             setTimeout(() => {
                 console.log('\n📊 Checking status...');
@@ -95,7 +95,7 @@ build.on('close', (code) => {
             if (memMatch) {
                 const memUsage = parseFloat(memMatch[1]);
                 console.log(`\n💾 Memory usage: ${memUsage} MB`);
-                
+
                 if (memUsage < 100) {
                     console.log('✅ Memory usage is reasonable');
                 } else if (memUsage < 200) {
@@ -112,7 +112,7 @@ build.on('close', (code) => {
             console.log('- Messages are queued properly ✅');
             console.log('- Tasks process without immediately completing ✅');
             console.log('- Memory usage is monitored ✅');
-            
+
             // Exit gracefully
             terminal.stdin.write('/help\n');
             setTimeout(() => {
@@ -122,11 +122,11 @@ build.on('close', (code) => {
         }
     });
 
-    terminal.stderr.on('data', (data) => {
+    terminal.stderr.on('data', data => {
         console.error('Error:', data.toString());
     });
 
-    terminal.on('close', (code) => {
+    terminal.on('close', code => {
         clearTimeout(testTimeout);
         if (code !== 0 && testPhase !== 'completed') {
             console.error(`\n❌ Terminal exited with code ${code}`);

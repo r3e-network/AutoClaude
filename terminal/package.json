@@ -1,91 +1,91 @@
 {
-  "name": "autoclaude-terminal",
-  "version": "3.9.1",
-  "description": "Terminal-based AutoClaude automation tool with task queuing and workflow management",
-  "main": "src/index.ts",
-  "bin": {
-    "autoclaude": "./bin/autoclaude",
-    "ac": "./bin/autoclaude"
-  },
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc -w",
-    "start": "node dist/index.js",
-    "test": "jest",
-    "lint": "eslint src --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "prepublishOnly": "npm run build",
-    "postinstall": "node scripts/postinstall.js"
-  },
-  "files": [
-    "dist/",
-    "bin/",
-    "scripts/",
-    "src/claude_pty_wrapper.py",
-    "README.md",
-    "CHANGELOG.md"
-  ],
-  "keywords": [
-    "autoclaude",
-    "claude",
-    "ai",
-    "automation",
-    "terminal",
-    "cli",
-    "parallel-processing",
-    "agent-orchestration",
-    "task-management",
-    "anthropic"
-  ],
-  "author": "AutoClaude Team",
-  "license": "MIT",
-  "dependencies": {
-    "ajv": "^8.17.1",
-    "blessed": "^0.1.81",
-    "blessed-contrib": "^4.11.0",
-    "boxen": "^5.1.2",
-    "chalk": "^4.1.2",
-    "chokidar": "^3.5.3",
-    "cli-table3": "^0.6.3",
-    "commander": "^11.1.0",
-    "conf": "^10.2.0",
-    "dotenv": "^16.3.1",
-    "eventemitter3": "^5.0.1",
-    "figlet": "^1.7.0",
-    "inquirer": "^8.2.6",
-    "minimatch": "^9.0.3",
-    "node-pty": "^1.0.0",
-    "ora": "^5.4.1",
-    "p-queue": "^6.6.2",
-    "update-notifier": "^5.1.0",
-    "uuid": "^9.0.1",
-    "winston": "^3.11.0"
-  },
-  "devDependencies": {
-    "@types/blessed": "^0.1.25",
-    "@types/figlet": "^1.5.8",
-    "@types/inquirer": "^8.2.10",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^20.10.5",
-    "@types/update-notifier": "^6.0.8",
-    "@types/uuid": "^9.0.7",
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0",
-    "eslint": "^8.56.0",
-    "jest": "^29.7.0",
-    "prettier": "^3.1.1",
-    "ts-jest": "^29.1.1",
-    "typescript": "^5.3.3"
-  },
-  "engines": {
-    "node": ">=16.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/r3e-network/AutoClaude"
-  },
-  "bugs": {
-    "url": "https://github.com/r3e-network/AutoClaude/issues"
-  },
-  "homepage": "https://github.com/r3e-network/AutoClaude#readme"
+    "name": "autoclaude-terminal",
+    "version": "3.9.1",
+    "description": "Terminal-based AutoClaude automation tool with task queuing and workflow management",
+    "main": "src/index.ts",
+    "bin": {
+        "autoclaude": "./bin/autoclaude",
+        "ac": "./bin/autoclaude"
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc -w",
+        "start": "node dist/index.js",
+        "test": "jest",
+        "lint": "eslint src --ext .ts",
+        "format": "prettier --write \"src/**/*.ts\"",
+        "prepublishOnly": "npm run build",
+        "postinstall": "node scripts/postinstall.js"
+    },
+    "files": [
+        "dist/",
+        "bin/",
+        "scripts/",
+        "src/claude_pty_wrapper.py",
+        "README.md",
+        "CHANGELOG.md"
+    ],
+    "keywords": [
+        "autoclaude",
+        "claude",
+        "ai",
+        "automation",
+        "terminal",
+        "cli",
+        "parallel-processing",
+        "agent-orchestration",
+        "task-management",
+        "anthropic"
+    ],
+    "author": "AutoClaude Team",
+    "license": "MIT",
+    "dependencies": {
+        "ajv": "^8.17.1",
+        "blessed": "^0.1.81",
+        "blessed-contrib": "^4.11.0",
+        "boxen": "^5.1.2",
+        "chalk": "^4.1.2",
+        "chokidar": "^3.5.3",
+        "cli-table3": "^0.6.3",
+        "commander": "^11.1.0",
+        "conf": "^10.2.0",
+        "dotenv": "^16.3.1",
+        "eventemitter3": "^5.0.1",
+        "figlet": "^1.7.0",
+        "inquirer": "^8.2.6",
+        "minimatch": "^9.0.3",
+        "node-pty": "^1.0.0",
+        "ora": "^5.4.1",
+        "p-queue": "^6.6.2",
+        "update-notifier": "^5.1.0",
+        "uuid": "^9.0.1",
+        "winston": "^3.11.0"
+    },
+    "devDependencies": {
+        "@types/blessed": "^0.1.25",
+        "@types/figlet": "^1.5.8",
+        "@types/inquirer": "^8.2.10",
+        "@types/jest": "^30.0.0",
+        "@types/node": "^20.10.5",
+        "@types/update-notifier": "^6.0.8",
+        "@types/uuid": "^9.0.7",
+        "@typescript-eslint/eslint-plugin": "^6.15.0",
+        "@typescript-eslint/parser": "^6.15.0",
+        "eslint": "^8.56.0",
+        "jest": "^29.7.0",
+        "prettier": "^3.1.1",
+        "ts-jest": "^29.1.1",
+        "typescript": "^5.3.3"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/r3e-network/AutoClaude"
+    },
+    "bugs": {
+        "url": "https://github.com/r3e-network/AutoClaude/issues"
+    },
+    "homepage": "https://github.com/r3e-network/AutoClaude#readme"
 }

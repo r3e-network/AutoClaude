@@ -70,10 +70,17 @@ const defaultConfig: ConfigSchema = {
         builtInAgents: {
             enabled: true,
             types: [
-                'code-analyzer', 'documentation-writer', 'test-generator', 
-                'refactor-specialist', 'security-auditor', 'rust-specialist',
-                'dotnet-expert', 'java-architect', 'golang-engineer',
-                'c-systems-programmer', 'cpp-performance-expert'
+                'code-analyzer',
+                'documentation-writer',
+                'test-generator',
+                'refactor-specialist',
+                'security-auditor',
+                'rust-specialist',
+                'dotnet-expert',
+                'java-architect',
+                'golang-engineer',
+                'c-systems-programmer',
+                'cpp-performance-expert'
             ]
         },
         contextGeneration: {
@@ -104,7 +111,7 @@ export class Config {
 
     constructor(configPath?: string) {
         this.customConfigPath = configPath;
-        
+
         const configDir = path.join(os.homedir(), '.autoclaude');
         if (!fs.existsSync(configDir)) {
             fs.mkdirSync(configDir, { recursive: true });
@@ -115,72 +122,72 @@ export class Config {
             cwd: configDir,
             defaults: defaultConfig,
             schema: {
-                    session: {
-                        type: 'object',
-                        properties: {
-                            skipPermissions: { type: 'boolean' },
-                            autoStart: { type: 'boolean' },
-                            scheduledStartTime: { type: 'string' }
-                        }
-                    },
-                    queue: {
-                        type: 'object',
-                        properties: {
-                            maxSize: { type: 'number', minimum: 10, maximum: 10000 },
-                            maxMessageSize: { type: 'number', minimum: 1000, maximum: 1000000 },
-                            retentionHours: { type: 'number', minimum: 1, maximum: 168 }
-                        }
-                    },
-                    parallelAgents: {
-                        type: 'object',
-                        properties: {
-                            enabled: { type: 'boolean' },
-                            maxAgents: { type: 'number', minimum: 1, maximum: 100 },
-                            defaultAgents: { type: 'number', minimum: 1, maximum: 50 },
-                            staggerDelay: { type: 'number', minimum: 1, maximum: 60 },
-                            contextThreshold: { type: 'number', minimum: 10, maximum: 50 },
-                            autoRestart: { type: 'boolean' },
-                            autoGenerate: { type: 'boolean' },
-                            builtInAgents: {
-                                type: 'object',
-                                properties: {
-                                    enabled: { type: 'boolean' },
-                                    types: { type: 'array', items: { type: 'string' } }
-                                }
-                            },
-                            contextGeneration: {
-                                type: 'object',
-                                properties: {
-                                    enabled: { type: 'boolean' },
-                                    minComplexity: { type: 'number', minimum: 1, maximum: 10 },
-                                    maxGeneratedAgents: { type: 'number', minimum: 1, maximum: 20 }
-                                }
+                session: {
+                    type: 'object',
+                    properties: {
+                        skipPermissions: { type: 'boolean' },
+                        autoStart: { type: 'boolean' },
+                        scheduledStartTime: { type: 'string' }
+                    }
+                },
+                queue: {
+                    type: 'object',
+                    properties: {
+                        maxSize: { type: 'number', minimum: 10, maximum: 10000 },
+                        maxMessageSize: { type: 'number', minimum: 1000, maximum: 1000000 },
+                        retentionHours: { type: 'number', minimum: 1, maximum: 168 }
+                    }
+                },
+                parallelAgents: {
+                    type: 'object',
+                    properties: {
+                        enabled: { type: 'boolean' },
+                        maxAgents: { type: 'number', minimum: 1, maximum: 100 },
+                        defaultAgents: { type: 'number', minimum: 1, maximum: 50 },
+                        staggerDelay: { type: 'number', minimum: 1, maximum: 60 },
+                        contextThreshold: { type: 'number', minimum: 10, maximum: 50 },
+                        autoRestart: { type: 'boolean' },
+                        autoGenerate: { type: 'boolean' },
+                        builtInAgents: {
+                            type: 'object',
+                            properties: {
+                                enabled: { type: 'boolean' },
+                                types: { type: 'array', items: { type: 'string' } }
+                            }
+                        },
+                        contextGeneration: {
+                            type: 'object',
+                            properties: {
+                                enabled: { type: 'boolean' },
+                                minComplexity: { type: 'number', minimum: 1, maximum: 10 },
+                                maxGeneratedAgents: { type: 'number', minimum: 1, maximum: 20 }
                             }
                         }
-                    },
-                    ui: {
-                        type: 'object',
-                        properties: {
-                            theme: { type: 'string', enum: ['dark', 'light'] },
-                            autoScroll: { type: 'boolean' },
-                            showTimestamps: { type: 'boolean' }
-                        }
-                    },
-                    logging: {
-                        type: 'object',
-                        properties: {
-                            level: { type: 'string', enum: ['error', 'warn', 'info', 'debug'] },
-                            file: { type: ['string', 'null'] }
-                        }
-                    },
-                    paths: {
-                        type: 'object',
-                        properties: {
-                            dataDir: { type: 'string' },
-                            logsDir: { type: 'string' },
-                            scriptsDir: { type: 'string' }
-                        }
                     }
+                },
+                ui: {
+                    type: 'object',
+                    properties: {
+                        theme: { type: 'string', enum: ['dark', 'light'] },
+                        autoScroll: { type: 'boolean' },
+                        showTimestamps: { type: 'boolean' }
+                    }
+                },
+                logging: {
+                    type: 'object',
+                    properties: {
+                        level: { type: 'string', enum: ['error', 'warn', 'info', 'debug'] },
+                        file: { type: ['string', 'null'] }
+                    }
+                },
+                paths: {
+                    type: 'object',
+                    properties: {
+                        dataDir: { type: 'string' },
+                        logsDir: { type: 'string' },
+                        scriptsDir: { type: 'string' }
+                    }
+                }
             }
         });
 
@@ -236,7 +243,7 @@ export class Config {
         try {
             const content = fs.readFileSync(filePath, 'utf-8');
             const config = JSON.parse(content);
-            
+
             // Merge with existing config
             Object.entries(config).forEach(([key, value]) => {
                 if (key in defaultConfig) {
