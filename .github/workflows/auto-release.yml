@@ -122,34 +122,34 @@ jobs:
           cp "$RELEASE_FILE" release-notes.md
         else
           echo "Generating default release notes"
-          cat > release-notes.md << EOF
-# AutoClaude v${VERSION}
-
-## 🎉 New Release
-
-This release was automatically generated from branch ${GITHUB_REF#refs/heads/}.
-
-### 📦 Installation
-
-#### VS Code Extension
-1. Download the \`.vsix\` file from the assets below
-2. Open VS Code
-3. Go to Extensions view (Ctrl+Shift+X)
-4. Click on the "..." menu and select "Install from VSIX..."
-5. Select the downloaded file
-
-### 🚀 Features
-- 24/7 Automated Processing
-- Script Runner & Quality Checks
-- Message Loop for Individual Tasks
-- Rich User Interface
-
-### 📝 Changelog
-See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes.
-
----
-*This release was automatically generated from the ${GITHUB_REF#refs/heads/} branch.*
-EOF
+          {
+            echo "# AutoClaude v${VERSION}"
+            echo ""
+            echo "## 🎉 New Release"
+            echo ""
+            echo "This release was automatically generated from branch ${GITHUB_REF#refs/heads/}."
+            echo ""
+            echo "### 📦 Installation"
+            echo ""
+            echo "#### VS Code Extension"
+            echo "1. Download the \`.vsix\` file from the assets below"
+            echo "2. Open VS Code"
+            echo "3. Go to Extensions view (Ctrl+Shift+X)"
+            echo "4. Click on the \"...\" menu and select \"Install from VSIX...\""
+            echo "5. Select the downloaded file"
+            echo ""
+            echo "### 🚀 Features"
+            echo "- 24/7 Automated Processing"
+            echo "- Script Runner & Quality Checks"
+            echo "- Message Loop for Individual Tasks"
+            echo "- Rich User Interface"
+            echo ""
+            echo "### 📝 Changelog"
+            echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes."
+            echo ""
+            echo "---"
+            echo "*This release was automatically generated from the ${GITHUB_REF#refs/heads/} branch.*"
+          } > release-notes.md
         fi
         
     - name: Create GitHub Release
