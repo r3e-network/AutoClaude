@@ -1789,10 +1789,20 @@ export function getMemoryManager(
   workspacePath: string,
   config?: MemoryConfig,
 ): MemoryManager {
-  if (!memoryManagers.has(workspacePath)) {
-    memoryManagers.set(workspacePath, new MemoryManager(workspacePath, config));
+  try {
+    if (!memoryManagers.has(workspacePath)) {
+      memoryManagers.set(workspacePath, new MemoryManager(workspacePath, config));
+    }
+    return memoryManagers.get(workspacePath)!;
+  } catch (error) {
+    console.warn("[AutoClaude] Failed to create MemoryManager, returning stub:", error);
+    // Return a stub that does nothing but doesn't crash
+    return {
+      initialize: async () => { console.warn("[AutoClaude] MemoryManager stub: initialize called"); },
+      close: async () => { console.warn("[AutoClaude] MemoryManager stub: close called"); },
+      // Add other methods as needed that just log and return empty results
+    } as any;
   }
-  return memoryManagers.get(workspacePath)!;
 }
 
 export function closeAllMemoryManagers(): Promise<void[]> {

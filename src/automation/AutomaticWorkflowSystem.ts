@@ -61,6 +61,8 @@ export class AutomaticWorkflowSystem {
       log.info("Memory system initialized");
     } catch (error) {
       log.warn("Memory system initialization failed (non-critical):", error as Error);
+      // Replace with stub methods to prevent crashes
+      this.memorySystem = this.createMemoryStub();
     }
 
     try {
@@ -678,8 +680,32 @@ export class AutomaticWorkflowSystem {
   async shutdown(): Promise<void> {
     await this.stopSession();
     await this.queenAgent.shutdown();
-    await this.memorySystem.close();
+    try {
+      await this.memorySystem.close();
+    } catch (error) {
+      log.warn("Error closing memory system:", error as Error);
+    }
 
     log.info("Automatic Workflow System shut down");
+  }
+
+  private createMemoryStub(): SQLiteMemorySystem {
+    // Create a stub that implements all methods but does nothing
+    return {
+      initialize: async () => {},
+      recordPattern: async () => {},
+      getLearnedPatterns: async () => [],
+      searchCache: async () => null,
+      cacheResult: async () => {},
+      recordTask: async () => {},
+      createSession: async () => `stub_session_${Date.now()}`,
+      updateSession: async () => {},
+      getLastSession: async () => null,
+      recordLearning: async () => {},
+      getLearningData: async () => [],
+      recordMetric: async () => {},
+      getMetrics: async () => [],
+      close: async () => {},
+    } as any;
   }
 }

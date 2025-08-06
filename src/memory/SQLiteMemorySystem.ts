@@ -174,7 +174,10 @@ export class SQLiteMemorySystem {
     context?: Record<string, unknown>;
     result?: unknown;
   }): Promise<void> {
-    if (!this.db) return;
+    if (!this.db) {
+      log.debug("Memory system not available - skipping pattern recording");
+      return;
+    }
 
     const patternId = `${data.type}_${Date.now()}`;
     const now = Date.now();
@@ -233,7 +236,10 @@ export class SQLiteMemorySystem {
   }
 
   async getLearnedPatterns(limit = 100): Promise<Pattern[]> {
-    if (!this.db) return [];
+    if (!this.db) {
+      log.debug("Memory system not available - returning empty patterns");
+      return [];
+    }
 
     const rows = await this.db.all(
       `SELECT * FROM patterns 
@@ -254,7 +260,10 @@ export class SQLiteMemorySystem {
   }
 
   async searchCache(type: string, context: Record<string, unknown>): Promise<unknown | null> {
-    if (!this.db) return null;
+    if (!this.db) {
+      log.debug("Memory system not available - cache miss");
+      return null;
+    }
 
     const key = this.generateCacheKey(type, context);
     const now = Date.now();
@@ -287,7 +296,10 @@ export class SQLiteMemorySystem {
     result: unknown,
     ttl?: number,
   ): Promise<void> {
-    if (!this.db) return;
+    if (!this.db) {
+      log.debug("Memory system not available - skipping cache");
+      return;
+    }
 
     const key = this.generateCacheKey(type, context);
     const now = Date.now();
@@ -310,7 +322,10 @@ export class SQLiteMemorySystem {
   }
 
   async recordTask(task: TaskRecord): Promise<void> {
-    if (!this.db) return;
+    if (!this.db) {
+      log.debug("Memory system not available - skipping task recording");
+      return;
+    }
 
     await this.db.run(
       `INSERT INTO tasks 
@@ -332,7 +347,10 @@ export class SQLiteMemorySystem {
   }
 
   async createSession(mode: "swarm" | "hive-mind"): Promise<string> {
-    if (!this.db) return "";
+    if (!this.db) {
+      log.debug("Memory system not available - returning stub session");
+      return `stub_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
 
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -353,7 +371,10 @@ export class SQLiteMemorySystem {
   }
 
   async updateSession(sessionId: string, data: Partial<SessionData>): Promise<void> {
-    if (!this.db) return;
+    if (!this.db) {
+      log.debug("Memory system not available - skipping session update");
+      return;
+    }
 
     const updates = [];
     const values = [];
@@ -393,7 +414,10 @@ export class SQLiteMemorySystem {
   }
 
   async getLastSession(): Promise<any | null> {
-    if (!this.db) return null;
+    if (!this.db) {
+      log.debug("Memory system not available - no last session");
+      return null;
+    }
 
     const session = await this.db.get(
       "SELECT * FROM sessions ORDER BY started_at DESC LIMIT 1",
@@ -422,7 +446,10 @@ export class SQLiteMemorySystem {
     output: unknown,
     confidence: number,
   ): Promise<void> {
-    if (!this.db) return;
+    if (!this.db) {
+      log.debug("Memory system not available - skipping learning record");
+      return;
+    }
 
     const learningId = `learn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -440,7 +467,10 @@ export class SQLiteMemorySystem {
   }
 
   async getLearningData(category: string, limit = 10): Promise<any[]> {
-    if (!this.db) return [];
+    if (!this.db) {
+      log.debug("Memory system not available - no learning data");
+      return [];
+    }
 
     const rows = await this.db.all(
       `SELECT * FROM learning 
@@ -465,7 +495,10 @@ export class SQLiteMemorySystem {
     value: number,
     tags?: Record<string, unknown>,
   ): Promise<void> {
-    if (!this.db) return;
+    if (!this.db) {
+      log.debug("Memory system not available - skipping metric");
+      return;
+    }
 
     const metricId = `metric_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -482,7 +515,10 @@ export class SQLiteMemorySystem {
   }
 
   async getMetrics(type: string, since?: number): Promise<any[]> {
-    if (!this.db) return [];
+    if (!this.db) {
+      log.debug("Memory system not available - no metrics");
+      return [];
+    }
 
     const query = since
       ? "SELECT * FROM metrics WHERE metric_type = ? AND timestamp > ? ORDER BY timestamp DESC"
@@ -521,7 +557,10 @@ export class SQLiteMemorySystem {
   }
 
   private async runMaintenance(): Promise<void> {
-    if (!this.db) return;
+    if (!this.db) {
+      log.debug("Memory system not available - skipping maintenance");
+      return;
+    }
 
     // Clean expired cache entries
     await this.db.run(
