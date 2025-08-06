@@ -89,29 +89,34 @@ jobs:
             CHANGELOG="See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
           fi
           
+          # Create release notes file
+          cat > release-notes.md << EOF
+          ## AutoClaude v$VERSION
+          
+          ### Installation
+          
+          1. Download the \`.vsix\` file from the assets below
+          2. Open VS Code
+          3. Go to Extensions view (Ctrl+Shift+X)
+          4. Click on the "..." menu and select "Install from VSIX..."
+          5. Select the downloaded file
+          
+          ### What's New
+          
+          $CHANGELOG
+          
+          ### Features
+          
+          - 🚀 24/7 Automated Processing
+          - 🔍 Script Runner & Quality Checks
+          - 🔄 Message Loop for Individual Tasks
+          - 📊 Rich User Interface
+          EOF
+          
           # Create release
           gh release create "v$VERSION" \
             --title "Release v$VERSION" \
-            --notes "## AutoClaude v$VERSION
-
-### Installation
-
-1. Download the \`.vsix\` file from the assets below
-2. Open VS Code
-3. Go to Extensions view (Ctrl+Shift+X)
-4. Click on the \"...\" menu and select \"Install from VSIX...\"
-5. Select the downloaded file
-
-### What's New
-
-$CHANGELOG
-
-### Features
-
-- 🚀 24/7 Automated Processing
-- 🔍 Script Runner & Quality Checks
-- 🔄 Message Loop for Individual Tasks
-- 📊 Rich User Interface" \
+            --notes-file release-notes.md \
             "$FILENAME"
         fi
         
