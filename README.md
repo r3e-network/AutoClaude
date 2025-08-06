@@ -1,7 +1,9 @@
 # AutoClaude - Automated Claude Code Assistant
 
-[![Version](https://img.shields.io/badge/version-3.9.0-blue)](https://github.com/r3e-network/AutoClaude/releases/tag/v3.9.0)
+[![Version](https://img.shields.io/badge/version-3.15.0-blue)](https://github.com/r3e-network/AutoClaude/releases/tag/v3.15.0)
+[![npm version](https://img.shields.io/npm/v/autoclaude.svg)](https://www.npmjs.com/package/autoclaude)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/release/r3e-network/AutoClaude.svg)](https://github.com/r3e-network/AutoClaude/releases)
 
 **AutoClaude** is an enterprise-grade automated assistant for Claude Code that provides intelligent task queuing, workflow automation, and 24/7 processing capabilities. Now featuring **Universal Language Conversion** with advanced Neo-rs specialization, persistent learning, multi-agent coordination, and production-ready automation systems.
 
@@ -216,20 +218,48 @@ AutoClaude learns your project:
 
 ### Installation
 
-#### 🖥️ **Terminal Version (Standalone)**
+#### 📦 **NPM Package (Library)**
 
 ```bash
-npm install -g autoclaude-terminal
+# Install as a library for your project
+npm install autoclaude
+
+# Or install globally for CLI usage
+npm install -g autoclaude
 autoclaude  # Start the terminal interface
 ac          # Short alias
 ```
 
-#### 📦 **VS Code Extension**
+[![npm](https://nodei.co/npm/autoclaude.png)](https://www.npmjs.com/package/autoclaude)
 
-1. Install via command palette: `Extensions: Install Extensions` → Search "AutoClaude"
-2. Or install from VSIX: Download from [GitHub Releases](https://github.com/r3e-network/AutoClaude/releases)
-3. **Cursor**: AutoClaude works seamlessly in Cursor with the same installation process
-4. **VS Code Web**: Full compatibility with vscode.dev and github.dev
+#### 🎯 **VS Code Extension**
+
+**Option 1: Install from Marketplace** (Coming Soon)
+```
+Extensions: Install Extensions → Search "AutoClaude"
+```
+
+**Option 2: Install from GitHub Release**
+1. Download the latest `.vsix` file from [GitHub Releases](https://github.com/r3e-network/AutoClaude/releases/latest)
+2. In VS Code: `Ctrl/Cmd + Shift + P` → "Extensions: Install from VSIX..."
+3. Select the downloaded file
+
+**Option 3: Install from Release Branch**
+```bash
+# Automated installation from latest release
+git clone -b release/v3.15.0 https://github.com/r3e-network/AutoClaude.git
+cd AutoClaude
+npm install
+npm run package
+# Install the generated .vsix file
+```
+
+#### 🚀 **Platform Support**
+
+- **VS Code**: Full support for version 1.74.0+
+- **Cursor**: Works seamlessly with the same installation process
+- **VS Code Web**: Compatible with vscode.dev and github.dev
+- **Terminal**: Standalone CLI available via npm
 
 ### Basic Usage
 
@@ -719,6 +749,38 @@ AutoClaude includes 12+ specialized sub-agents that work together to analyze and
 ## 🤝 Contributing
 
 Contributions are welcome! Please open issues and pull requests on our GitHub repository.
+
+## 🚀 Automated Release Process
+
+AutoClaude uses a fully automated release workflow that handles versioning, building, and publishing to multiple platforms.
+
+### Release Workflow
+
+When a `release/v*` branch is created, the automated workflow:
+
+1. **Builds the VS Code Extension** - Creates the `.vsix` file
+2. **Publishes to npm** - Automatically publishes the package to npm registry
+3. **Creates GitHub Release** - Tags and releases with the `.vsix` file attached
+4. **Updates Documentation** - Release notes are automatically included
+
+### Creating a New Release
+
+```bash
+# Use the automated release script
+./scripts/prepare-release.sh 3.16.0
+
+# This will:
+# 1. Update version numbers
+# 2. Create release branch
+# 3. Trigger automated workflow
+# 4. Publish to npm and GitHub
+```
+
+### Available Versions
+
+- **npm Package**: `npm install autoclaude@latest`
+- **VS Code Extension**: Download from [GitHub Releases](https://github.com/r3e-network/AutoClaude/releases)
+- **Source Code**: Clone from GitHub repository
 
 ## 👥 Credits
 
