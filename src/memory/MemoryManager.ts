@@ -2,7 +2,15 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import type { Database } from "sqlite3";
-const sqlite3 = require("sqlite3").verbose();
+
+// Try to load sqlite3, but don't fail if it's not available
+let sqlite3: any;
+try {
+  sqlite3 = require("sqlite3").verbose();
+} catch (error) {
+  console.warn("[AutoClaude] sqlite3 not available - memory features will be disabled");
+  sqlite3 = null;
+}
 import { promisify } from "util";
 import { debugLog } from "../utils/logging";
 import {
@@ -83,6 +91,13 @@ export class MemoryManager {
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
+    // Skip initialization if sqlite3 is not available
+    if (!sqlite3) {
+      console.warn("[AutoClaude] Memory system disabled - sqlite3 not available");
+      this.initialized = true;
+      return;
+    }
+
     try {
       // Ensure directory exists
       const dir = path.dirname(this.dbPath);
@@ -91,7 +106,6 @@ export class MemoryManager {
       }
 
       // Open database
-      const sqlite3 = require("sqlite3").verbose();
       this.db = new sqlite3.Database(this.dbPath);
 
       // Promisify methods

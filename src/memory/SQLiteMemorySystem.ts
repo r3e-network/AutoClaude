@@ -1,5 +1,20 @@
-import * as sqlite3 from "sqlite3";
-import { open, Database as SqliteDatabase } from "sqlite";
+// Try to load sqlite3 and sqlite
+let sqlite3: any;
+let sqlite: any;
+let open: any;
+type SqliteDatabase = any;
+
+try {
+  sqlite3 = require("sqlite3");
+  const sqliteModule = require("sqlite");
+  sqlite = sqliteModule;
+  open = sqliteModule.open;
+} catch (error) {
+  console.warn("[AutoClaude] SQLite modules not available - memory features will be disabled");
+  sqlite3 = null;
+  sqlite = null;
+  open = null;
+}
 import * as path from "path";
 import { log } from "../utils/productionLogger";
 import { Pattern } from "../agents/hivemind/types";
@@ -26,6 +41,12 @@ export class SQLiteMemorySystem {
   }
 
   async initialize(): Promise<void> {
+    // Skip initialization if sqlite modules are not available
+    if (!sqlite3 || !open) {
+      console.warn("[AutoClaude] SQLiteMemorySystem disabled - sqlite modules not available");
+      return;
+    }
+
     try {
       // Open database connection
       this.db = await open({
