@@ -212,16 +212,29 @@ jobs:
         
         echo "Assets to upload: $ASSETS"
         
-        # Create or update release
+        # Delete existing release if it exists (to avoid upload issues)
         if gh release view "v$VERSION" >/dev/null 2>&1; then
-          echo "Release v$VERSION already exists, updating..."
-          gh release upload "v$VERSION" $ASSETS --clobber
-        else
-          echo "Creating new release v$VERSION..."
+          echo "Release v$VERSION already exists, deleting it first..."
+          gh release delete "v$VERSION" --yes || echo "Could not delete release, continuing..."
+        fi
+        
+        # Create new release
+        echo "Creating release v$VERSION..."
+        if [ -n "$ASSETS" ]; then
+          echo "Creating release with assets: $ASSETS"
           gh release create "v$VERSION" \
             --title "AutoClaude v$VERSION" \
             --notes-file release-notes.md \
+            --draft=false \
+            --prerelease=false \
             $ASSETS
+        else
+          echo "No assets found, creating release without assets"
+          gh release create "v$VERSION" \
+            --title "AutoClaude v$VERSION" \
+            --notes-file release-notes.md \
+            --draft=false \
+            --prerelease=false
         fi
         
     - name: Output release URL
