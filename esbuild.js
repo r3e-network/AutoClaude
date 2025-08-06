@@ -16,6 +16,7 @@ async function main() {
     outfile: "out/extension.js",
     external: ["vscode", "sqlite", "sqlite3"],
     logLevel: "info",
+    keepNames: true,
     plugins: [
       {
         name: "copy-files",

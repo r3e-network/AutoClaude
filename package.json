@@ -2,7 +2,7 @@
   "name": "autoclaude",
   "displayName": "AutoClaude",
   "description": "Automated Claude Code assistant with smart task completion, queue management, and workflow automation for VS Code",
-  "version": "3.13.0",
+  "version": "3.13.1",
   "publisher": "R3ENetwork",
   "icon": "img/autoclaude.png",
   "engines": {
@@ -15,7 +15,7 @@
   ],
   "main": "./out/extension.js",
   "activationEvents": [
-    "onCommand:autoclaude.start"
+    "onStartupFinished"
   ],
   "contributes": {
     "commands": [
