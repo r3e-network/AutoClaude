@@ -9,7 +9,7 @@ async function main() {
     entryPoints: ["src/extension.ts"],
     bundle: true,
     format: "cjs",
-    minify: production,
+    minify: false, // Don't minify to preserve function names
     sourcemap: !production,
     sourcesContent: false,
     platform: "node",

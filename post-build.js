@@ -5,17 +5,14 @@ const path = require('path');
 const extensionPath = path.join(__dirname, 'out', 'extension.js');
 let content = fs.readFileSync(extensionPath, 'utf8');
 
-// Check if exports are already at the end
-if (!content.includes('module.exports = { activate, deactivate }')) {
-  // Add proper CommonJS exports at the end
-  content += '\n\n// Ensure proper CommonJS exports for VS Code\n';
-  content += 'if (typeof module !== "undefined" && module.exports) {\n';
-  content += '  module.exports = { activate, deactivate };\n';
-  content += '}\n';
-  
-  // Write back
-  fs.writeFileSync(extensionPath, content, 'utf8');
-  console.log('Added CommonJS exports to extension.js');
-} else {
-  console.log('CommonJS exports already present');
-}
+// Remove any existing exports at the end
+content = content.replace(/\n\/\/ Ensure proper CommonJS exports[\s\S]*$/, '');
+
+// Add proper CommonJS exports at the end
+// Since we're not minifying, the function names should be 'activate' and 'deactivate'
+content += '\n\n// Ensure proper CommonJS exports for VS Code\n';
+content += 'module.exports = { activate, deactivate };\n';
+
+// Write back
+fs.writeFileSync(extensionPath, content, 'utf8');
+console.log('Added CommonJS exports to extension.js');
