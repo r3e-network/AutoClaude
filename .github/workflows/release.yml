@@ -88,35 +88,32 @@ jobs:
           echo "Creating new release v$VERSION..."
           
           # Create release with the VSIX file
-          cat > release-notes.md << 'RELEASE_NOTES'
-## AutoClaude v$VERSION
-
-### Installation
-
-1. Download the `.vsix` file from the assets below
-2. Open VS Code
-3. Go to Extensions view (Ctrl+Shift+X)
-4. Click on the "..." menu and select "Install from VSIX..."
-5. Select the downloaded file
-
-### What's New
-
-See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
-
-### Features
-
-- 🚀 24/7 Automated Processing
-- 🔍 Script Runner & Quality Checks
-- 🔄 Message Loop for Individual Tasks
-- 📊 Rich User Interface
-RELEASE_NOTES
-          
-          # Substitute variables in the release notes
-          VERSION="$VERSION" REPO="${{ github.repository }}" envsubst < release-notes.md > release-notes-final.md
+          {
+            echo "## AutoClaude v$VERSION"
+            echo ""
+            echo "### Installation"
+            echo ""
+            echo "1. Download the \`.vsix\` file from the assets below"
+            echo "2. Open VS Code"
+            echo "3. Go to Extensions view (Ctrl+Shift+X)"
+            echo "4. Click on the \"...\" menu and select \"Install from VSIX...\""
+            echo "5. Select the downloaded file"
+            echo ""
+            echo "### What's New"
+            echo ""
+            echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+            echo ""
+            echo "### Features"
+            echo ""
+            echo "- 🚀 24/7 Automated Processing"
+            echo "- 🔍 Script Runner & Quality Checks"
+            echo "- 🔄 Message Loop for Individual Tasks"
+            echo "- 📊 Rich User Interface"
+          } > release-notes.md
           
           gh release create "v$VERSION" \
             --title "Release v$VERSION" \
-            --notes-file release-notes-final.md \
+            --notes-file release-notes.md \
             "$FILENAME"
         fi
         
