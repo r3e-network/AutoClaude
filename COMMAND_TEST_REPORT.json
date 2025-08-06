@@ -1,0 +1,264 @@
+{
+  "timestamp": "2025-08-06T06:34:58.614Z",
+  "totalCommands": 43,
+  "passed": 20,
+  "warnings": 23,
+  "failed": 0,
+  "details": {
+    "passed": [
+      "autoclaude.start",
+      "autoclaude.stopParallelAgents",
+      "autoclaude.showAgentMonitor",
+      "autoclaude.attachToAgents",
+      "autoclaude.clearAllAgentContext",
+      "autoclaude.toggleAutoOrchestration",
+      "autoclaude.exportQueue",
+      "autoclaude.importQueue",
+      "autoclaude.exportSettings",
+      "autoclaude.useTemplate",
+      "autoclaude.manageTemplates",
+      "autoclaude.showStatistics",
+      "autoclaude.validateConfiguration",
+      "autoclaude.resetToDefaults",
+      "autoclaude.toggleHook",
+      "autoclaude.viewMemoryInsights",
+      "autoclaude.showAgentStatus",
+      "autoclaude.showHookStats",
+      "autoclaude.showMemoryStats",
+      "autoclaude.submitAgentTask"
+    ],
+    "warnings": [
+      {
+        "command": "autoclaude.stop",
+        "issues": [
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.addMessage",
+        "issues": [
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.runScriptChecks",
+        "issues": [
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.runScriptLoop",
+        "issues": [
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.quickStart",
+        "issues": [
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.runSubAgents",
+        "issues": [
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.autoComplete",
+        "issues": [
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.workflowWizard",
+        "issues": [
+          "⚠️ No error handling (try/catch)",
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.executeCommand",
+        "issues": [
+          "⚠️ No error handling (try/catch)",
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.updateContext",
+        "issues": [
+          "⚠️ No error handling (try/catch)",
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.showContext",
+        "issues": [
+          "⚠️ No error handling (try/catch)",
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.showTasks",
+        "issues": [
+          "⚠️ No error handling (try/catch)",
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.startParallelAgents",
+        "issues": [
+          "⚠️ No error handling (try/catch)"
+        ]
+      },
+      {
+        "command": "autoclaude.checkRemoteStatus",
+        "issues": [
+          "⚠️ No error handling (try/catch)",
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.showErrorHistory",
+        "issues": [
+          "⚠️ No error handling (try/catch)",
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.showServiceHealth",
+        "issues": [
+          "⚠️ No error handling (try/catch)",
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.exportLogs",
+        "issues": [
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.startHiveMind",
+        "issues": [
+          "⚠️ No error handling (try/catch)"
+        ]
+      },
+      {
+        "command": "autoclaude.startSwarm",
+        "issues": [
+          "⚠️ No error handling (try/catch)"
+        ]
+      },
+      {
+        "command": "autoclaude.executeNaturalCommand",
+        "issues": [
+          "⚠️ No error handling (try/catch)"
+        ]
+      },
+      {
+        "command": "autoclaude.showWorkflowStatus",
+        "issues": [
+          "⚠️ No error handling (try/catch)",
+          "⚠️ No user error feedback"
+        ]
+      },
+      {
+        "command": "autoclaude.exportMemory",
+        "issues": [
+          "⚠️ No error handling (try/catch)"
+        ]
+      },
+      {
+        "command": "autoclaude.showSessionInfo",
+        "issues": [
+          "⚠️ No user error feedback"
+        ]
+      }
+    ],
+    "failed": []
+  },
+  "commonIssues": {
+    "missingWorkspaceCheck": [
+      "autoclaude.addMessage",
+      "autoclaude.runScriptChecks",
+      "autoclaude.runScriptLoop",
+      "autoclaude.quickStart",
+      "autoclaude.runSubAgents",
+      "autoclaude.autoComplete",
+      "autoclaude.workflowWizard",
+      "autoclaude.executeCommand",
+      "autoclaude.updateContext",
+      "autoclaude.showContext",
+      "autoclaude.showTasks",
+      "autoclaude.startParallelAgents",
+      "autoclaude.stopParallelAgents",
+      "autoclaude.showAgentMonitor",
+      "autoclaude.attachToAgents",
+      "autoclaude.clearAllAgentContext",
+      "autoclaude.toggleAutoOrchestration",
+      "autoclaude.exportQueue",
+      "autoclaude.importQueue",
+      "autoclaude.exportSettings",
+      "autoclaude.useTemplate",
+      "autoclaude.manageTemplates",
+      "autoclaude.showStatistics",
+      "autoclaude.checkRemoteStatus",
+      "autoclaude.showErrorHistory",
+      "autoclaude.showServiceHealth",
+      "autoclaude.exportLogs",
+      "autoclaude.validateConfiguration",
+      "autoclaude.resetToDefaults",
+      "autoclaude.startHiveMind",
+      "autoclaude.startSwarm",
+      "autoclaude.executeNaturalCommand",
+      "autoclaude.showWorkflowStatus",
+      "autoclaude.toggleHook",
+      "autoclaude.viewMemoryInsights",
+      "autoclaude.exportMemory",
+      "autoclaude.showAgentStatus",
+      "autoclaude.showHookStats",
+      "autoclaude.showMemoryStats",
+      "autoclaude.showSessionInfo",
+      "autoclaude.submitAgentTask"
+    ],
+    "missingPanelCheck": [
+      "autoclaude.addMessage"
+    ],
+    "missingErrorHandling": [
+      "autoclaude.workflowWizard",
+      "autoclaude.executeCommand",
+      "autoclaude.updateContext",
+      "autoclaude.showContext",
+      "autoclaude.showTasks",
+      "autoclaude.startParallelAgents",
+      "autoclaude.checkRemoteStatus",
+      "autoclaude.showErrorHistory",
+      "autoclaude.showServiceHealth",
+      "autoclaude.startHiveMind",
+      "autoclaude.startSwarm",
+      "autoclaude.executeNaturalCommand",
+      "autoclaude.showWorkflowStatus",
+      "autoclaude.exportMemory"
+    ],
+    "missingUserFeedback": [
+      "autoclaude.stop",
+      "autoclaude.addMessage",
+      "autoclaude.runScriptChecks",
+      "autoclaude.runScriptLoop",
+      "autoclaude.quickStart",
+      "autoclaude.runSubAgents",
+      "autoclaude.autoComplete",
+      "autoclaude.workflowWizard",
+      "autoclaude.executeCommand",
+      "autoclaude.updateContext",
+      "autoclaude.showContext",
+      "autoclaude.showTasks",
+      "autoclaude.checkRemoteStatus",
+      "autoclaude.showErrorHistory",
+      "autoclaude.showServiceHealth",
+      "autoclaude.exportLogs",
+      "autoclaude.showSessionInfo"
+    ]
+  }
+}

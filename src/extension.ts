@@ -390,60 +390,122 @@ export async function activate(context: vscode.ExtensionContext) {
     // Register commands
     const startCommand = vscode.commands.registerCommand(
       "autoclaude.start",
-      () => {
-        if (!checkCommandRateLimit("autoclaude.start")) {
-          return;
+      async () => {
+        try {
+          if (!checkCommandRateLimit("autoclaude.start")) {
+            vscode.window.showWarningMessage("Command rate limit exceeded. Please wait before trying again.");
+            return;
+          }
+          startAutoClaude(context);
+        } catch (error) {
+          errorLog("Failed to start AutoClaude", { error: error instanceof Error ? error.message : String(error) });
+          vscode.window.showErrorMessage(
+            `Failed to start AutoClaude: ${error instanceof Error ? error.message : String(error)}`,
+            "Show Logs"
+          ).then(choice => {
+            if (choice === "Show Logs") {
+              vscode.commands.executeCommand("autoclaude.exportLogs");
+            }
+          });
         }
-        startAutoClaude(context);
       },
     );
 
     const stopCommand = vscode.commands.registerCommand(
       "autoclaude.stop",
-      () => {
-        stopAutoClaude();
+      async () => {
+        try {
+          stopAutoClaude();
+        } catch (error) {
+          errorLog("Failed to stop AutoClaude", { error: error instanceof Error ? error.message : String(error) });
+          vscode.window.showErrorMessage(
+            `Failed to stop AutoClaude: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
       },
     );
 
     const addMessageCommand = vscode.commands.registerCommand(
       "autoclaude.addMessage",
-      () => {
-        addMessageToQueue();
+      async () => {
+        try {
+          addMessageToQueue();
+        } catch (error) {
+          errorLog("Failed to add message", { error: error instanceof Error ? error.message : String(error) });
+          vscode.window.showErrorMessage(
+            `Failed to add message: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
       },
     );
 
     const runScriptChecksCommand = vscode.commands.registerCommand(
       "autoclaude.runScriptChecks",
       async () => {
-        await runScriptChecks();
+        try {
+          await runScriptChecks();
+        } catch (error) {
+          errorLog("Failed to run script checks", { error: error instanceof Error ? error.message : String(error) });
+          vscode.window.showErrorMessage(
+            `Failed to run script checks: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
       },
     );
 
     const runScriptLoopCommand = vscode.commands.registerCommand(
       "autoclaude.runScriptLoop",
       async () => {
-        await runScriptCheckLoop();
+        try {
+          await runScriptCheckLoop();
+        } catch (error) {
+          errorLog("Failed to run script loop", { error: error instanceof Error ? error.message : String(error) });
+          vscode.window.showErrorMessage(
+            `Failed to run script loop: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
       },
     );
 
     const quickStartCommand = vscode.commands.registerCommand(
       "autoclaude.quickStart",
       async () => {
-        await showQuickStart();
+        try {
+          await showQuickStart();
+        } catch (error) {
+          errorLog("Failed to show quick start", { error: error instanceof Error ? error.message : String(error) });
+          vscode.window.showErrorMessage(
+            `Failed to show quick start: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
       },
     );
 
     const runSubAgentsCommand = vscode.commands.registerCommand(
       "autoclaude.runSubAgents",
       async () => {
-        await runSubAgents();
+        try {
+          await runSubAgents();
+        } catch (error) {
+          errorLog("Failed to run sub-agents", { error: error instanceof Error ? error.message : String(error) });
+          vscode.window.showErrorMessage(
+            `Failed to run sub-agents: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
       },
     );
 
     const autoCompleteCommand = vscode.commands.registerCommand(
       "autoclaude.autoComplete",
       async () => {
-        await autoCompleteCurrentTask();
+        try {
+          await autoCompleteCurrentTask();
+        } catch (error) {
+          errorLog("Failed to auto-complete task", { error: error instanceof Error ? error.message : String(error) });
+          vscode.window.showErrorMessage(
+            `Failed to auto-complete task: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
       },
     );
 
