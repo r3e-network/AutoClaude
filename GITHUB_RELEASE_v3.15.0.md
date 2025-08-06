@@ -2,25 +2,27 @@
 
 ## 🎉 Release Highlights
 
-<!-- Brief summary of the most important changes -->
+This release introduces automated release workflows, multi-platform binary support, and enhanced GitHub Actions integration for seamless deployment.
 
 ## ✨ New Features
 
-<!-- List new features with bullet points -->
-- Feature 1
-- Feature 2
+- **Automated Release Workflow**: New GitHub Actions workflow that automatically builds and releases when creating `release/v*` branches
+- **Multi-Platform Terminal Binaries**: Build and distribute terminal binaries for Windows, macOS (Intel & ARM), and Linux
+- **Release Preparation Script**: New `prepare-release.sh` script for one-command releases
+- **Enhanced Release Documentation**: Comprehensive release process documentation
 
 ## 🐛 Bug Fixes
 
-<!-- List bug fixes with bullet points -->
-- Fixed issue with...
-- Resolved problem where...
+- Fixed command registration issues from v3.14.1
+- Resolved module export problems preventing VS Code from loading the extension
+- Fixed activation event circular dependencies
 
 ## 💫 Improvements
 
-<!-- List improvements and enhancements -->
-- Improved performance of...
-- Enhanced user experience for...
+- Improved build process with automated version management
+- Enhanced release notes integration from markdown files
+- Better asset management with automatic uploads to GitHub releases
+- Streamlined release workflow reducing manual steps
 
 ## 🔄 Changes
 
