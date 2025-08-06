@@ -6,7 +6,7 @@ const watch = process.argv.includes("--watch");
 
 async function main() {
   const ctx = await esbuild.context({
-    entryPoints: ["src/extension.ts"],
+    entryPoints: ["src/index.ts"],
     bundle: true,
     format: "cjs",
     minify: production,
@@ -17,6 +17,7 @@ async function main() {
     external: ["vscode", "sqlite", "sqlite3"],
     logLevel: "info",
     keepNames: true,
+    mainFields: ["module", "main"],
     plugins: [
       {
         name: "copy-files",
