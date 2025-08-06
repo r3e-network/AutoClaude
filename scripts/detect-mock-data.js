@@ -42,6 +42,10 @@ const excludePatterns = [
   /tests\//,
   /mock\//,
   /mocks\//,
+  // Exclude the mock detection agent itself - it's not mock data
+  /MockDataDetectionAgent/,
+  /mock-data-detection/,
+  /detect-mock-data/,
 ];
 
 const issues = [];

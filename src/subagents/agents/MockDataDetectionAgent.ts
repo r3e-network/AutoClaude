@@ -144,7 +144,12 @@ export class MockDataDetectionAgent extends BaseProductionAgent {
     /node_modules/,
     /dist\//,
     /build\//,
-    /coverage\//
+    /coverage\//,
+    // Exclude the mock detection agent itself - it's not mock data
+    /MockDataDetectionAgent/,
+    /mock-data-detection/,
+    /detect-mock-data/,
+    /ProductionReadinessValidator/ // Also exclude validator that checks for mock data
   ];
 
   async executeSimple(spec?: string): Promise<{ success: boolean; message: string; data?: any; confidence?: string; suggestions?: string[] }> {

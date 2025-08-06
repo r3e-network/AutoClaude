@@ -245,6 +245,13 @@
     "type": "SUSPICIOUS"
   },
   {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/index.ts",
+    "line": 21,
+    "pattern": "(?:mock|dummy|fake|sample)(?:Data|Service|Client|R...",
+    "content": "export * from \"./agents/MockDataDetectionAgent\";",
+    "type": "MOCK_DATA"
+  },
+  {
     "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/productionAgents.ts",
     "line": 238,
     "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
@@ -260,17 +267,38 @@
   },
   {
     "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/registry.ts",
-    "line": 73,
+    "line": 75,
     "pattern": "\\/\\/.*(?:for now|temporarily|will be replaced|to b...",
     "content": "// For now, return all agents as categories are not implemented",
     "type": "SUSPICIOUS"
   },
   {
     "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/registry.ts",
-    "line": 82,
+    "line": 84,
     "pattern": "\\/\\/.*(?:for now|temporarily|will be replaced|to b...",
     "content": "// For now, using built-in agents provides complete functionality",
     "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/registry.ts",
+    "line": 14,
+    "pattern": "(?:mock|dummy|fake|sample)(?:Data|Service|Client|R...",
+    "content": "import { MockDataDetectionAgent } from \"./agents/MockDataDetectionAgent\";",
+    "type": "MOCK_DATA"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/registry.ts",
+    "line": 14,
+    "pattern": "(?:mock|dummy|fake|sample)(?:Data|Service|Client|R...",
+    "content": "import { MockDataDetectionAgent } from \"./agents/MockDataDetectionAgent\";",
+    "type": "MOCK_DATA"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/registry.ts",
+    "line": 42,
+    "pattern": "(?:mock|dummy|fake|sample)(?:Data|Service|Client|R...",
+    "content": "new MockDataDetectionAgent(this.workspacePath),",
+    "type": "MOCK_DATA"
   },
   {
     "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/validation/PreTaskValidator.ts",
