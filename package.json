@@ -2,7 +2,7 @@
   "name": "autoclaude",
   "displayName": "AutoClaude",
   "description": "Automated Claude Code assistant with smart task completion, queue management, and workflow automation for VS Code",
-  "version": "3.12.2",
+  "version": "3.13.0",
   "publisher": "R3ENetwork",
   "icon": "img/autoclaude.png",
   "engines": {
@@ -240,6 +240,42 @@
         "title": "🧠 View Memory & Learning Insights",
         "category": "Claude",
         "icon": "$(graph)"
+      },
+      {
+        "command": "autoclaude.exportMemory",
+        "title": "💾 Export Memory Database",
+        "category": "Claude",
+        "icon": "$(database)"
+      },
+      {
+        "command": "autoclaude.showAgentStatus",
+        "title": "📊 Show Agent Status",
+        "category": "Claude Agent Farm",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "autoclaude.showHookStats",
+        "title": "🔗 Show Hook Statistics",
+        "category": "Claude",
+        "icon": "$(graph-line)"
+      },
+      {
+        "command": "autoclaude.showMemoryStats",
+        "title": "📈 Show Memory Statistics",
+        "category": "Claude",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "autoclaude.showSessionInfo",
+        "title": "ℹ️ Show Session Information",
+        "category": "Claude",
+        "icon": "$(info)"
+      },
+      {
+        "command": "autoclaude.submitAgentTask",
+        "title": "📝 Submit Task to Agents",
+        "category": "Claude Agent Farm",
+        "icon": "$(send)"
       }
     ],
     "menus": {
