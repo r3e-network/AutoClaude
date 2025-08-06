@@ -158,15 +158,21 @@ jobs:
       run: |
         VERSION="${{ needs.prepare-release.outputs.version }}"
         
-        # Check if tag exists
+        # Check if tag exists locally
         if git rev-parse "v$VERSION" >/dev/null 2>&1; then
-          echo "Tag v$VERSION already exists"
+          echo "Tag v$VERSION already exists locally"
         else
-          echo "Creating tag v$VERSION"
+          echo "Creating local tag v$VERSION"
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git tag -a "v$VERSION" -m "Release v$VERSION"
-          git push origin "v$VERSION"
+        fi
+        
+        # Try to push tag, but don't fail if it already exists
+        if git push origin "v$VERSION" 2>/dev/null; then
+          echo "Successfully pushed tag v$VERSION"
+        else
+          echo "Tag v$VERSION already exists on remote or push failed, continuing..."
         fi
         
         # Find all built assets
