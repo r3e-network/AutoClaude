@@ -117,8 +117,47 @@ jobs:
         path: '*.vsix'
         retention-days: 1
 
-  create-release:
+  publish-npm:
     needs: [prepare-release, build-extension]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        registry-url: 'https://registry.npmjs.org'
+        
+    - name: Update package.json version
+      run: |
+        VERSION="${{ needs.prepare-release.outputs.version }}"
+        npm version $VERSION --no-git-tag-version --allow-same-version
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build for npm
+      run: npm run compile:production
+      
+    - name: Publish to npm
+      run: |
+        VERSION="${{ needs.prepare-release.outputs.version }}"
+        echo "Publishing version $VERSION to npm..."
+        npm publish --access public
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        
+    - name: Verify npm publish
+      run: |
+        VERSION="${{ needs.prepare-release.outputs.version }}"
+        echo "Verifying npm package autoclaude@$VERSION"
+        sleep 10
+        npm view autoclaude@$VERSION || echo "Package may take a few minutes to appear on npm"
+
+  create-release:
+    needs: [prepare-release, build-extension, publish-npm]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -241,4 +280,8 @@ jobs:
       run: |
         VERSION="${{ needs.prepare-release.outputs.version }}"
         echo "🎉 Release created successfully!"
-        echo "📦 Release URL: https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
+        echo "📦 GitHub Release: https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
+        echo "📦 npm Package: https://www.npmjs.com/package/autoclaude/v/$VERSION"
+        echo ""
+        echo "Install from npm: npm install autoclaude@$VERSION"
+        echo "Install VS Code extension: Download from GitHub release"
