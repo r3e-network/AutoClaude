@@ -75,14 +75,40 @@ jobs:
         npm version $VERSION --no-git-tag-version --allow-same-version
         
     - name: Install dependencies
-      run: npm ci
-      
-    - name: Build and Package extension
+      run: |
+        echo "Installing dependencies..."
+        npm ci
+        echo "Dependencies installed successfully"
+        
+    - name: Verify build files exist
+      run: |
+        echo "Checking required files..."
+        ls -la src/index.ts
+        ls -la src/extension.ts
+        ls -la src/claude_pty_wrapper.py
+        ls -la src/webview/
+        ls -la esbuild.js
+        echo "All required files present"
+        
+    - name: Build extension
       run: |
         echo "Building extension..."
-        npm run compile:production
+        node esbuild.js --production
+        echo "Build completed"
+        
+    - name: Verify build output
+      run: |
+        echo "Checking build output..."
+        ls -la out/
+        ls -la out/extension.js
+        echo "Build output verified"
+      
+    - name: Package extension
+      run: |
         echo "Packaging extension..."
-        npm run package
+        npx @vscode/vsce package --no-dependencies
+        echo "Package created successfully"
+        ls -la *.vsix
       
     - name: Upload extension artifact
       uses: actions/upload-artifact@v3
