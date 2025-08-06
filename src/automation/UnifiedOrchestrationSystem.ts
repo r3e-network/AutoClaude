@@ -986,11 +986,15 @@ export class UnifiedOrchestrationSystem {
   }
 
   private async executeDirectTask(task: HiveMindTask): Promise<void> {
-    // Simple direct execution
-    await this.taskEngine.completeTask({
-      description: task.description,
-      type: task.type,
-    } as any);
+    // Simple direct execution - check if taskEngine method exists
+    if (this.taskEngine && typeof this.taskEngine.autoCompleteTask === 'function') {
+      try {
+        const context = await this.taskEngine.analyzeCurrentContext();
+        await this.taskEngine.autoCompleteTask(context);
+      } catch (error) {
+        log.debug("Task engine execution skipped", error as Error);
+      }
+    }
 
     task.result = {
       success: true,
