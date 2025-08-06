@@ -129,7 +129,7 @@ export class UnifiedOrchestrationSystem {
         await task.init();
         log.info(`Initialized ${task.name}`);
       } catch (error) {
-        log.error(`Failed to initialize ${task.name}:`, error as Error);
+        log.warn(`Failed to initialize ${task.name}:`, error as Error);
         // Continue with other initializations instead of throwing
         console.warn(`[AutoClaude] ${task.name} initialization failed but continuing`);
       }
@@ -147,7 +147,7 @@ export class UnifiedOrchestrationSystem {
 
       log.info("Unified Orchestration System initialized (with some subsystems disabled)");
     } catch (error) {
-      log.error(
+      log.warn(
         "Failed to complete Unified Orchestration System setup",
         error as Error,
       );
@@ -610,7 +610,7 @@ export class UnifiedOrchestrationSystem {
         await this.processTaskQueue();
       }
     } catch (error) {
-      log.error("Failed to detect pending work", error as Error);
+      log.warn("Failed to detect pending work", error as Error);
     }
   }
 

@@ -405,4 +405,66 @@ export class ContextManager {
 
     return prompt;
   }
+
+  /**
+   * Build the import graph for the workspace
+   */
+  private async buildImportGraph(): Promise<void> {
+    try {
+      debugLog("Building import graph for workspace");
+      // This is a simplified implementation - can be enhanced later
+      // For now, just initialize the map
+      this.importGraph.clear();
+      debugLog("Import graph initialized");
+    } catch (error) {
+      debugLog(`Failed to build import graph: ${error}`);
+      // Don't throw - this is not critical
+    }
+  }
+
+  /**
+   * Find pending work items in the codebase
+   */
+  async findPendingWork(): Promise<any[]> {
+    const pendingWork: any[] = [];
+    
+    try {
+      // Search for TODO and FIXME comments
+      const todoPattern = /(?:TODO|FIXME|HACK|XXX|NOTE)\s*:?\s*(.+)/gi;
+      
+      // Search in common source file patterns
+      const files = await vscode.workspace.findFiles(
+        "**/*.{ts,js,tsx,jsx,py,java,cs,go,rs,cpp,c,h}",
+        "**/node_modules/**",
+        100 // Limit to 100 files
+      );
+
+      for (const file of files) {
+        try {
+          const content = fs.readFileSync(file.fsPath, "utf8");
+          const lines = content.split("\n");
+          
+          lines.forEach((line, index) => {
+            const matches = line.match(todoPattern);
+            if (matches) {
+              pendingWork.push({
+                file: file.fsPath,
+                line: index + 1,
+                type: "TODO",
+                description: matches[0],
+                priority: matches[0].includes("FIXME") ? "high" : "normal"
+              });
+            }
+          });
+        } catch (error) {
+          // Skip files that can't be read
+          debugLog(`Could not read file ${file.fsPath}: ${error}`);
+        }
+      }
+    } catch (error) {
+      debugLog(`Error finding pending work: ${error}`);
+    }
+
+    return pendingWork;
+  }
 }
