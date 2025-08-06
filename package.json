@@ -21,260 +21,260 @@
     "commands": [
       {
         "command": "autoclaude.start",
-        "title": "🚀 Start Claude Assistant",
-        "category": "Claude",
+        "title": "🚀 Start AutoClaude Assistant",
+        "category": "AutoClaude",
         "icon": "$(play)"
       },
       {
         "command": "autoclaude.stop",
-        "title": "⏹️ Stop Claude",
-        "category": "Claude",
+        "title": "⏹️ Stop AutoClaude",
+        "category": "AutoClaude",
         "icon": "$(stop)"
       },
       {
         "command": "autoclaude.addMessage",
-        "title": "💬 Ask Claude Something...",
-        "category": "Claude",
+        "title": "💬 Ask AutoClaude Something...",
+        "category": "AutoClaude",
         "icon": "$(comment-add)"
       },
       {
         "command": "autoclaude.runScriptChecks",
         "title": "🔍 Run Quality Checks",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(search)"
       },
       {
         "command": "autoclaude.runScriptLoop",
         "title": "🔄 Auto-Fix Issues (Loop Mode)",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(refresh)"
       },
       {
         "command": "autoclaude.quickStart",
         "title": "⚡ Quick Start Guide",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(rocket)"
       },
       {
         "command": "autoclaude.runSubAgents",
-        "title": "🤖 Run Claude AI Agents",
-        "category": "Claude",
+        "title": "🤖 Run AutoClaude AI Agents",
+        "category": "AutoClaude",
         "icon": "$(hubot)"
       },
       {
         "command": "autoclaude.autoComplete",
         "title": "✨ Auto-Complete Current Task",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(sparkle)"
       },
       {
         "command": "autoclaude.workflowWizard",
-        "title": "🧙 Claude Workflow Wizard",
-        "category": "Claude",
+        "title": "🧙 AutoClaude Workflow Wizard",
+        "category": "AutoClaude",
         "icon": "$(list-tree)"
       },
       {
         "command": "autoclaude.executeCommand",
-        "title": "🎯 Execute Claude Command",
-        "category": "Claude",
+        "title": "🎯 Execute AutoClaude Command",
+        "category": "AutoClaude",
         "icon": "$(terminal)"
       },
       {
         "command": "autoclaude.updateContext",
         "title": "🔄 Update Project Context",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(refresh)"
       },
       {
         "command": "autoclaude.showContext",
         "title": "📋 Show Project Context",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(file-text)"
       },
       {
         "command": "autoclaude.showTasks",
         "title": "📝 Show Task History",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(list-ordered)"
       },
       {
         "command": "autoclaude.startParallelAgents",
         "title": "🚀 Start Parallel Agents",
-        "category": "Claude Agent Farm",
+        "category": "AutoClaude Agent Farm",
         "icon": "$(rocket)"
       },
       {
         "command": "autoclaude.stopParallelAgents",
         "title": "⏹️ Stop Parallel Agents",
-        "category": "Claude Agent Farm",
+        "category": "AutoClaude Agent Farm",
         "icon": "$(stop)"
       },
       {
         "command": "autoclaude.showAgentMonitor",
         "title": "📊 Show Agent Monitor",
-        "category": "Claude Agent Farm",
+        "category": "AutoClaude Agent Farm",
         "icon": "$(dashboard)"
       },
       {
         "command": "autoclaude.attachToAgents",
         "title": "🖥️ Attach to Agent Session",
-        "category": "Claude Agent Farm",
+        "category": "AutoClaude Agent Farm",
         "icon": "$(terminal)"
       },
       {
         "command": "autoclaude.clearAllAgentContext",
         "title": "🧹 Clear All Agent Context",
-        "category": "Claude Agent Farm",
+        "category": "AutoClaude Agent Farm",
         "icon": "$(clear-all)"
       },
       {
         "command": "autoclaude.toggleAutoOrchestration",
         "title": "🤖 Toggle Auto-Orchestration (On/Off)",
-        "category": "Claude Agent Farm",
+        "category": "AutoClaude Agent Farm",
         "icon": "$(circuit-board)"
       },
       {
         "command": "autoclaude.exportQueue",
         "title": "📤 Export Queue",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(export)"
       },
       {
         "command": "autoclaude.importQueue",
         "title": "📥 Import Queue",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(import)"
       },
       {
         "command": "autoclaude.exportSettings",
         "title": "⚙️ Export Settings",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(save-as)"
       },
       {
         "command": "autoclaude.useTemplate",
         "title": "📋 Use Message Template",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(file-text)"
       },
       {
         "command": "autoclaude.manageTemplates",
         "title": "🗂️ Manage Message Templates",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(library)"
       },
       {
         "command": "autoclaude.showStatistics",
         "title": "📊 Show Queue Statistics",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(graph)"
       },
       {
         "command": "autoclaude.checkRemoteStatus",
         "title": "🌐 Check Remote Environment",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(remote)"
       },
       {
         "command": "autoclaude.showErrorHistory",
         "title": "📋 Show Error History",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(list-unordered)"
       },
       {
         "command": "autoclaude.showServiceHealth",
         "title": "💚 Show Service Health",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(pulse)"
       },
       {
         "command": "autoclaude.exportLogs",
         "title": "📄 Export Debug Logs",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(export)"
       },
       {
         "command": "autoclaude.validateConfiguration",
         "title": "✅ Validate Configuration",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(check)"
       },
       {
         "command": "autoclaude.resetToDefaults",
         "title": "🔄 Reset to Default Settings",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(discard)"
       },
       {
         "command": "autoclaude.startHiveMind",
         "title": "🧠 Start Hive-Mind Mode",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(globe)"
       },
       {
         "command": "autoclaude.startSwarm",
         "title": "🐝 Start Swarm Mode",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(symbol-namespace)"
       },
       {
         "command": "autoclaude.executeNaturalCommand",
         "title": "💬 Execute Natural Language Command",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(comment)"
       },
       {
         "command": "autoclaude.showWorkflowStatus",
         "title": "📊 Show Workflow Status",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(dashboard)"
       },
       {
         "command": "autoclaude.toggleHook",
         "title": "🪝 Configure Hooks",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(settings-gear)"
       },
       {
         "command": "autoclaude.viewMemoryInsights",
         "title": "🧠 View Memory & Learning Insights",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(graph)"
       },
       {
         "command": "autoclaude.exportMemory",
         "title": "💾 Export Memory Database",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(database)"
       },
       {
         "command": "autoclaude.showAgentStatus",
         "title": "📊 Show Agent Status",
-        "category": "Claude Agent Farm",
+        "category": "AutoClaude Agent Farm",
         "icon": "$(pulse)"
       },
       {
         "command": "autoclaude.showHookStats",
         "title": "🔗 Show Hook Statistics",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(graph-line)"
       },
       {
         "command": "autoclaude.showMemoryStats",
         "title": "📈 Show Memory Statistics",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(graph)"
       },
       {
         "command": "autoclaude.showSessionInfo",
         "title": "ℹ️ Show Session Information",
-        "category": "Claude",
+        "category": "AutoClaude",
         "icon": "$(info)"
       },
       {
         "command": "autoclaude.submitAgentTask",
         "title": "📝 Submit Task to Agents",
-        "category": "Claude Agent Farm",
+        "category": "AutoClaude Agent Farm",
         "icon": "$(send)"
       }
     ],
