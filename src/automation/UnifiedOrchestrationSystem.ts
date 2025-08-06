@@ -113,18 +113,29 @@ export class UnifiedOrchestrationSystem {
   async initialize(): Promise<void> {
     log.info("Initializing Unified Orchestration System");
 
-    try {
-      // Initialize all subsystems
-      await Promise.all([
-        this.workflowSystem.initialize(),
-        this.subAgentRunner.initialize(),
-        this.contextManager.initialize(),
-        this.memoryManager.initialize(),
-        this.hookManager.initialize(),
-        this.agentCoordinator.initialize(),
-        this.systemMonitor.initialize(),
-      ]);
+    const initTasks = [
+      { name: 'workflowSystem', init: () => this.workflowSystem.initialize() },
+      { name: 'subAgentRunner', init: () => this.subAgentRunner.initialize() },
+      { name: 'contextManager', init: () => this.contextManager.initialize() },
+      { name: 'memoryManager', init: () => this.memoryManager.initialize() },
+      { name: 'hookManager', init: () => this.hookManager.initialize() },
+      { name: 'agentCoordinator', init: () => this.agentCoordinator.initialize() },
+      { name: 'systemMonitor', init: () => this.systemMonitor.initialize() },
+    ];
 
+    // Initialize each subsystem with error handling
+    for (const task of initTasks) {
+      try {
+        await task.init();
+        log.info(`Initialized ${task.name}`);
+      } catch (error) {
+        log.error(`Failed to initialize ${task.name}:`, error as Error);
+        // Continue with other initializations instead of throwing
+        console.warn(`[AutoClaude] ${task.name} initialization failed but continuing`);
+      }
+    }
+
+    try {
       // Set up automatic coordination
       await this.setupAutomaticCoordination();
 
@@ -134,13 +145,13 @@ export class UnifiedOrchestrationSystem {
       // Start automatic monitoring
       await this.startAutomaticMonitoring();
 
-      log.info("Unified Orchestration System initialized successfully");
+      log.info("Unified Orchestration System initialized (with some subsystems disabled)");
     } catch (error) {
       log.error(
-        "Failed to initialize Unified Orchestration System",
+        "Failed to complete Unified Orchestration System setup",
         error as Error,
       );
-      throw error;
+      // Don't throw - let the extension continue with reduced functionality
     }
   }
 

@@ -55,27 +55,37 @@ export class AutomaticWorkflowSystem {
   async initialize(): Promise<void> {
     log.info("Initializing Automatic Workflow System");
 
+    // Initialize each component with error handling
     try {
-      // Initialize memory system
       await this.memorySystem.initialize();
-
-      // Initialize Queen Agent
-      await this.queenAgent.initialize();
-
-      // Setup automatic behaviors
-      await this.setupAutomaticBehaviors();
-
-      // Load configuration
-      await this.loadConfiguration();
-
-      log.info("Automatic Workflow System initialized successfully");
+      log.info("Memory system initialized");
     } catch (error) {
-      log.error(
-        "Failed to initialize Automatic Workflow System",
-        error as Error,
-      );
-      throw error;
+      log.warn("Memory system initialization failed (non-critical):", error as Error);
     }
+
+    try {
+      await this.queenAgent.initialize();
+      log.info("Queen Agent initialized");
+    } catch (error) {
+      log.warn("Queen Agent initialization failed (non-critical):", error as Error);
+    }
+
+    try {
+      await this.setupAutomaticBehaviors();
+      log.info("Automatic behaviors set up");
+    } catch (error) {
+      log.warn("Automatic behaviors setup failed (non-critical):", error as Error);
+    }
+
+    try {
+      await this.loadConfiguration();
+      log.info("Configuration loaded");
+    } catch (error) {
+      log.warn("Configuration loading failed (non-critical):", error as Error);
+    }
+
+    log.info("Automatic Workflow System initialized (with some features disabled)");
+    // Don't throw - let the system run with reduced functionality
   }
 
   async startSession(mode: "swarm" | "hive-mind" = "swarm"): Promise<void> {
