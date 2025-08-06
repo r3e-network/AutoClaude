@@ -98,6 +98,31 @@ export class ProductionReadinessValidator {
       message: "Test data found",
       severity: "error",
     },
+    {
+      pattern: /sample\s+data/gi,
+      message: "Sample data found in production code",
+      severity: "error",
+    },
+    {
+      pattern: /example\.com|test@|john\s+doe|jane\s+doe/gi,
+      message: "Example/test values found",
+      severity: "error",
+    },
+    {
+      pattern: /abc123|def456|xyz789|test-id|dummy-id/gi,
+      message: "Hardcoded test IDs found",
+      severity: "error",
+    },
+    {
+      pattern: /lorem\s+ipsum/gi,
+      message: "Lorem ipsum placeholder text found",
+      severity: "error",
+    },
+    {
+      pattern: /\/\/.*for\s+now/gi,
+      message: "Temporary implementation comment found",
+      severity: "error",
+    },
 
     // Simplified implementations
     {

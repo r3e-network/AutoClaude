@@ -20,6 +20,12 @@ async function check() {
         pattern: /console\.(log|debug)/g,
         message: "Debug console statement found",
       },
+      { pattern: /sample\s+data/gi, message: "Sample data found" },
+      { pattern: /mock(?!ing)\s+data/gi, message: "Mock data found" },
+      { pattern: /dummy\s+data/gi, message: "Dummy data found" },
+      { pattern: /abc123|def456|test-id/gi, message: "Test IDs found" },
+      { pattern: /example\.com/gi, message: "Example domain found" },
+      { pattern: /for\s+now/gi, message: "Temporary implementation found" },
     ];
 
     // Just check our test file

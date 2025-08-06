@@ -1,0 +1,296 @@
+[
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/agents/hivemind/ArchitectAgent.ts",
+    "line": 29,
+    "pattern": "=\\s*\\[[\\s\\S]*?(?:John Doe|Jane Doe|test@|example\\....",
+    "content": "capabilities = [",
+    "type": "SAMPLE_DATA"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/agents/hivemind/CoderAgent.ts",
+    "line": 676,
+    "pattern": "\\/\\/.*(?:for now|temporarily|will be replaced|to b...",
+    "content": "// Add refactoring comments for now",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/agents/hivemind/CoderAgent.ts",
+    "line": 549,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/agents/hivemind/DocumentationAgent.ts",
+    "line": 540,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [...new Set(apiFiles)]; // Remove duplicates",
+    "type": "SAMPLE_DATA"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/agents/hivemind/DocumentationAgent.ts",
+    "line": 1459,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/agents/hivemind/OptimizationAgent.ts",
+    "line": 1185,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/agents/hivemind/ResearcherAgent.ts",
+    "line": 582,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/agents/hivemind/ResearcherAgent.ts",
+    "line": 720,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/agents/hivemind/ResearcherAgent.ts",
+    "line": 992,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/agents/hivemind/SecurityAgent.ts",
+    "line": 1391,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/agents/hivemind/TesterAgent.ts",
+    "line": 653,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/automation/IntelligentTaskAnalyzer.ts",
+    "line": 332,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/automation/IntelligentTaskAnalyzer.ts",
+    "line": 1007,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [...new Set(entities)]; // Remove duplicates",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/automation/UnifiedOrchestrationSystem.ts",
+    "line": 1375,
+    "pattern": "\\/\\/.*(?:for now|temporarily|will be replaced|to b...",
+    "content": "subtask: any, // Using any temporarily as Subtask type from IntelligentTaskAnalyzer",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/automation/UnifiedOrchestrationSystem.ts",
+    "line": 864,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/automation/UnifiedOrchestrationSystem.ts",
+    "line": 894,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/automation/UnifiedOrchestrationSystem.ts",
+    "line": 1217,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/automation/UnifiedOrchestrationSystem.ts",
+    "line": 1242,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/automation/UnifiedOrchestrationSystem.ts",
+    "line": 1263,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/automation/UnifiedOrchestrationSystem.ts",
+    "line": 1288,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SAMPLE_DATA"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/automation/taskCompletion.ts",
+    "line": 536,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "if (!workspaceFolders) return [];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/automation/taskDecomposer.ts",
+    "line": 739,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/automation/workflowOrchestrator.ts",
+    "line": 48,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/config/TechStackManager.ts",
+    "line": 266,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "if (!stack) return [];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/context/projectLearning.ts",
+    "line": 545,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/extension.ts",
+    "line": 2019,
+    "pattern": "\\/\\/.*(?:for now|temporarily|will be replaced|to b...",
+    "content": "// Toggle debug logging state (this would need to be implemented in core state)",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/memory/MemoryManager.production.ts",
+    "line": 551,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/monitoring/SystemMonitor.ts",
+    "line": 330,
+    "pattern": "\\/\\/.*(?:for now|temporarily|will be replaced|to b...",
+    "content": "const sessionsActive = 1; // Simplified for now",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/monitoring/SystemMonitor.ts",
+    "line": 506,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [...this.alerts];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/scripts/index.ts",
+    "line": 134,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [",
+    "type": "PLACEHOLDER"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/agents/IntegrationTestingAgent.ts",
+    "line": 262,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [...new Set(endpoints)];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/agents/IntegrationTestingAgent.ts",
+    "line": 278,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/agents/IntegrationTestingAgent.ts",
+    "line": 308,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [...new Set(operations)];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/agents/IntegrationTestingAgent.ts",
+    "line": 323,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/gitAgents.ts",
+    "line": 666,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/productionAgents.ts",
+    "line": 238,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [];",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/productionAgents.ts",
+    "line": 243,
+    "pattern": "return\\s+\\[[\\s\\S]*?(?:abc123|def456|test|dummy|sam...",
+    "content": "return [];",
+    "type": "SAMPLE_DATA"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/registry.ts",
+    "line": 73,
+    "pattern": "\\/\\/.*(?:for now|temporarily|will be replaced|to b...",
+    "content": "// For now, return all agents as categories are not implemented",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/subagents/registry.ts",
+    "line": 82,
+    "pattern": "\\/\\/.*(?:for now|temporarily|will be replaced|to b...",
+    "content": "// For now, using built-in agents provides complete functionality",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/validation/PreTaskValidator.ts",
+    "line": 213,
+    "pattern": "\\/\\/.*(?:for now|temporarily|will be replaced|to b...",
+    "content": "// For now, we'll check if there are any implementation files that might make tests pass",
+    "type": "SUSPICIOUS"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/validation/ProductionReadinessValidator.ts",
+    "line": 27,
+    "pattern": "=\\s*\\[[\\s\\S]*?(?:John Doe|Jane Doe|test@|example\\....",
+    "content": "private readonly FORBIDDEN_PATTERNS = [",
+    "type": "SAMPLE_DATA"
+  },
+  {
+    "file": "/Users/jinghuiliao/git/r3e/AutoClaude/src/validation/ProductionReadinessValidator.ts",
+    "line": 118,
+    "pattern": "lorem\\s+ipsum...",
+    "content": "message: \"Lorem ipsum placeholder text found\",",
+    "type": "LOREM_IPSUM"
+  }
+]
