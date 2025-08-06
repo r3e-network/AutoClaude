@@ -119,10 +119,11 @@ jobs:
         
         if [ -n "$RELEASE_FILE" ] && [ -f "$RELEASE_FILE" ]; then
           echo "Using release notes from: $RELEASE_FILE"
-          NOTES=$(cat "$RELEASE_FILE")
+          cp "$RELEASE_FILE" release-notes.md
         else
           echo "Generating default release notes"
-          NOTES="# AutoClaude v${VERSION}
+          cat > release-notes.md << EOF
+# AutoClaude v${VERSION}
 
 ## 🎉 New Release
 
@@ -134,7 +135,7 @@ This release was automatically generated from branch ${GITHUB_REF#refs/heads/}.
 1. Download the \`.vsix\` file from the assets below
 2. Open VS Code
 3. Go to Extensions view (Ctrl+Shift+X)
-4. Click on the \"...\" menu and select \"Install from VSIX...\"
+4. Click on the "..." menu and select "Install from VSIX..."
 5. Select the downloaded file
 
 ### 🚀 Features
@@ -147,11 +148,9 @@ This release was automatically generated from branch ${GITHUB_REF#refs/heads/}.
 See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes.
 
 ---
-*This release was automatically generated from the ${GITHUB_REF#refs/heads/} branch.*"
+*This release was automatically generated from the ${GITHUB_REF#refs/heads/} branch.*
+EOF
         fi
-        
-        # Save notes to file for gh release
-        echo "$NOTES" > release-notes.md
         
     - name: Create GitHub Release
       env:
