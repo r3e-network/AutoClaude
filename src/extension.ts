@@ -140,6 +140,10 @@ if (isDevelopmentMode()) {
 }
 
 export async function activate(context: vscode.ExtensionContext) {
+  // Debug: Log that activate is being called
+  console.log('[AutoClaude] Activate function called');
+  vscode.window.showInformationMessage('AutoClaude: Activating extension...');
+  
   try {
     extensionContext = context;
     setExtensionContext(context);
@@ -388,6 +392,9 @@ export async function activate(context: vscode.ExtensionContext) {
     });
 
     // Register commands
+    console.log('[AutoClaude] Registering commands...');
+    vscode.window.showInformationMessage('AutoClaude: Registering commands...');
+    
     const startCommand = vscode.commands.registerCommand(
       "autoclaude.start",
       async () => {
@@ -1563,6 +1570,9 @@ export async function activate(context: vscode.ExtensionContext) {
       configWatcher,
     );
 
+    console.log('[AutoClaude] Commands pushed to subscriptions');
+    vscode.window.showInformationMessage('AutoClaude: Commands registered successfully');
+
     // Auto-start or schedule Claude session based on configuration
     if (config.session.autoStart) {
       setTimeout(() => {
@@ -1583,6 +1593,18 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     infoLog("AutoClaude extension activated successfully");
+    console.log('[AutoClaude] Extension activation completed successfully');
+    vscode.window.showInformationMessage('AutoClaude: Extension activated! All commands ready.');
+    
+    // Return an API object (VS Code convention)
+    return {
+      version: context.extension.packageJSON.version,
+      commands: {
+        start: () => vscode.commands.executeCommand('autoclaude.start'),
+        stop: () => vscode.commands.executeCommand('autoclaude.stop'),
+        addMessage: () => vscode.commands.executeCommand('autoclaude.addMessage'),
+      }
+    };
   } catch (error) {
     errorLog("Failed to activate AutoClaude extension", {
       error: error instanceof Error ? error.message : String(error),
