@@ -186,6 +186,7 @@ export class ClaudeCliManager {
    */
   private getPlatformCommands(): string[] {
     const platform = os.platform();
+    const homeDir = os.homedir();
     
     // Common commands across platforms
     const baseCommands = ["claude", "claude-cli"];
@@ -195,19 +196,22 @@ export class ClaudeCliManager {
       case "win32":
         return [...baseCommands, "claude.exe", "claude.cmd", "claude.bat"];
       case "darwin":
-        // Check Homebrew locations
+        // Check Homebrew locations (both Intel and Apple Silicon)
         return [
           ...baseCommands,
-          "/usr/local/bin/claude",
-          "/opt/homebrew/bin/claude",
-          "~/.local/bin/claude"
+          "/opt/homebrew/bin/claude",  // Apple Silicon
+          "/usr/local/bin/claude",      // Intel Mac
+          path.join(homeDir, ".local", "bin", "claude"),
+          path.join(homeDir, "bin", "claude"),
+          "/Applications/Claude.app/Contents/MacOS/claude"
         ];
       case "linux":
         return [
           ...baseCommands,
           "/usr/local/bin/claude",
           "/usr/bin/claude",
-          "~/.local/bin/claude"
+          path.join(homeDir, ".local", "bin", "claude"),
+          path.join(homeDir, "bin", "claude")
         ];
       default:
         return baseCommands;

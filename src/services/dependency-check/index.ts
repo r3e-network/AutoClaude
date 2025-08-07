@@ -1,10 +1,16 @@
 import { debugLog } from "../../utils/logging";
 
 import * as vscode from "vscode";
-import { spawn } from "child_process";
+import { spawn, execSync } from "child_process";
 import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
+
+// Import improved detection functions
+import { 
+  checkClaudeInstallation as checkClaudeImproved, 
+  checkPythonInstallation as checkPythonImproved 
+} from "./improved";
 
 export interface DependencyCheckResult {
   available: boolean;
@@ -15,106 +21,15 @@ export interface DependencyCheckResult {
 }
 
 export async function checkClaudeInstallation(): Promise<DependencyCheckResult> {
-  return new Promise((resolve) => {
-    const process = spawn("claude", ["--version"], {
-      stdio: ["pipe", "pipe", "pipe"],
-      shell: true,
-    });
-
-    let stdout = "";
-    let stderr = "";
-
-    process.stdout?.on("data", (data) => {
-      stdout += data.toString();
-    });
-
-    process.stderr?.on("data", (data) => {
-      stderr += data.toString();
-    });
-
-    const timeout = setTimeout(() => {
-      process.kill();
-      resolve({
-        available: false,
-        error: "Command timeout - Claude CLI may not be installed",
-        installInstructions: getClaudeInstallInstructions(),
-      });
-    }, 5000);
-
-    process.on("close", (code) => {
-      clearTimeout(timeout);
-
-      if (code === 0 && stdout.trim()) {
-        resolve({
-          available: true,
-          version: stdout.trim(),
-          path: "claude", // Could be enhanced to find actual path
-        });
-      } else {
-        resolve({
-          available: false,
-          error: stderr.trim() || "Claude CLI not found in PATH",
-          installInstructions: getClaudeInstallInstructions(),
-        });
-      }
-    });
-
-    process.on("error", (error) => {
-      clearTimeout(timeout);
-      resolve({
-        available: false,
-        error: `Failed to check Claude installation: ${error.message}`,
-        installInstructions: getClaudeInstallInstructions(),
-      });
-    });
-  });
+  // Use the improved detection function
+  debugLog("[DependencyCheck] Using improved Claude detection");
+  return checkClaudeImproved();
 }
 
 export async function checkPythonInstallation(): Promise<DependencyCheckResult> {
-  const platform = os.platform();
-
-  // Platform-specific Python command preferences
-  let pythonCommands: string[];
-
-  switch (platform) {
-    case "win32": // Windows
-      pythonCommands = ["python", "python3", "py"];
-      break;
-    case "darwin": // macOS
-      pythonCommands = ["python3", "python"];
-      break;
-    case "linux": // Linux
-      pythonCommands = ["python3", "python"];
-      break;
-    default:
-      pythonCommands = ["python3", "python", "py"];
-  }
-
-  for (const cmd of pythonCommands) {
-    const result = await checkCommand(cmd, ["--version"]);
-    if (result.available) {
-      // Verify Python version is 3.8+
-      const versionResult = await verifyPythonVersion(cmd);
-      if (versionResult.valid) {
-        return {
-          ...result,
-          version: versionResult.version,
-        };
-      } else {
-        return {
-          available: false,
-          error: `Python version too old: ${versionResult.version}. Need Python 3.8+`,
-          installInstructions: getPythonInstallInstructions(),
-        };
-      }
-    }
-  }
-
-  return {
-    available: false,
-    error: "Python not found in PATH",
-    installInstructions: getPythonInstallInstructions(),
-  };
+  // Use the improved detection function
+  debugLog("[DependencyCheck] Using improved Python detection");
+  return checkPythonImproved();
 }
 
 async function verifyPythonVersion(
