@@ -233,7 +233,8 @@ export async function activate(context: vscode.ExtensionContext) {
         const workflowConfig = vscode.workspace.getConfiguration(
           "autoclaude.workflow",
         );
-        if (workflowConfig.get<boolean>("autoStart", true)) {
+        // Disabled auto-start to prevent hanging on startup with large codebases
+        if (workflowConfig.get<boolean>("autoStart", false)) {
           await unifiedSystem.start();
           log.info("Unified orchestration system auto-started");
         }

@@ -588,8 +588,16 @@ export class UnifiedOrchestrationSystem {
       if (pendingWork.length > 0) {
         log.info(`Found ${pendingWork.length} pending work items`);
 
+        // Limit to prevent overwhelming the system
+        const MAX_TASKS_PER_RUN = 5;
+        const limitedWork = pendingWork.slice(0, MAX_TASKS_PER_RUN);
+        
+        if (pendingWork.length > MAX_TASKS_PER_RUN) {
+          log.info(`Processing only first ${MAX_TASKS_PER_RUN} tasks to prevent system overload`);
+        }
+
         // Convert to tasks
-        const tasks = pendingWork.map((work) =>
+        const tasks = limitedWork.map((work) =>
           this.createTaskFromPendingWork(work),
         );
 
@@ -618,7 +626,16 @@ export class UnifiedOrchestrationSystem {
    * Process the task queue
    */
   private async processTaskQueue(): Promise<void> {
+    const MAX_PROCESSING_TIME = 30000; // 30 seconds max
+    const startTime = Date.now();
+    
     while (this.taskQueue.length > 0) {
+      // Check timeout to prevent infinite processing
+      if (Date.now() - startTime > MAX_PROCESSING_TIME) {
+        log.warn(`Task processing timeout reached, stopping queue processing. ${this.taskQueue.length} tasks remaining`);
+        break;
+      }
+      
       const task = this.taskQueue.shift()!;
       await this.executeTaskWithOrchestration(task);
     }
