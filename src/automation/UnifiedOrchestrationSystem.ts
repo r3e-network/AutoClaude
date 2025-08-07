@@ -102,6 +102,10 @@ export class UnifiedOrchestrationSystem {
     this.hookManager = getHookManager(workspaceRoot);
     this.agentCoordinator = getAgentCoordinator(workspaceRoot);
     this.systemMonitor = getSystemMonitor(workspaceRoot);
+    
+    // Initialize ProductionIssueQueueManager and ComprehensiveIssueHandler with workspace root
+    getProductionIssueQueueManager(workspaceRoot);
+    getComprehensiveIssueHandler(workspaceRoot);
   }
 
   static getInstance(workspaceRoot: string): UnifiedOrchestrationSystem {
