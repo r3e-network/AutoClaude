@@ -98,6 +98,8 @@ import {
 import { AutomaticWorkflowSystem } from "./automation/AutomaticWorkflowSystem";
 import { UnifiedOrchestrationSystem } from "./automation/UnifiedOrchestrationSystem";
 import { log } from "./utils/productionLogger";
+import { initializeStabilitySystems, getStabilityStatus } from "./stability";
+import { getAutoRecoverySystem } from "./stability/AutoRecoverySystem";
 import {
   AutoClaudeMemoryManager,
   AutoClaudeConfigManager,
@@ -154,6 +156,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Setup global error handling
     setupGlobalErrorHandler();
+    
+    // Initialize stability systems for robust session management
+    try {
+      await initializeStabilitySystems(context);
+      const autoRecovery = getAutoRecoverySystem();
+      autoRecovery.startMonitoring();
+      infoLog("Stability systems initialized successfully");
+    } catch (error) {
+      errorLog("Failed to initialize stability systems", { error });
+    }
 
     // Configure logging based on development mode
     if (isDevelopmentMode()) {
@@ -1523,6 +1535,64 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage("Memory insights UI coming soon!");
       },
     );
+    
+    // Add stability status command
+    const checkStabilityCommand = vscode.commands.registerCommand(
+      "autoclaude.checkStability",
+      async () => {
+        const status = getStabilityStatus();
+        const autoRecovery = getAutoRecoverySystem();
+        const recoveryStatus = autoRecovery.getStatus();
+        
+        const statusContent = [
+          "# AutoClaude Stability Status",
+          "",
+          `## Overall Health: ${status.overall.toUpperCase()}`,
+          "",
+          "## Session Health",
+          `- Healthy: ${status.session.isHealthy ? "✅" : "❌"}`,
+          `- Consecutive Failures: ${status.session.consecutiveFailures}`,
+          `- Memory Usage: ${(status.session.memoryUsage || 0).toFixed(2)}MB`,
+          `- Active Timers: ${status.session.activeTimers?.size || 0}`,
+          `- Active Intervals: ${status.session.activeIntervals?.size || 0}`,
+          `- Active Promises: ${status.session.activePromises?.size || 0}`,
+          `- Errors: ${status.session.errors?.length || 0}`,
+          `- Warnings: ${status.session.warnings?.length || 0}`,
+          "",
+          "## Queue Status",
+          `- Queue Size: ${status.queue.queueSize}`,
+          `- Processing: ${status.queue.processing}`,
+          `- Pending: ${status.queue.pending}`,
+          `- Failed: ${status.queue.failed}`,
+          `- Dead Letter: ${status.queue.deadLetter}`,
+          "",
+          "## Auto Recovery",
+          `- Recovering: ${recoveryStatus.isRecovering ? "🔄" : "✅"}`,
+          "",
+          "### Recovery Scenarios:",
+          ...recoveryStatus.scenarios.map(s => 
+            `- ${s.name}: ${s.attempts}/${s.maxAttempts} attempts`
+          ),
+        ].join("\n");
+        
+        const doc = await vscode.workspace.openTextDocument({
+          content: statusContent,
+          language: "markdown",
+        });
+        
+        await vscode.window.showTextDocument(doc);
+      },
+    );
+    
+    // Add manual recovery trigger command
+    const triggerRecoveryCommand = vscode.commands.registerCommand(
+      "autoclaude.triggerRecovery",
+      async () => {
+        const autoRecovery = getAutoRecoverySystem();
+        await autoRecovery.triggerCheck();
+        vscode.window.showInformationMessage("Recovery check triggered");
+      },
+    );
 
     context.subscriptions.push(
       startCommand,
@@ -1568,6 +1638,8 @@ export async function activate(context: vscode.ExtensionContext) {
       showWorkflowStatusCommand,
       toggleHookCommand,
       viewMemoryInsightsCommand,
+      checkStabilityCommand,
+      triggerRecoveryCommand,
       configWatcher,
     );
 
@@ -2583,6 +2655,16 @@ export async function deactivate(): Promise<void> {
   stopHealthCheck();
   stopAutomaticMaintenance();
   stopScheduledSession();
+  
+  // Stop stability systems
+  try {
+    const autoRecovery = getAutoRecoverySystem();
+    autoRecovery.stopMonitoring();
+    autoRecovery.dispose();
+    debugLog("Auto recovery system cleaned up");
+  } catch (error) {
+    debugLog(`Failed to cleanup auto recovery: ${error}`);
+  }
   
   // Dispose middleware
   disposeMiddleware();
