@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-VERSION="3.20.0"
+VERSION="3.20.1"
 REPO="r3e-network/AutoClaude"
 BRANCH="release/v3.16.0"  # Current branch
 

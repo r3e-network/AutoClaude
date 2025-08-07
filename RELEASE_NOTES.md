@@ -1,4 +1,4 @@
-# AutoClaude v3.20.0 Release Notes
+# AutoClaude v3.20.1 Release Notes
 
 ## 🎉 Automatic Claude Updates & Enhanced Stability
 
