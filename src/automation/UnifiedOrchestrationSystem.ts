@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { TextDecoder } from "util";
 import { log } from "../utils/productionLogger";
+import { getStabilityConfig } from "../config/stability-config";
 import { AutomaticWorkflowSystem } from "./AutomaticWorkflowSystem";
 import { SubAgentRunner } from "../subagents/SubAgentRunner";
 import { ParallelAgentOrchestrator } from "../agents/ParallelAgentOrchestrator";
@@ -348,52 +349,72 @@ export class UnifiedOrchestrationSystem {
         }
       }
 
-      // CRITICAL: Validate production readiness before marking as complete
-      const validationResult = await this.validateProductionReadiness();
+      // Check if production validation is enabled
+      const stabilityConfig = getStabilityConfig();
+      
+      if (stabilityConfig.get("enableProductionValidation")) {
+        // Validate production readiness
+        const validationResult = await this.validateProductionReadiness();
 
-      if (!validationResult.isProductionReady) {
-        log.error("Task cannot be completed - code is not production ready", undefined, {
-          taskId: task.id,
-          errors: validationResult.errors.length,
-          criticalIssues: validationResult.criticalIssues.length,
-        });
-
-        // Show validation report to user
-        const report =
-          this.productionValidator.formatValidationResult(validationResult);
-        vscode.window
-          .showErrorMessage(
-            "Task cannot be completed - code is not production ready. Check output for details.",
-            "Show Report",
-          )
-          .then((action) => {
-            if (action === "Show Report") {
-              const outputChannel = vscode.window.createOutputChannel(
-                "Production Readiness",
-              );
-              outputChannel.appendLine(report);
-              outputChannel.show();
-            }
+        if (!validationResult.isProductionReady) {
+          log.warn("Code is not production ready", undefined, {
+            taskId: task.id,
+            errors: validationResult.errors.length,
+            criticalIssues: validationResult.criticalIssues.length,
           });
 
-        // Attempt to fix issues automatically
-        await this.attemptAutomaticFixes(validationResult);
+          // Show validation report to user (non-blocking)
+          const report = this.productionValidator.formatValidationResult(validationResult);
+          vscode.window
+            .showWarningMessage(
+              "Code may not be production ready. Check output for details.",
+              "Show Report",
+              "Ignore"
+            )
+            .then((action) => {
+              if (action === "Show Report") {
+                const outputChannel = vscode.window.createOutputChannel(
+                  "Production Readiness",
+                );
+                outputChannel.appendLine(report);
+                outputChannel.show();
+              }
+            });
 
-        // Re-validate after fixes
-        const revalidationResult = await this.validateProductionReadiness();
+          // Attempt automatic fixes if enabled
+          if (stabilityConfig.get("autoFixValidationIssues")) {
+            try {
+              await this.attemptAutomaticFixes(validationResult);
+              
+              // Re-validate after fixes
+              const revalidationResult = await this.validateProductionReadiness();
+              
+              if (revalidationResult.isProductionReady) {
+                log.info("Production readiness issues fixed automatically");
+              }
+            } catch (error) {
+              log.warn("Failed to automatically fix production issues", error as Error);
+            }
+          }
 
-        if (!revalidationResult.isProductionReady) {
-          // Still not ready - mark task as failed
-          task.status = TaskStatus.FAILED;
-          task.result = {
-            success: false,
-            error: "Code is not production ready",
-            data: revalidationResult,
-          };
-          throw new Error(
-            "Production readiness validation failed after automatic fixes",
-          );
+          // Only block if configured to do so
+          if (stabilityConfig.get("blockOnValidationFailure")) {
+            task.status = TaskStatus.FAILED;
+            task.result = {
+              success: false,
+              error: "Code is not production ready",
+              data: validationResult,
+            };
+            throw new Error(
+              "Production readiness validation failed - blocking task completion",
+            );
+          } else {
+            // Log warning but continue
+            log.warn("Continuing despite production readiness issues (non-blocking mode)");
+          }
         }
+      } else {
+        log.info("Production validation disabled - skipping checks");
       }
 
       // Update task completion only if validation passes

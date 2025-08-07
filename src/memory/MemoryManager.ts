@@ -2,15 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import type { Database } from "sqlite3";
-
-// Try to load sqlite3, but don't fail if it's not available
-let sqlite3: any;
-try {
-  sqlite3 = require("sqlite3").verbose();
-} catch (error) {
-  console.warn("[AutoClaude] sqlite3 not available - memory features will be disabled");
-  sqlite3 = null;
-}
+import { sqliteLoader, MemoryFallbackStorage } from "./SqliteLoader";
 import { promisify } from "util";
 import { debugLog } from "../utils/logging";
 import {
@@ -78,6 +70,8 @@ export class MemoryManager {
   private db: Database | null = null;
   private dbPath: string;
   private initialized: boolean = false;
+  private fallbackStorage: MemoryFallbackStorage | null = null;
+  private useFallback = false;
 
   // Promisified database methods
   private dbRun: DatabaseMethod;
@@ -91,10 +85,15 @@ export class MemoryManager {
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    // Skip initialization if sqlite3 is not available
-    if (!sqlite3) {
-      console.warn("[AutoClaude] Memory system disabled - sqlite3 not available");
+    // Check if SQLite is available
+    if (!sqliteLoader.isAvailable()) {
+      console.warn("[AutoClaude] SQLite not available - using in-memory fallback storage");
+      this.fallbackStorage = sqliteLoader.createMemoryFallback();
+      this.useFallback = true;
       this.initialized = true;
+      
+      // Initialize fallback tables
+      this.initializeFallbackTables();
       return;
     }
 
@@ -105,13 +104,24 @@ export class MemoryManager {
         fs.mkdirSync(dir, { recursive: true });
       }
 
-      // Open database
-      this.db = new sqlite3.Database(this.dbPath);
-
-      // Promisify methods
-      this.dbRun = promisify(this.db!.run.bind(this.db));
-      this.dbGet = promisify(this.db!.get.bind(this.db));
-      this.dbAll = promisify(this.db!.all.bind(this.db));
+      // Open database using SqliteLoader
+      const sqlite3Module = sqliteLoader.getSqlite3();
+      if (sqlite3Module) {
+        this.db = new sqlite3Module.Database(this.dbPath);
+        
+        // Promisify methods
+        this.dbRun = promisify(this.db!.run.bind(this.db));
+        this.dbGet = promisify(this.db!.get.bind(this.db));
+        this.dbAll = promisify(this.db!.all.bind(this.db));
+      } else {
+        // Try alternative connection method
+        this.db = await sqliteLoader.createDatabase(this.dbPath);
+        
+        // Setup promisified methods for alternative driver
+        this.dbRun = (sql: string, params?: any) => this.db!.run(sql, params);
+        this.dbGet = (sql: string, params?: any) => this.db!.get(sql, params);
+        this.dbAll = (sql: string, params?: any) => this.db!.all(sql, params);
+      }
 
       // Create tables
       await this.createTables();
@@ -120,9 +130,26 @@ export class MemoryManager {
       this.initialized = true;
       debugLog("Memory system initialized successfully");
     } catch (error) {
-      debugLog(`Failed to initialize memory system: ${error}`);
-      throw error;
+      debugLog(`Failed to initialize SQLite, falling back to in-memory storage: ${error}`);
+      
+      // Fall back to in-memory storage
+      this.fallbackStorage = sqliteLoader.createMemoryFallback();
+      this.useFallback = true;
+      this.initialized = true;
+      this.initializeFallbackTables();
     }
+  }
+  
+  private initializeFallbackTables(): void {
+    if (!this.fallbackStorage) return;
+    
+    // Create tables in fallback storage
+    this.fallbackStorage.createTable("projects");
+    this.fallbackStorage.createTable("conversion_history");
+    this.fallbackStorage.createTable("conversion_patterns");
+    this.fallbackStorage.createTable("agent_memory");
+    this.fallbackStorage.createTable("workflow_templates");
+    this.fallbackStorage.createTable("statistics");
   }
 
   private async createTables(): Promise<void> {

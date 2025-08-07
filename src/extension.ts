@@ -126,6 +126,8 @@ let debugQueueState: (() => void) | undefined;
 
 // Extension context for global access
 let extensionContext: vscode.ExtensionContext;
+let activationInProgress = false;
+let activated = false;
 
 // Dynamically import development features only in dev mode
 if (isDevelopmentMode()) {
@@ -144,7 +146,19 @@ if (isDevelopmentMode()) {
 export async function activate(context: vscode.ExtensionContext) {
   // Debug: Log that activate is being called
   console.log('[AutoClaude] Activate function called');
-  vscode.window.showInformationMessage('AutoClaude: Activating extension...');
+  
+  // Prevent duplicate activation
+  if (activated) {
+    console.log('[AutoClaude] Already activated, skipping');
+    return;
+  }
+  
+  if (activationInProgress) {
+    console.log('[AutoClaude] Activation already in progress, skipping');
+    return;
+  }
+  
+  activationInProgress = true;
   
   try {
     extensionContext = context;
@@ -406,7 +420,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Register commands
     console.log('[AutoClaude] Registering commands...');
-    vscode.window.showInformationMessage('AutoClaude: Registering commands...');
     
     const startCommand = vscode.commands.registerCommand(
       "autoclaude.start",
@@ -1644,7 +1657,6 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     console.log('[AutoClaude] Commands pushed to subscriptions');
-    vscode.window.showInformationMessage('AutoClaude: Commands registered successfully');
 
     // Auto-start or schedule Claude session based on configuration
     if (config.session.autoStart) {
@@ -1665,9 +1677,12 @@ export async function activate(context: vscode.ExtensionContext) {
       }, 1000); // Small delay to ensure extension is fully loaded
     }
 
+    // Mark activation as complete
+    activated = true;
+    activationInProgress = false;
+    
     infoLog("AutoClaude extension activated successfully");
     console.log('[AutoClaude] Extension activation completed successfully');
-    vscode.window.showInformationMessage('AutoClaude: Extension activated! All commands ready.');
     
     // Return an API object (VS Code convention)
     return {
@@ -1679,6 +1694,10 @@ export async function activate(context: vscode.ExtensionContext) {
       }
     };
   } catch (error) {
+    // Reset activation flags on error
+    activationInProgress = false;
+    activated = false;
+    
     errorLog("Failed to activate AutoClaude extension", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
