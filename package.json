@@ -272,6 +272,24 @@
         "icon": "$(info)"
       },
       {
+        "command": "autoclaude.checkClaudeCli",
+        "title": "🔍 Check Claude CLI Status",
+        "category": "AutoClaude",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "autoclaude.checkClaudeUpdate",
+        "title": "🔄 Check for Claude Updates",
+        "category": "AutoClaude",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "autoclaude.claudeUpdateStatus",
+        "title": "📊 Claude Update Status",
+        "category": "AutoClaude",
+        "icon": "$(versions)"
+      },
+      {
         "command": "autoclaude.submitAgentTask",
         "title": "📝 Submit Task to Agents",
         "category": "AutoClaude Agent Farm",
@@ -548,6 +566,33 @@
           "maximum": 60,
           "description": "Delay in seconds between starting each agent"
         },
+        "autoclaude.updates.autoCheck": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically check for Claude updates"
+        },
+        "autoclaude.updates.autoInstall": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically install Claude updates (requires confirmation)"
+        },
+        "autoclaude.updates.checkInterval": {
+          "type": "number",
+          "default": 24,
+          "minimum": 1,
+          "maximum": 168,
+          "description": "Hours between automatic update checks"
+        },
+        "autoclaude.updates.notifyOnUpdate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show notification when updates are available"
+        },
+        "autoclaude.updates.preReleaseChannel": {
+          "type": "boolean",
+          "default": false,
+          "description": "Check for pre-release versions of Claude"
+        },
         "autoclaude.parallelAgents.contextThreshold": {
           "type": "number",
           "default": 20,
@@ -800,9 +845,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:integration": "jest --testPathPattern=integration",
-    "test:unit": "jest --testPathPattern=\"(simple|id-generator)\\.test\\.ts\"",
-    "test:production": "jest --testPathPattern=\"(simple|id-generator)\\.test\\.ts\"",
+    "test:integration": "jest --testPathPatterns=integration",
+    "test:unit": "jest --testPathPatterns=\"(simple|id-generator)\\.test\\.ts\"",
+    "test:production": "jest --testPathPatterns=\"(simple|id-generator)\\.test\\.ts\"",
     "package": "npx @vscode/vsce package --no-dependencies",
     "package:pre-release": "npx @vscode/vsce package --no-dependencies --pre-release",
     "publish": "npx @vscode/vsce publish",

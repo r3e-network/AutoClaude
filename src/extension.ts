@@ -100,6 +100,7 @@ import { UnifiedOrchestrationSystem } from "./automation/UnifiedOrchestrationSys
 import { log } from "./utils/productionLogger";
 import { initializeStabilitySystems, getStabilityStatus } from "./stability";
 import { getAutoRecoverySystem } from "./stability/AutoRecoverySystem";
+import { getClaudeUpdateManager } from "./services/claude-update-manager";
 import {
   AutoClaudeMemoryManager,
   AutoClaudeConfigManager,
@@ -138,23 +139,23 @@ if (isDevelopmentMode()) {
       debugQueueState = module.debugQueueState;
     })
     .catch((error) => {
-      console.error("Failed to load development features:", error);
+      errorLog("Failed to load development features", error as Error);
       vscode.window.showWarningMessage("Development features failed to load");
     });
 }
 
 export async function activate(context: vscode.ExtensionContext) {
   // Debug: Log that activate is being called
-  console.log('[AutoClaude] Activate function called');
+  debugLog('[AutoClaude] Activate function called');
   
   // Prevent duplicate activation
   if (activated) {
-    console.log('[AutoClaude] Already activated, skipping');
+    debugLog('[AutoClaude] Already activated, skipping');
     return;
   }
   
   if (activationInProgress) {
-    console.log('[AutoClaude] Activation already in progress, skipping');
+    debugLog('[AutoClaude] Activation already in progress, skipping');
     return;
   }
   
@@ -179,6 +180,15 @@ export async function activate(context: vscode.ExtensionContext) {
       infoLog("Stability systems initialized successfully");
     } catch (error) {
       errorLog("Failed to initialize stability systems", { error });
+    }
+    
+    // Initialize Claude update manager
+    try {
+      const updateManager = getClaudeUpdateManager();
+      await updateManager.initialize();
+      infoLog("Claude update manager initialized");
+    } catch (error) {
+      errorLog("Failed to initialize update manager", { error });
     }
 
     // Configure logging based on development mode
@@ -419,7 +429,7 @@ export async function activate(context: vscode.ExtensionContext) {
     });
 
     // Register commands
-    console.log('[AutoClaude] Registering commands...');
+    debugLog('[AutoClaude] Registering commands...');
     
     const startCommand = vscode.commands.registerCommand(
       "autoclaude.start",
@@ -1639,6 +1649,77 @@ export async function activate(context: vscode.ExtensionContext) {
         await vscode.window.showTextDocument(doc);
       },
     );
+    
+    // Add Claude update check command
+    const checkClaudeUpdateCommand = vscode.commands.registerCommand(
+      "autoclaude.checkClaudeUpdate",
+      async () => {
+        const updateManager = getClaudeUpdateManager();
+        const versionInfo = await updateManager.checkForUpdates();
+        
+        if (!versionInfo) {
+          vscode.window.showErrorMessage("Failed to check for Claude updates");
+          return;
+        }
+        
+        if (versionInfo.isUpdateAvailable) {
+          const action = await vscode.window.showInformationMessage(
+            `Claude update available: ${versionInfo.current} → ${versionInfo.latest}`,
+            "Install Now",
+            "Later"
+          );
+          
+          if (action === "Install Now") {
+            await updateManager.installUpdate(versionInfo);
+          }
+        } else {
+          vscode.window.showInformationMessage(
+            `Claude is up to date (version ${versionInfo.current})`
+          );
+        }
+      },
+    );
+    
+    // Add Claude update status command
+    const claudeUpdateStatusCommand = vscode.commands.registerCommand(
+      "autoclaude.claudeUpdateStatus",
+      async () => {
+        const updateManager = getClaudeUpdateManager();
+        const status = updateManager.getStatus();
+        
+        const lastCheck = status.lastCheckTime 
+          ? new Date(status.lastCheckTime).toLocaleString()
+          : "Never";
+        
+        const statusContent = [
+          "# Claude Update Status",
+          "",
+          "## Version Information",
+          `- **Current Version**: ${status.currentVersion || "Unknown"}`,
+          `- **Latest Version**: ${status.latestVersion || "Unknown"}`,
+          `- **Update Available**: ${status.updateAvailable ? "✅ Yes" : "❌ No"}`,
+          "",
+          "## Update Settings",
+          `- **Auto-Check Enabled**: ${status.autoCheckEnabled ? "✅" : "❌"}`,
+          `- **Last Check**: ${lastCheck}`,
+          "",
+          "## Actions",
+          "- Check for updates: Run command `AutoClaude: Check for Claude Updates`",
+          "- Configure updates: Settings → AutoClaude → Updates",
+          "",
+          status.updateAvailable 
+            ? "### 🎉 Update Available!\nRun `AutoClaude: Check for Claude Updates` to install"
+            : "### ✅ You're up to date!"
+        ].join("\n");
+        
+        const doc = await vscode.workspace.openTextDocument({
+          content: statusContent,
+          language: "markdown"
+        });
+        
+        await vscode.window.showTextDocument(doc);
+      },
+    );
 
     context.subscriptions.push(
       startCommand,
@@ -1687,10 +1768,12 @@ export async function activate(context: vscode.ExtensionContext) {
       checkStabilityCommand,
       triggerRecoveryCommand,
       checkClaudeCliCommand,
+      checkClaudeUpdateCommand,
+      claudeUpdateStatusCommand,
       configWatcher,
     );
 
-    console.log('[AutoClaude] Commands pushed to subscriptions');
+    debugLog('[AutoClaude] Commands pushed to subscriptions');
 
     // Auto-start or schedule Claude session based on configuration
     if (config.session.autoStart) {
@@ -1716,7 +1799,7 @@ export async function activate(context: vscode.ExtensionContext) {
     activationInProgress = false;
     
     infoLog("AutoClaude extension activated successfully");
-    console.log('[AutoClaude] Extension activation completed successfully');
+    infoLog('[AutoClaude] Extension activation completed successfully');
     
     // Return an API object (VS Code convention)
     return {
@@ -2719,6 +2802,15 @@ export async function deactivate(): Promise<void> {
     debugLog(`Failed to cleanup auto recovery: ${error}`);
   }
   
+  // Stop update manager
+  try {
+    const updateManager = getClaudeUpdateManager();
+    updateManager.dispose();
+    debugLog("Update manager cleaned up");
+  } catch (error) {
+    debugLog(`Failed to cleanup update manager: ${error}`);
+  }
+  
   // Dispose middleware
   disposeMiddleware();
 
@@ -2788,7 +2880,7 @@ export async function deactivate(): Promise<void> {
     try {
       clearAllTimers();
     } catch (error) {
-      console.error("Error clearing timers during deactivation:", error);
+      errorLog("Error clearing timers during deactivation", error as Error);
     }
   }
 
@@ -2797,7 +2889,7 @@ export async function deactivate(): Promise<void> {
     saveWorkspaceHistory();
     endCurrentHistoryRun();
   } catch (error) {
-    console.error("Error saving state during deactivation:", error);
+    errorLog("Error saving state during deactivation", error as Error);
   }
 
   // Clean up output and stop loops
@@ -2806,6 +2898,6 @@ export async function deactivate(): Promise<void> {
     clearClaudeOutput();
     stopAutoClaude();
   } catch (error) {
-    console.error("Error during final cleanup:", error);
+    errorLog("Error during final cleanup", error as Error);
   }
 }

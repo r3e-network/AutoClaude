@@ -139,7 +139,7 @@ export class UnifiedOrchestrationSystem {
       } catch (error) {
         log.warn(`Failed to initialize ${task.name}:`, error as Error);
         // Continue with other initializations instead of throwing
-        console.warn(`[AutoClaude] ${task.name} initialization failed but continuing`);
+        log.warn(`${task.name} initialization failed but continuing`);
       }
     }
 

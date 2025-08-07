@@ -5,6 +5,83 @@ All notable changes to the AutoClaude extension will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.20.0] - 2025-01-07
+
+### 🚀 Major Features
+
+#### Automatic Claude Updates
+- **Auto-Update Manager**: Automatically detects and installs new Claude Code versions
+- Background update checking every 24 hours (configurable)
+- Support for multiple installation methods (Homebrew, pip, npm)
+- Update notifications with one-click installation
+- Manual update check command: `AutoClaude: Check for Claude Updates`
+
+#### Enhanced Stability & Recovery Systems
+- **Session Stability Manager**: Comprehensive health monitoring and auto-recovery
+- **Auto-Recovery System**: Handles crashes, hangs, and memory leaks automatically
+- **Connection Pool Manager**: Efficient resource management with connection pooling
+- **Robust Queue Manager**: Timeout protection and dead letter queue support
+
+#### Production-Ready Improvements
+- **Production Issue Queue Manager**: Intelligent issue detection and fixing
+- **Comprehensive Issue Handler**: Categorizes and prioritizes code issues
+- **Configurable Validation**: Production checks that don't block user workflow
+- **SQLite Fallback**: In-memory storage when SQLite is unavailable
+
+### ✨ New Features
+- Added `autoclaude.checkClaudeUpdate` command for manual update checks
+- Added `autoclaude.claudeUpdateStatus` command to view update status
+- Improved Claude CLI detection for Apple Silicon Macs (checks `/opt/homebrew/bin/`)
+- Enhanced dependency detection with platform-specific paths
+- Smart initialization with lazy loading for faster startup
+
+### 🔧 Improvements
+- Replaced all console statements with proper logging system
+- Improved error messages with actionable solutions
+- Better resource cleanup on extension deactivation
+- Optimized bundle size to 1.8MB
+- Enhanced TypeScript compilation with production optimizations
+
+### 🐛 Bug Fixes
+- Fixed false "Claude Code Missing" errors on macOS with Homebrew
+- Fixed SQLite initialization errors with fallback storage
+- Fixed production validation blocking user tasks
+- Fixed duplicate extension activation issues
+- Fixed memory leaks in long-running sessions
+- Fixed queue processing hangs with timeout protection
+
+### 📋 Configuration Updates
+New configuration options added:
+- `autoclaude.updates.autoCheck`: Enable automatic update checking
+- `autoclaude.updates.autoInstall`: Auto-install updates (requires confirmation)
+- `autoclaude.updates.checkInterval`: Hours between update checks (default: 24)
+- `autoclaude.updates.notifyOnUpdate`: Show update notifications
+- `autoclaude.updates.preReleaseChannel`: Check for pre-release versions
+
+### 🔒 Security
+- XSS protection enabled by default
+- Improved input sanitization
+- Secure session management
+- Configurable security settings
+
+### 📦 Dependencies
+- Updated all dependencies to latest stable versions
+- Added sqlite3 fallback support
+- Improved platform-specific dependency handling
+
+### 🏗️ Technical Improvements
+- Singleton pattern for all manager classes
+- Comprehensive error handling with recovery strategies
+- Memory leak prevention with proper resource disposal
+- Thread-safe operations where applicable
+- Performance monitoring and optimization
+
+### 📝 Developer Experience
+- Added production validation script
+- Improved development mode with debug controls
+- Better logging with configurable log levels
+- Enhanced error reporting with stack traces
+
 ## [3.11.0] - 2025-08-06
 
 ### 🎯 Production Readiness Release
