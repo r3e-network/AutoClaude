@@ -1655,7 +1655,7 @@ function startAutoClaude(context: vscode.ExtensionContext): void {
   );
 
   setClaudePanel(panel);
-  panel.webview.html = getWebviewContent(context);
+  panel.webview.html = getWebviewContent(context, panel.webview);
 
   loadPendingQueue();
   recoverWaitingMessages();

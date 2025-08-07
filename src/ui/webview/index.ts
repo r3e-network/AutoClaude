@@ -36,12 +36,13 @@ export function updateSessionState(): void {
   }
 }
 
-export function getWebviewContent(context: vscode.ExtensionContext): string {
-  if (!claudePanel) {
+export function getWebviewContent(context: vscode.ExtensionContext, webviewParam?: vscode.Webview): string {
+  // Use provided webview or fall back to claudePanel
+  const webview = webviewParam || claudePanel?.webview;
+  
+  if (!webview) {
     return getErrorHtml("Panel not initialized");
   }
-
-  const webview = claudePanel.webview;
 
   // Get URIs for resources - this works in both desktop and web
   const scriptUri = webview.asWebviewUri(
