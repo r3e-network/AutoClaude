@@ -430,13 +430,19 @@ export class QueenAgent implements HiveMindAgent {
   private async optimizeTaskDistribution(): Promise<void> {
     // Rebalance tasks across agents for optimal performance
     // Skip if getAgentLoads is not available
-    if (!this.agentCoordinator || typeof this.agentCoordinator.getAgentLoads !== 'function') {
+    if (!this.agentCoordinator) {
+      return;
+    }
+    
+    // Check if the method exists before calling
+    if (typeof (this.agentCoordinator as any).getAgentLoads !== 'function') {
+      // Method not available, skip optimization
       return;
     }
     
     try {
-      const loads = this.agentCoordinator.getAgentLoads();
-      const average = loads.reduce((a, b) => a + b.load, 0) / loads.length;
+      const loads = (this.agentCoordinator as any).getAgentLoads();
+      const average = loads.reduce((a: any, b: any) => a + b.load, 0) / loads.length;
 
       for (const agentLoad of loads) {
         if (agentLoad.load > average * 1.5) {
@@ -454,14 +460,21 @@ export class QueenAgent implements HiveMindAgent {
 
   private async redistributeTasks(overloadedAgentId: string): Promise<void> {
     // Move tasks from overloaded agent to others
-    const tasks = this.agentCoordinator.getAgentTasks(overloadedAgentId);
-    const redistributable = tasks.filter((t) => t.canRedistribute);
+    // Check if methods exist before calling
+    if (!this.agentCoordinator || 
+        typeof (this.agentCoordinator as any).getAgentTasks !== 'function' ||
+        typeof (this.agentCoordinator as any).reassignTask !== 'function') {
+      return;
+    }
+    
+    const tasks = (this.agentCoordinator as any).getAgentTasks(overloadedAgentId);
+    const redistributable = tasks.filter((t: any) => t.canRedistribute);
 
     for (const task of redistributable.slice(0, 2)) {
       // Move at most 2 tasks
       const newAgent = await this.selectBestAgent(task);
       if (newAgent.id !== overloadedAgentId) {
-        await this.agentCoordinator.reassignTask(
+        await (this.agentCoordinator as any).reassignTask(
           task.id,
           overloadedAgentId,
           newAgent.id,

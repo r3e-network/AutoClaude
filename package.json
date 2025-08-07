@@ -2,7 +2,7 @@
   "name": "autoclaude",
   "displayName": "AutoClaude",
   "description": "Automated Claude Code assistant with smart task completion, queue management, and workflow automation for VS Code",
-  "version": "3.16.0",
+  "version": "3.18.1",
   "publisher": "R3ENetwork",
   "icon": "img/autoclaude.png",
   "engines": {
@@ -276,6 +276,12 @@
         "title": "📝 Submit Task to Agents",
         "category": "AutoClaude Agent Farm",
         "icon": "$(send)"
+      },
+      {
+        "command": "autoclaude.testAutoFix",
+        "title": "🔧 Test Automatic Issue Fixing",
+        "category": "AutoClaude",
+        "icon": "$(tools)"
       }
     ],
     "menus": {

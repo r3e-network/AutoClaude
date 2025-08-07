@@ -28,6 +28,8 @@ import {
 import {
   HookManager,
 } from "../hooks/HookManager";
+import { issueFixerAgent, ProductionIssue } from "./IssueFixerAgent";
+import { getProductionIssueQueueManager } from "./ProductionIssueQueueManager";
 import {
   AgentCoordinator,
 } from "../agents/AgentCoordinator";
@@ -1459,54 +1461,185 @@ export class UnifiedOrchestrationSystem {
   }
 
   /**
+   * Format validation report for Claude
+   */
+  private formatValidationReport(validationResult: ValidationResult): string {
+    let report = "Production Readiness Validation Report\n";
+    report += "=" + "=".repeat(40) + "\n\n";
+    
+    report += `Status: ${validationResult.isProductionReady ? "✅ READY" : "❌ NOT READY"}\n\n`;
+    
+    if (validationResult.errors && validationResult.errors.length > 0) {
+      report += `## Errors (${validationResult.errors.length})\n`;
+      for (const error of validationResult.errors) {
+        report += `- ${error.message || error}\n`;
+      }
+      report += "\n";
+    }
+    
+    if (validationResult.criticalIssues && validationResult.criticalIssues.length > 0) {
+      report += `## Critical Issues (${validationResult.criticalIssues.length})\n`;
+      for (const critical of validationResult.criticalIssues) {
+        report += `- ${critical.message || critical}\n`;
+      }
+      report += "\n";
+    }
+    
+    if (validationResult.warnings && validationResult.warnings.length > 0) {
+      report += `## Warnings (${validationResult.warnings.length})\n`;
+      for (const warning of validationResult.warnings) {
+        report += `- ${warning.message || warning}\n`;
+      }
+      report += "\n";
+    }
+    
+    if (validationResult.summary) {
+      report += `## Summary\n${validationResult.summary}\n\n`;
+    }
+    
+    return report;
+  }
+
+  /**
+   * Parse validation error into a ProductionIssue
+   */
+  private parseValidationError(error: ValidationError | string, severityOverride?: "critical" | "error" | "warning"): ProductionIssue | null {
+    // Extract file path and line number from error message
+    // Common patterns: "file.ts:10:", "[file.ts:10]", "in file.ts at line 10"
+    const filePatterns = [
+      /^([^:]+):(\d+):\s*(.+)$/,  // file.ts:10: message
+      /\[([^:]+):(\d+)\]\s*(.+)$/,  // [file.ts:10] message
+      /in\s+([^\s]+)\s+at\s+line\s+(\d+):\s*(.+)$/i,  // in file.ts at line 10: message
+      /File:\s*([^,]+),\s*Line:\s*(\d+):\s*(.+)$/i,  // File: file.ts, Line: 10: message
+    ];
+
+    let file = "";
+    let line = 0;
+    let message = typeof error === 'string' ? error : (error.message || String(error));
+
+    // Try to extract file and line from error message
+    for (const pattern of filePatterns) {
+      const match = message.match(pattern);
+      if (match) {
+        file = match[1];
+        line = parseInt(match[2], 10);
+        message = match[3] || message;
+        break;
+      }
+    }
+
+    // If no file found in message, check if error has file property
+    if (!file && typeof error === 'object' && error !== null) {
+      file = (error as any).file || (error as any).fileName || (error as any).path || "";
+      line = (error as any).line || (error as any).lineNumber || 0;
+    }
+
+    // Determine issue type based on message content
+    let type: ProductionIssue["type"] = "placeholder";
+    let severity: ProductionIssue["severity"] = severityOverride || "warning";
+    let fixable = true;
+
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes("todo") || lowerMessage.includes("fixme")) {
+      type = "todo";
+      if (!severityOverride) severity = "warning";
+    } else if (lowerMessage.includes("password") || lowerMessage.includes("secret") || lowerMessage.includes("key") || lowerMessage.includes("token")) {
+      type = "hardcoded-secret";
+      if (!severityOverride) severity = "critical";
+    } else if (lowerMessage.includes("console.log") || lowerMessage.includes("console.error")) {
+      type = "console-log";
+      if (!severityOverride) severity = "warning";
+    } else if (lowerMessage.includes("placeholder") || lowerMessage.includes("not implemented") || lowerMessage.includes("mock") || lowerMessage.includes("stub")) {
+      type = "placeholder";
+      if (!severityOverride) severity = "error";
+    } else if (lowerMessage.includes("security") || lowerMessage.includes("vulnerability")) {
+      type = "security";
+      if (!severityOverride) severity = "critical";
+      fixable = false; // Security issues often need manual review
+    } else if (lowerMessage.includes("test") || lowerMessage.includes("failing")) {
+      type = "test-failure";
+      if (!severityOverride) severity = "error";
+      fixable = false; // Test failures need manual fixes
+    }
+
+    // If we couldn't extract a file, try to find it from workspace
+    if (!file) {
+      // For now, skip issues without file info
+      return null;
+    }
+
+    return {
+      type,
+      file,
+      line,
+      message,
+      severity,
+      fixable
+    };
+  }
+
+  /**
    * Attempt to automatically fix production readiness issues
    */
   private async attemptAutomaticFixes(validationResult: ValidationResult): Promise<void> {
-    log.info("Attempting automatic fixes for production readiness issues");
+    log.info("Sending production readiness issues to Claude for intelligent fixing");
 
+    // Get the production issue queue manager
+    const issueQueueManager = getProductionIssueQueueManager(this.workspacePath);
+    
+    // Send validation issues to Claude via message queue
+    await issueQueueManager.queueValidationIssues(validationResult);
+    
+    // Generate a comprehensive validation report
+    const validationReport = this.formatValidationReport(validationResult);
+    
+    // Queue comprehensive fix message for Claude
+    await issueQueueManager.queueComprehensiveFixMessage(validationReport);
+    
+    // Show status to user
+    vscode.window.showInformationMessage(
+      "🚀 Production issues have been queued for Claude to fix automatically. " +
+      "Claude will analyze and fix all issues to make the code production-ready."
+    );
+    
+    // Log the action
+    log.info("Production issues queued for Claude", {
+      errors: validationResult.errors.length,
+      criticalIssues: validationResult.criticalIssues?.length || 0,
+      warnings: validationResult.warnings?.length || 0
+    });
+
+    // Also try SubAgent fixes for complex issues
     const fixTasks: HiveMindTask[] = [];
 
-    // Create fix tasks for different issue types
-    if (validationResult.errors.some((e: ValidationError) => e.message.includes("TODO"))) {
+    // Create fix tasks for different issue types that need Claude's help
+    if (validationResult.errors.some((e: ValidationError) => e.message.includes("TODO") && e.message.includes("implement"))) {
       fixTasks.push(
         this.createTask(
-          "fix-todos",
-          "Remove all TODO comments and implement missing functionality",
+          "implement-todos",
+          "Implement TODO items that require complex logic",
           TaskPriority.CRITICAL,
         ),
       );
     }
 
-    if (
-      validationResult.errors.some((e: ValidationError) => e.message.includes("console"))
-    ) {
+    if (validationResult.errors.some((e: ValidationError) => e.message.includes("test"))) {
       fixTasks.push(
         this.createTask(
-          "remove-console",
-          "Replace all console.log statements with proper logging",
+          "fix-tests",
+          "Fix failing tests and add missing test coverage",
           TaskPriority.HIGH,
         ),
       );
     }
 
-    if (
-      validationResult.errors.some((e: ValidationError) => e.message.includes("any type"))
-    ) {
+    if (validationResult.errors.some((e: ValidationError) => e.message.includes("documentation"))) {
       fixTasks.push(
         this.createTask(
-          "fix-types",
-          "Replace all TypeScript any types with proper types",
-          TaskPriority.HIGH,
-        ),
-      );
-    }
-
-    if (validationResult.criticalIssues.length > 0) {
-      fixTasks.push(
-        this.createTask(
-          "fix-security",
-          "Fix all security issues including hardcoded secrets",
-          TaskPriority.CRITICAL,
+          "add-documentation",
+          "Add missing documentation for public APIs",
+          TaskPriority.MEDIUM,
         ),
       );
     }
