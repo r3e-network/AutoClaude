@@ -1628,38 +1628,52 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 function startAutoClaude(context: vscode.ExtensionContext): void {
-  if (isRunning && claudePanel) {
-    claudePanel.reveal(vscode.ViewColumn.Two);
-    vscode.window.showInformationMessage(
-      "AutoClaude is already running - showing existing panel",
+  try {
+    if (isRunning && claudePanel) {
+      claudePanel.reveal(vscode.ViewColumn.Two);
+      vscode.window.showInformationMessage(
+        "AutoClaude is already running - showing existing panel",
+      );
+      return;
+    }
+
+    if (isRunning && !claudePanel) {
+      setIsRunning(false);
+    }
+
+    debugLog("Creating webview panel...");
+    const panel = vscode.window.createWebviewPanel(
+      "autoclaude",
+      "AutoClaude",
+      vscode.ViewColumn.Two,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [
+          vscode.Uri.joinPath(context.extensionUri, "out"),
+          vscode.Uri.joinPath(context.extensionUri, "src"),
+          context.extensionUri,
+        ],
+      },
     );
-    return;
-  }
 
-  if (isRunning && !claudePanel) {
-    setIsRunning(false);
-  }
+    debugLog("Panel created, setting up content...");
+    setClaudePanel(panel);
+    
+    try {
+      const htmlContent = getWebviewContent(context, panel.webview);
+      debugLog(`HTML content length: ${htmlContent.length}`);
+      panel.webview.html = htmlContent;
+      debugLog("Webview HTML set successfully");
+    } catch (htmlError) {
+      errorLog("Failed to set webview HTML", { error: htmlError });
+      vscode.window.showErrorMessage(`Failed to create webview content: ${htmlError}`);
+      panel.dispose();
+      return;
+    }
 
-  const panel = vscode.window.createWebviewPanel(
-    "autoclaude",
-    "AutoClaude",
-    vscode.ViewColumn.Two,
-    {
-      enableScripts: true,
-      retainContextWhenHidden: true,
-      localResourceRoots: [
-        vscode.Uri.joinPath(context.extensionUri, "out"),
-        vscode.Uri.joinPath(context.extensionUri, "src"),
-        context.extensionUri,
-      ],
-    },
-  );
-
-  setClaudePanel(panel);
-  panel.webview.html = getWebviewContent(context, panel.webview);
-
-  loadPendingQueue();
-  recoverWaitingMessages();
+    loadPendingQueue();
+    recoverWaitingMessages();
 
   // Start automatic queue maintenance
   startAutomaticMaintenance();
@@ -1884,6 +1898,10 @@ function startAutoClaude(context: vscode.ExtensionContext): void {
 
   setIsRunning(true);
   vscode.window.showInformationMessage("AutoClaude started");
+  } catch (error) {
+    errorLog("Failed to start AutoClaude", { error });
+    vscode.window.showErrorMessage(`Failed to start AutoClaude: ${error}`);
+  }
 }
 
 async function getWorkspaceFiles(
