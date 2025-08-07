@@ -1606,6 +1606,39 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage("Recovery check triggered");
       },
     );
+    
+    // Add Claude CLI status check command
+    const checkClaudeCliCommand = vscode.commands.registerCommand(
+      "autoclaude.checkClaudeCli",
+      async () => {
+        const { getClaudeCliManager } = await import("./services/claude-cli-manager");
+        const cliManager = getClaudeCliManager();
+        const status = await cliManager.checkCliStatus(true);
+        
+        const statusContent = [
+          "# Claude CLI Status",
+          "",
+          `## Installation: ${status.installed ? "✅ Installed" : "❌ Not Installed"}`,
+          status.version ? `## Version: ${status.version}` : "",
+          status.path ? `## Path: ${status.path}` : "",
+          `## Authentication: ${status.authenticated ? "✅ Authenticated" : "❌ Not Authenticated"}`,
+          "",
+          status.error ? `### Error:\n${status.error}` : "",
+          "",
+          "## Actions:",
+          !status.installed ? "- Install Claude CLI: Run 'pip install claude-cli' or 'npm install -g claude-cli'" : "",
+          !status.authenticated ? "- Authenticate: Run 'claude login' in terminal" : "",
+          status.installed && status.authenticated ? "✅ Claude CLI is ready to use!" : ""
+        ].filter(line => line !== "").join("\n");
+        
+        const doc = await vscode.workspace.openTextDocument({
+          content: statusContent,
+          language: "markdown"
+        });
+        
+        await vscode.window.showTextDocument(doc);
+      },
+    );
 
     context.subscriptions.push(
       startCommand,
@@ -1653,6 +1686,7 @@ export async function activate(context: vscode.ExtensionContext) {
       viewMemoryInsightsCommand,
       checkStabilityCommand,
       triggerRecoveryCommand,
+      checkClaudeCliCommand,
       configWatcher,
     );
 

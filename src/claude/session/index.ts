@@ -34,6 +34,7 @@ import {
   showRemoteWarning,
   checkRemoteCompatibility,
 } from "../../utils/remoteDetection";
+import { getClaudeCliManager } from "../../services/claude-cli-manager";
 
 // Global recovery manager instance
 let recoveryManager: SessionRecoveryManager | null = null;
@@ -59,8 +60,64 @@ export async function startClaudeSession(
       return;
     }
 
-    // Check dependencies before starting
-    debugLog("🔍 Checking dependencies...");
+    // Check Claude CLI status first
+    debugLog("🔍 Checking Claude CLI status...");
+    const cliManager = getClaudeCliManager();
+    const cliStatus = await cliManager.checkCliStatus();
+    
+    if (!cliStatus.installed) {
+      debugLog("❌ Claude CLI not installed");
+      
+      const action = await vscode.window.showErrorMessage(
+        "Claude CLI is not installed. Please install it to use AutoClaude.",
+        "Install Guide",
+        "Auto Install",
+        "Cancel"
+      );
+      
+      if (action === "Install Guide") {
+        await cliManager.showInstallationGuide();
+      } else if (action === "Auto Install") {
+        const installed = await cliManager.attemptAutoInstall();
+        if (!installed) {
+          debugLog("❌ Auto installation failed or cancelled");
+          return;
+        }
+      } else {
+        return;
+      }
+      
+      // Check again after installation attempt
+      const newStatus = await cliManager.checkCliStatus(true);
+      if (!newStatus.installed) {
+        debugLog("❌ Claude CLI still not available after installation attempt");
+        return;
+      }
+    }
+    
+    if (!cliStatus.authenticated) {
+      debugLog("⚠️ Claude CLI not authenticated");
+      
+      const action = await vscode.window.showWarningMessage(
+        "Claude CLI is not authenticated. Please log in to use AutoClaude.",
+        "Open Terminal",
+        "Continue Anyway",
+        "Cancel"
+      );
+      
+      if (action === "Open Terminal") {
+        await cliManager.openAuthenticationTerminal();
+        return;
+      } else if (action === "Cancel") {
+        return;
+      }
+      // "Continue Anyway" will proceed - user may want to authenticate during session
+    }
+    
+    debugLog(`✅ Claude CLI ready: ${cliStatus.version || 'version unknown'}`);
+    
+    // Now check other dependencies (Python, PTY wrapper)
+    debugLog("🔍 Checking other dependencies...");
     let dependencyResults;
     try {
       dependencyResults = await runDependencyCheck();

@@ -529,9 +529,33 @@ export async function startProcessingQueue(
       setTimeout(() => {
         clearInterval(checkReadyInterval);
         if (!sessionReady) {
-          vscode.window.showErrorMessage(
-            "Claude session failed to start. Please check your Claude CLI installation.",
-          );
+          // Use the CLI manager to provide better error details
+          import("../../services/claude-cli-manager").then(({ getClaudeCliManager }) => {
+            const cliManager = getClaudeCliManager();
+            cliManager.checkCliStatus().then((status) => {
+              let errorMsg = "Claude session failed to start.";
+              
+              if (!status.installed) {
+                errorMsg = "Claude CLI is not installed. Please install it first.";
+              } else if (!status.authenticated) {
+                errorMsg = "Claude CLI is not authenticated. Please run 'claude login' in terminal.";
+              } else {
+                errorMsg = "Claude session failed to start. Please check the logs for details.";
+              }
+              
+              vscode.window.showErrorMessage(
+                errorMsg,
+                "Show Logs",
+                "Help"
+              ).then((action) => {
+                if (action === "Show Logs") {
+                  vscode.commands.executeCommand("autoclaude.exportLogs");
+                } else if (action === "Help") {
+                  cliManager.showInstallationGuide();
+                }
+              });
+            });
+          });
         }
       }, 30000);
     }
