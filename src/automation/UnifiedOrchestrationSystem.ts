@@ -30,6 +30,7 @@ import {
 } from "../hooks/HookManager";
 import { issueFixerAgent, ProductionIssue } from "./IssueFixerAgent";
 import { getProductionIssueQueueManager } from "./ProductionIssueQueueManager";
+import { getComprehensiveIssueHandler } from "./ComprehensiveIssueHandler";
 import {
   AgentCoordinator,
 } from "../agents/AgentCoordinator";
@@ -1583,32 +1584,58 @@ export class UnifiedOrchestrationSystem {
    * Attempt to automatically fix production readiness issues
    */
   private async attemptAutomaticFixes(validationResult: ValidationResult): Promise<void> {
-    log.info("Sending production readiness issues to Claude for intelligent fixing");
+    log.info("Using comprehensive issue handler to queue ALL issues for Claude");
 
-    // Get the production issue queue manager
-    const issueQueueManager = getProductionIssueQueueManager(this.workspacePath);
-    
-    // Send validation issues to Claude via message queue
-    await issueQueueManager.queueValidationIssues(validationResult);
-    
-    // Generate a comprehensive validation report
-    const validationReport = this.formatValidationReport(validationResult);
-    
-    // Queue comprehensive fix message for Claude
-    await issueQueueManager.queueComprehensiveFixMessage(validationReport);
-    
-    // Show status to user
-    vscode.window.showInformationMessage(
-      "🚀 Production issues have been queued for Claude to fix automatically. " +
-      "Claude will analyze and fix all issues to make the code production-ready."
-    );
-    
-    // Log the action
-    log.info("Production issues queued for Claude", {
-      errors: validationResult.errors.length,
-      criticalIssues: validationResult.criticalIssues?.length || 0,
-      warnings: validationResult.warnings?.length || 0
-    });
+    try {
+      // Use the comprehensive handler for robust issue processing
+      const comprehensiveHandler = getComprehensiveIssueHandler(this.workspacePath);
+      const result = await comprehensiveHandler.processAllValidationResults(validationResult);
+      
+      if (result.success) {
+        vscode.window.showInformationMessage(
+          `🚀 Successfully queued ${result.queued} messages for Claude to fix ALL issues. ` +
+          `Claude will systematically fix every issue to make the code 100% production-ready.`
+        );
+        
+        log.info("Comprehensive issue processing complete", {
+          queued: result.queued,
+          failed: result.failed,
+          retried: result.retried
+        });
+      } else {
+        // Fallback to basic queue manager if comprehensive handler fails
+        log.warn("Comprehensive handler failed, using fallback");
+        
+        const issueQueueManager = getProductionIssueQueueManager(this.workspacePath);
+        await issueQueueManager.queueValidationIssues(validationResult);
+        
+        const validationReport = this.formatValidationReport(validationResult);
+        await issueQueueManager.queueComprehensiveFixMessage(validationReport);
+        
+        vscode.window.showWarningMessage(
+          "⚠️ Using fallback issue processing. Some issues may not be detected. " +
+          "Claude will still fix all reported issues."
+        );
+      }
+    } catch (error) {
+      log.error("Failed to queue issues for Claude", error as Error);
+      
+      // Last resort: Queue a simple message
+      try {
+        const issueQueueManager = getProductionIssueQueueManager(this.workspacePath);
+        const validationReport = this.formatValidationReport(validationResult);
+        await issueQueueManager.queueComprehensiveFixMessage(validationReport);
+        
+        vscode.window.showErrorMessage(
+          "❌ Issue detection partially failed, but Claude has been notified to fix all issues."
+        );
+      } catch (fallbackError) {
+        log.error("Even fallback failed", fallbackError as Error);
+        vscode.window.showErrorMessage(
+          "❌ Failed to queue issues. Please manually review and fix production readiness issues."
+        );
+      }
+    }
 
     // Also try SubAgent fixes for complex issues
     const fixTasks: HiveMindTask[] = [];

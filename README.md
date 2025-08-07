@@ -1,6 +1,6 @@
 # AutoClaude - Automated Claude Code Assistant
 
-[![Version](https://img.shields.io/badge/version-3.9.0-blue)](https://github.com/r3e-network/AutoClaude/releases/tag/v3.9.0)
+[![Version](https://img.shields.io/badge/version-3.19.0-blue)](https://github.com/r3e-network/AutoClaude/releases/tag/v3.19.0)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **AutoClaude** is an enterprise-grade automated assistant for Claude Code that provides intelligent task queuing, workflow automation, and 24/7 processing capabilities. Now featuring **Universal Language Conversion** with advanced Neo-rs specialization, persistent learning, multi-agent coordination, and production-ready automation systems.
