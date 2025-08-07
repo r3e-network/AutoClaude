@@ -19,6 +19,12 @@ import {
   AgentEnhancedConfig,
   AgentEnhancedConfigManager,
 } from "../types/agent-coordinator";
+import { 
+  conflictManager, 
+  communicationChannel,
+  ConflictPreventionManager,
+  AgentCommunicationChannel 
+} from "./ConflictPrevention";
 
 // Core interfaces
 export interface Agent {
@@ -584,6 +590,9 @@ export class AgentCoordinator {
       // Create and initialize agents based on configuration
       await this.createAgents();
 
+      // Start deadlock detection
+      this.startDeadlockDetection();
+
       this.initialized = true;
       debugLog("Agent coordinator initialized successfully");
     } catch (error) {
@@ -734,9 +743,55 @@ export class AgentCoordinator {
 
     debugLog(`Executing task ${task.id} with agent ${agent.id}`);
 
+    // Acquire necessary resource locks
+    const resources = this.getTaskResources(task);
+    const locksAcquired: string[] = [];
+    
     try {
+      // Try to acquire all necessary locks
+      for (const resource of resources) {
+        const lockType = this.determineLockType(task.type, resource);
+        const acquired = await conflictManager.acquireResourceLock(
+          resource,
+          agent.id,
+          task.id,
+          lockType
+        );
+        
+        if (acquired) {
+          locksAcquired.push(resource);
+        } else {
+          // Could not acquire lock, wait or reschedule
+          debugLog(`Failed to acquire lock for ${resource}, rescheduling task`);
+          this.taskQueue.unshift(task); // Put back in queue
+          this.activeTasks.delete(task.id);
+          // Release any locks we did acquire
+          for (const lockedResource of locksAcquired) {
+            conflictManager.releaseResourceLock(lockedResource, agent.id);
+          }
+          return;
+        }
+      }
+
+      // Subscribe to relevant communication channels
+      const channels = this.getTaskChannels(task.type);
+      for (const channel of channels) {
+        communicationChannel.subscribe(channel, agent.id);
+      }
+
+      // Execute the task
       const result = await agent.execute(task);
       task.completedAt = new Date();
+
+      // Publish result to communication channels
+      for (const channel of channels) {
+        communicationChannel.publish(channel, agent.id, {
+          taskId: task.id,
+          taskType: task.type,
+          success: result.success,
+          output: result.output
+        });
+      }
 
       // Store result in memory
       await this.memory.storeAgentMemory(
@@ -760,6 +815,11 @@ export class AgentCoordinator {
         this.taskQueue.unshift(task); // Add back to front of queue
       }
     } finally {
+      // Release all resource locks
+      for (const resource of locksAcquired) {
+        conflictManager.releaseResourceLock(resource, agent.id);
+      }
+      
       this.activeTasks.delete(task.id);
 
       // Continue processing queue
@@ -937,9 +997,137 @@ export class AgentCoordinator {
     debugLog("All agents stopped");
   }
 
+  /**
+   * Get resources required by a task
+   */
+  private getTaskResources(task: Task): string[] {
+    const resources: string[] = [];
+    
+    switch (task.type) {
+      case "convert-file":
+      case "validate-conversion":
+        if (task.input.filePath) {
+          resources.push(`file:${task.input.filePath}`);
+        }
+        break;
+      case "optimize-code":
+        resources.push(`optimization:${task.id}`);
+        break;
+      case "generate-tests":
+        resources.push(`tests:${task.input.filePath || task.id}`);
+        break;
+      case "create-docs":
+        resources.push(`docs:${task.input.filePath || task.id}`);
+        break;
+      default:
+        resources.push(`task:${task.id}`);
+    }
+    
+    return resources;
+  }
+
+  /**
+   * Determine lock type based on task type and resource
+   */
+  private determineLockType(taskType: TaskType, resource: string): "exclusive" | "shared" {
+    // Write operations need exclusive locks
+    const exclusiveTaskTypes: TaskType[] = [
+      "convert-file",
+      "optimize-code",
+      "generate-tests",
+      "create-docs"
+    ];
+    
+    // Read operations can use shared locks
+    const sharedTaskTypes: TaskType[] = [
+      "validate-conversion",
+      "validate-syntax",
+      "analyze-code",
+      "detect-errors",
+      "security-scan"
+    ];
+    
+    if (exclusiveTaskTypes.includes(taskType)) {
+      return "exclusive";
+    }
+    
+    if (sharedTaskTypes.includes(taskType)) {
+      return "shared";
+    }
+    
+    // Default to exclusive for safety
+    return "exclusive";
+  }
+
+  /**
+   * Get communication channels for a task type
+   */
+  private getTaskChannels(taskType: TaskType): string[] {
+    const channels: string[] = [];
+    
+    switch (taskType) {
+      case "convert-file":
+      case "validate-conversion":
+        channels.push("conversion-pipeline");
+        break;
+      case "optimize-code":
+        channels.push("optimization");
+        break;
+      case "generate-tests":
+      case "validate-syntax":
+        channels.push("quality-assurance");
+        break;
+      case "create-docs":
+        channels.push("documentation");
+        break;
+      case "security-scan":
+        channels.push("security");
+        break;
+      default:
+        channels.push("general");
+    }
+    
+    return channels;
+  }
+
+  /**
+   * Check for deadlocks periodically
+   */
+  private startDeadlockDetection(): void {
+    setInterval(() => {
+      if (conflictManager.detectDeadlocks()) {
+        debugLog("Deadlock detected! Attempting resolution...");
+        const activeAgentIds = Array.from(this.agents.keys()).filter(
+          id => this.agents.get(id)?.status === "busy"
+        );
+        conflictManager.resolveDeadlock(activeAgentIds);
+      }
+    }, 5000); // Check every 5 seconds
+  }
+
+  /**
+   * Clean up when agent fails
+   */
+  private handleAgentFailure(agentId: string): void {
+    conflictManager.clearAgentLocks(agentId);
+    const agent = this.agents.get(agentId);
+    if (agent) {
+      agent.status = "error";
+      if (agent.currentTask) {
+        // Reschedule the task
+        this.taskQueue.unshift(agent.currentTask);
+        agent.currentTask = undefined;
+      }
+    }
+  }
+
   dispose(): void {
     this.stopAllAgents();
     this.agents.clear();
+    // Clear all locks on disposal
+    for (const agentId of this.agents.keys()) {
+      conflictManager.clearAgentLocks(agentId);
+    }
     this.config.dispose();
   }
 }
